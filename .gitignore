@@ -1,0 +1,42 @@
+# R Cache
+.Rprofile
+.Rhistory
+.RData
+
+# Proprietary data that I shouldn't share publically
+*.sdf
+*.csv
+*.xlsx
+*.pptx
+*.pdf
+*.std
+*.stdf
+*.rtdf
+*.summary
+*.log
+*.lnk
+*.idea
+*.txt
+
+/Old/Data/*
+/Data/*
+/__pycache__/*
+/build/*
+/hide_things_here/*
+
+# Temp Files
+*~
+
+# Because I don't need to include the entire RADAR/PySTDF libraries
+/Old/RADAR_Files/*
+/pystdf-master/*
+/PyPDF2-1.26.0/*
+/*.exe
+/*.spec
+/*.txt_results_temp
+/*.bat
+/dist/*.exe
+/.vscode
+/Old
+/release/platforms/*.dll
+/release/*.exe
