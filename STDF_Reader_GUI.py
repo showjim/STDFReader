@@ -60,7 +60,7 @@ import time
 # These are the functions for the widget application objects that run the whole interface
 
 
-class Application(QMainWindow):#QWidget):
+class Application(QMainWindow):  # QWidget):
 
     # Construct me
     def __init__(self):
@@ -75,11 +75,10 @@ class Application(QMainWindow):#QWidget):
         self.list_of_test_numbers = [['', 'ALL DATA']]
         self.list_of_test_numbers_string = []
 
-
-        exitAct = QAction(QIcon('exit.png'), '&Exit', self)        
+        exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
         exitAct.triggered.connect(qApp.quit)
-        aboutAct=QAction(QIcon('about.png'), '&About', self)
+        aboutAct = QAction(QIcon('about.png'), '&About', self)
         aboutAct.triggered.connect(self.aboutecho)
 
         menubar = self.menuBar()
@@ -87,7 +86,6 @@ class Application(QMainWindow):#QWidget):
         helpMenu = menubar.addMenu('&Help')
         fileMenu.addAction(exitAct)
         helpMenu.addAction(aboutAct)
-
 
         self.status_text = QLabel()
         self.status_text.setText('Welcome!')
@@ -114,17 +112,19 @@ class Application(QMainWindow):#QWidget):
 
         # Generates a summary of the loaded text
         self.generate_summary_button = QPushButton(
-            'Generate summary of all results (Sies Merge)')
+            'Generate summary of all results (Sites Merge)')
         self.generate_summary_button.setToolTip(
             'Generate a results .csv summary for the uploaded parsed .txt')
-        self.generate_summary_button.clicked.connect(lambda: self.make_csv(True))
+        self.generate_summary_button.clicked.connect(
+            lambda: self.make_csv(True))
 
         # Generates a summary of the loaded text
         self.generate_summary_button_split = QPushButton(
-            'Generate summary of all results (Sies Split)')
+            'Generate summary of all results (Sites Split)')
         self.generate_summary_button_split.setToolTip(
             'Generate a results .csv summary for the uploaded parsed .txt')
-        self.generate_summary_button_split.clicked.connect(lambda: self.make_csv(False))
+        self.generate_summary_button_split.clicked.connect(
+            lambda: self.make_csv(False))
 
         # Selects a test result for the desired
         self.select_test_menu = QComboBox()
@@ -189,7 +189,7 @@ class Application(QMainWindow):#QWidget):
         #self.setGeometry(300, 300, 300, 200)
         #self.resize(900, 700)
         self.setWindowTitle('STDF Reader For AP Beta V0.1')
-        
+
         # Layout
         layout = QGridLayout()
         self.setLayout(layout)
@@ -199,7 +199,7 @@ class Application(QMainWindow):#QWidget):
         layout.addWidget(self.stdf_upload_button, 1, 0)
         layout.addWidget(self.stdf_upload_button_xlsx, 1, 1)
         layout.addWidget(self.txt_upload_button, 2, 0, 1, 2)
-        layout.addWidget(self.generate_summary_button, 3, 0)    #, 1, 2)
+        layout.addWidget(self.generate_summary_button, 3, 0)  # , 1, 2)
         layout.addWidget(self.generate_summary_button_split, 3, 1)
         layout.addWidget(self.select_test_menu, 4, 0, 1, 2)
         layout.addWidget(self.generate_pdf_button, 5, 0)
@@ -216,7 +216,8 @@ class Application(QMainWindow):#QWidget):
         self.show()
 
     def aboutecho(self):
-        QMessageBox.information(self,'About','Author：Chao Zhou \n verion Beta 0.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',QMessageBox.Ok)
+        QMessageBox.information(
+            self, 'About', 'Author：Chao Zhou \n verion Beta 0.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ', QMessageBox.Ok)
 
     # Centers the window
     def center(self):
@@ -408,7 +409,7 @@ class Application(QMainWindow):#QWidget):
                 self.status_text.setText('Please select a file')
 
     # Handler for the summary button to generate a csv table results file for a summary of the data
-    def make_csv(self,merge_sites):
+    def make_csv(self, merge_sites):
 
         # Won't perform action unless there's actually a file
         if self.file_selected:
@@ -416,14 +417,16 @@ class Application(QMainWindow):#QWidget):
             self.progress_bar.setValue(0)
 
             table = self.get_summary_table(self.all_test, self.ptr_data, self.number_of_sites,
-                                           self.list_of_test_numbers[1: len(self.list_of_test_numbers)],merge_sites)
+                                           self.list_of_test_numbers[1: len(self.list_of_test_numbers)], merge_sites)
 
             self.progress_bar.setValue(10)
 
-            if merge_sites==True:
-                csv_summary_name = str(self.file_path[:-11].split('/')[-1] + "_merge_summary.csv")
+            if merge_sites == True:
+                csv_summary_name = str(
+                    self.file_path[:-11].split('/')[-1] + "_merge_summary.csv")
             else:
-                csv_summary_name = str(self.file_path[:-11].split('/')[-1] + "_split_summary.csv")
+                csv_summary_name = str(
+                    self.file_path[:-11].split('/')[-1] + "_split_summary.csv")
 
             # In case someone has the file open
             try:
@@ -440,7 +443,8 @@ class Application(QMainWindow):#QWidget):
                 else:
 
                     table.to_csv(path_or_buf=csv_summary_name)
-                    self.status_text.setText(str(csv_summary_name + " written successfully!"))
+                    self.status_text.setText(
+                        str(csv_summary_name + " written successfully!"))
 
                     self.progress_bar.setValue(100)
 
@@ -509,7 +513,7 @@ class Application(QMainWindow):#QWidget):
                 summary_results.append(Backend.site_array(
                     all_data_array, minimum, maximum, units, units))
             else:
-                for j in range(0,len(test_list_data[i])):
+                for j in range(0, len(test_list_data[i])):
                     summary_results.append(Backend.site_array(
                         test_list_data[i][j], minimum, maximum, j, units))
 
@@ -519,10 +523,10 @@ class Application(QMainWindow):#QWidget):
 
         for i in range(0, len(test_list)):
             # add for split multi-site
-            for j in range(0,len(test_list_data[i])):
+            for j in range(0, len(test_list_data[i])):
                 test_names.append(test_list[i][1])
-                #if merge sites data, only plot test name
-                if merge_sites== True:
+                # if merge sites data, only plot test name
+                if merge_sites == True:
                     break
 
             self.progress_bar.setValue(80 + i / len(test_list) * 10)
@@ -942,37 +946,40 @@ class Backend(ABC):
     @staticmethod
     def plot_full_test_trend(test_data, minimum, maximum, fail_limit):
 
-        # in case of (-inf,inf)
-        if (minimum == float('-inf')) or (maximum == float('inf')):
-            minimum = 0
-            maximum = 0
-
-        expand = max([abs(minimum), abs(maximum)])
         data_min = min(np.concatenate(test_data, axis=0))
         data_max = max(np.concatenate(test_data, axis=0))
+        
+        # in case of (-inf,inf)
+        if (minimum == float('-inf')) or (maximum == float('inf')):
+            minimum = data_min
+            maximum = data_max
+
+        expand = max([abs(minimum), abs(maximum)])
+
 
         # Plots each site one at a time
         for i in range(0, len(test_data)):
             Backend.plot_single_site_trend(test_data[i])
 
         # Plots the minimum and maximum barriers
-        if minimum == 'n/a' or minimum == float('-inf'):
-            plt.plot(range(0, len(test_data[0])), [
-                     0] * len(test_data[0]), color="red", linewidth=3.0)
-            plt.plot(range(0, len(test_data[0])), [
-                     maximum] * len(test_data[0]), color="red", linewidth=3.0)
+        if fail_limit:
+            if minimum == 'n/a' or minimum == float('-inf'):
+                plt.plot(range(0, len(test_data[0])), [
+                        0] * len(test_data[0]), color="red", linewidth=3.0)
+                plt.plot(range(0, len(test_data[0])), [
+                        maximum] * len(test_data[0]), color="red", linewidth=3.0)
 
-        elif maximum == 'n/a' or maximum == float('inf'):
-            plt.plot(range(0, len(test_data[0])), [
-                     minimum] * len(test_data[0]), color="red", linewidth=3.0)
-            plt.plot(range(0, len(test_data[0])), [max(np.concatenate(
-                test_data, axis=0))] * len(test_data[0]), color="red", linewidth=3.0)
+            elif maximum == 'n/a' or maximum == float('inf'):
+                plt.plot(range(0, len(test_data[0])), [
+                        minimum] * len(test_data[0]), color="red", linewidth=3.0)
+                plt.plot(range(0, len(test_data[0])), [max(np.concatenate(
+                    test_data, axis=0))] * len(test_data[0]), color="red", linewidth=3.0)
 
-        else:
-            plt.plot(range(0, len(test_data[0])), [
-                     minimum] * len(test_data[0]), color="red", linewidth=3.0)
-            plt.plot(range(0, len(test_data[0])), [
-                     maximum] * len(test_data[0]), color="red", linewidth=3.0)
+            else:
+                plt.plot(range(0, len(test_data[0])), [
+                        minimum] * len(test_data[0]), color="red", linewidth=3.0)
+                plt.plot(range(0, len(test_data[0])), [
+                        maximum] * len(test_data[0]), color="red", linewidth=3.0)
 
         if fail_limit:
 
@@ -993,8 +1000,17 @@ class Backend(ABC):
                 #     print(minimum)
                 plt.ylim(ymax=maximum + abs(0.05 * expand))
         else:
-            plt.ylim(ymin=(min(data_min, minimum - abs(0.05 * expand))))
-            plt.ylim(ymax=(max(data_max, maximum + abs(0.05 * expand))))
+            if minimum == maximum:
+                plt.ylim(ymin=-0.05)
+                plt.ylim(ymax=max(maximum + abs(0.05 * expand), 1.05))
+            else:
+                plt.ylim(ymin=(min(data_min, minimum - abs(0.05 * expand))))
+                # try:
+                plt.ylim(ymax=(max(data_max, maximum + abs(0.05 * expand))))
+                # except BaseException:
+                #     print(min(data_min, minimum - abs(0.05 * expand)))
+                #     print(max(data_max, maximum + abs(0.05 * expand)))
+                #     os.system('pause')
 
     # Returns the table of the results of all the tests to visualize the data
     @staticmethod
@@ -1132,7 +1148,8 @@ class Backend(ABC):
     @staticmethod
     def plot_full_test_hist(test_data, minimum, maximum, fail_limit):
 
-        if minimum == 'n/a':
+        # in case of n/a or inf
+        if minimum == 'n/a' or minimum == float('-inf'):
 
             new_minimum = min(min(np.concatenate(test_data, axis=0)), 0)
 
@@ -1140,7 +1157,7 @@ class Backend(ABC):
 
             new_minimum = min(min(np.concatenate(test_data, axis=0)), minimum)
 
-        if maximum == 'n/a':
+        if maximum == 'n/a' or maximum == float('inf'):
 
             new_maximum = max(np.concatenate(test_data, axis=0))
 
@@ -1148,16 +1165,17 @@ class Backend(ABC):
 
             new_maximum = max(max(np.concatenate(test_data, axis=0)), maximum)
 
+        if (minimum == float('-inf')) or (maximum == float('inf')):
+            minimum = 0
+            maximum = 0
+
         # Plots each site one at a time
         for i in range(0, len(test_data)):
             Backend.plot_single_site_hist(
                 test_data[i], new_minimum, new_maximum, test_data)
 
-        if fail_limit:
+        if fail_limit == False:
 
-            if (minimum == float('-inf')) or (maximum == float('inf')):
-                minimum = 0
-                maximum = 0
             # My feeble attempt to get pretty dynamic limits
             if minimum == maximum:
                 plt.xlim(xmin=-0.05)
@@ -1183,27 +1201,27 @@ class Backend(ABC):
         else:
 
             if minimum == maximum:
-                plt.axvline(x=0)
-                plt.axvline(x=1)
+                plt.axvline(x=0, linestyle="--")
+                plt.axvline(x=1, linestyle="--")
                 plt.xlim(xmin=-0.05)
                 plt.xlim(xmax=1.05)
 
             elif minimum == 'n/a':
                 expand = max(abs(maximum))
-                plt.axvline(x=maximum)
+                plt.axvline(x=maximum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
             elif maximum == 'n/a':
                 expand = abs(minimum)
-                plt.axvline(x=minimum)
+                plt.axvline(x=minimum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
             else:
                 expand = max([abs(minimum), abs(maximum)])
-                plt.axvline(x=minimum)
-                plt.axvline(x=maximum)
+                plt.axvline(x=minimum, linestyle="--")
+                plt.axvline(x=maximum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
