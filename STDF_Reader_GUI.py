@@ -345,15 +345,29 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(35)
 
                 self.list_of_test_numbers = [['', 'ALL DATA']]
+                list_of_duplicate_test_numbers =[]
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 for i in range(0, len(self.ptr_data), self.number_of_sites):
                     if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
                         pass
                     else:
+                        # Find the duplicate test number item from list
+                        for item_to_exam in self.list_of_test_numbers:
+                            if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
+                                if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
+                                    list_of_duplicate_test_numbers.append(
+                                        [self.ptr_data[i].split("|")[1],self.ptr_data[i].split("|")[7],item_to_exam[1]])
+                                    break
+
                         self.list_of_test_numbers.append(
                             [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
                     self.progress_bar.setValue(35 + i/len(self.ptr_data) * 15)
+                # Log duplicate test number item from list, if exist
+                if len(list_of_duplicate_test_numbers)>0:
+                    log_csv=pd.DataFrame(list_of_duplicate_test_numbers, 
+                        columns=['Test Number','Test Name','Test Name'])
+                    log_csv.to_csv(path_or_buf=str(self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
 
                 # Extracts the PTR data for the selected test number
                 self.list_of_test_numbers_string = ['ALL DATA']
@@ -392,7 +406,10 @@ class Application(QMainWindow):  # QWidget):
 
                 self.selected_tests = [['', 'ALL DATA']]
 
-                self.status_text.setText('Parsed .txt uploaded!')
+                if len(list_of_duplicate_test_numbers)>0:
+                    self.status_text.setText('Parsed .txt uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
+                else:
+                    self.status_text.setText('Parsed .txt uploaded!')
 
                 self.progress_bar.setValue(100)
 
