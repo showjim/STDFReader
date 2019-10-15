@@ -57,7 +57,7 @@ import time
 ########################
 
 # Object oriented programming should be illegal cus i forgot how to be good at it
-# These are the functions for the widget application objects that run the whole interface
+# These are the functions for the QMainWindow/widget application objects that run the whole interface
 
 
 class Application(QMainWindow):  # QWidget):
@@ -152,7 +152,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
-        self.setWindowTitle('STDF Reader For AP Beta V0.1')
+        self.setWindowTitle('STDF Reader For AP Beta V0.2')
 
         self.test_text = QLabel()
         self.test_text.setText("test")
@@ -188,7 +188,7 @@ class Application(QMainWindow):  # QWidget):
     def main_window(self):
         #self.setGeometry(300, 300, 300, 200)
         #self.resize(900, 700)
-        self.setWindowTitle('STDF Reader For AP Beta V0.1')
+        self.setWindowTitle('STDF Reader For AP Beta V0.2')
 
         # Layout
         layout = QGridLayout()
@@ -281,12 +281,13 @@ class Application(QMainWindow):  # QWidget):
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
 
-        if self.file_selected:
+        # Change to allow to upload file without restart program
+        if True:  # self.file_selected:
 
-            self.status_text.setText(
-                'Parsed .txt file already uploaded. Please restart program to upload another.')
+            #     self.status_text.setText(
+            #         'Parsed .txt file already uploaded. Please restart program to upload another.')
 
-        else:
+            # else:
 
             # Only accepts text files
             filterboi = 'Text (*.txt)'
@@ -298,7 +299,7 @@ class Application(QMainWindow):  # QWidget):
             # Because you can open it and select nothing smh
             if self.file_path is not '':
 
-                self.txt_upload_button.setEnabled(False)
+                # self.txt_upload_button.setEnabled(False)
 
                 self.progress_bar.setValue(0)
 
@@ -345,7 +346,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(35)
 
                 self.list_of_test_numbers = [['', 'ALL DATA']]
-                list_of_duplicate_test_numbers =[]
+                list_of_duplicate_test_numbers = []
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 for i in range(0, len(self.ptr_data), self.number_of_sites):
                     if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
@@ -356,7 +357,7 @@ class Application(QMainWindow):  # QWidget):
                             if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
                                 if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
                                     list_of_duplicate_test_numbers.append(
-                                        [self.ptr_data[i].split("|")[1],self.ptr_data[i].split("|")[7],item_to_exam[1]])
+                                        [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7], item_to_exam[1]])
                                     break
 
                         self.list_of_test_numbers.append(
@@ -364,10 +365,25 @@ class Application(QMainWindow):  # QWidget):
 
                     self.progress_bar.setValue(35 + i/len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
-                if len(list_of_duplicate_test_numbers)>0:
-                    log_csv=pd.DataFrame(list_of_duplicate_test_numbers, 
-                        columns=['Test Number','Test Name','Test Name'])
-                    log_csv.to_csv(path_or_buf=str(self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
+                if len(list_of_duplicate_test_numbers) > 0:
+                    log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
+                                           columns=['Test Number', 'Test Name', 'Test Name'])
+                    try:
+                        log_csv.to_csv(path_or_buf=str(
+                            self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
+                    except PermissionError:
+                        self.status_text.setText(
+                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to generate a new one"))
+
+                        # Set buttons to false if upload file fail
+                        self.progress_bar.setValue(0)
+                        self.generate_pdf_button.setEnabled(False)
+                        self.select_test_menu.setEnabled(False)
+                        self.generate_summary_button.setEnabled(False)
+                        self.generate_summary_button_split.setEnabled(False)
+                        self.limit_toggle.setEnabled(False)
+                        self.main_window()
+                        return
 
                 # Extracts the PTR data for the selected test number
                 self.list_of_test_numbers_string = ['ALL DATA']
@@ -406,8 +422,10 @@ class Application(QMainWindow):  # QWidget):
 
                 self.selected_tests = [['', 'ALL DATA']]
 
-                if len(list_of_duplicate_test_numbers)>0:
-                    self.status_text.setText('Parsed .txt uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
+                # log parsed document, if duplicate test number exist, show warning !
+                if len(list_of_duplicate_test_numbers) > 0:
+                    self.status_text.setText(
+                        'Parsed .txt uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
                 else:
                     self.status_text.setText('Parsed .txt uploaded!')
 
@@ -965,14 +983,13 @@ class Backend(ABC):
 
         data_min = min(np.concatenate(test_data, axis=0))
         data_max = max(np.concatenate(test_data, axis=0))
-        
+
         # in case of (-inf,inf)
         if (minimum == float('-inf')) or (maximum == float('inf')):
             minimum = data_min
             maximum = data_max
 
         expand = max([abs(minimum), abs(maximum)])
-
 
         # Plots each site one at a time
         for i in range(0, len(test_data)):
@@ -982,21 +999,21 @@ class Backend(ABC):
         if fail_limit:
             if minimum == 'n/a' or minimum == float('-inf'):
                 plt.plot(range(0, len(test_data[0])), [
-                        0] * len(test_data[0]), color="red", linewidth=3.0)
+                    0] * len(test_data[0]), color="red", linewidth=3.0)
                 plt.plot(range(0, len(test_data[0])), [
-                        maximum] * len(test_data[0]), color="red", linewidth=3.0)
+                    maximum] * len(test_data[0]), color="red", linewidth=3.0)
 
             elif maximum == 'n/a' or maximum == float('inf'):
                 plt.plot(range(0, len(test_data[0])), [
-                        minimum] * len(test_data[0]), color="red", linewidth=3.0)
+                    minimum] * len(test_data[0]), color="red", linewidth=3.0)
                 plt.plot(range(0, len(test_data[0])), [max(np.concatenate(
                     test_data, axis=0))] * len(test_data[0]), color="red", linewidth=3.0)
 
             else:
                 plt.plot(range(0, len(test_data[0])), [
-                        minimum] * len(test_data[0]), color="red", linewidth=3.0)
+                    minimum] * len(test_data[0]), color="red", linewidth=3.0)
                 plt.plot(range(0, len(test_data[0])), [
-                        maximum] * len(test_data[0]), color="red", linewidth=3.0)
+                    maximum] * len(test_data[0]), color="red", linewidth=3.0)
 
         if fail_limit:
 
