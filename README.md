@@ -1,7 +1,10 @@
 # STDF Reader Tool
+
 This project is designed for AP team to process and analyze Teradyne's STDF/STD file format.
 ![Semantic description of image](/img/Win_Capture.PNG "Image Title") *STDF Reader Interface*
-## How to use ?
+
+## How to use?
+
 1. Convert STDF/STD file to ASCII txt file by click buttun "Parse STD/STDF to .txt", and select the stdf file;
 2. Upload the txt file which genereted in setp 1 by click button "Upload parsed .txt file";
 3. Now, more buttons on the UI you can try;

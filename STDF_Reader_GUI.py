@@ -40,7 +40,13 @@ from pystdf.Importer import STDF2DataFrame
 from abc import ABC
 
 import numpy as np
+
+# why not use "import matplotlib.pyplot as plt" simply? 
+# Below import statements can avoid "RuntimeError: main thread is not in main loop" in threading
+import matplotlib 
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
+
 from decimal import Decimal
 import decimal
 import pandas as pd
@@ -590,7 +596,7 @@ class Application(QMainWindow):  # QWidget):
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                                  list_of_test_numbers=self.list_of_test_numbers)
-
+   
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
 
