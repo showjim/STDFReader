@@ -309,42 +309,84 @@ class Application(QMainWindow):  # QWidget):
 
                 self.progress_bar.setValue(0)
 
-                self.data = open(self.file_path).read().splitlines()
+                i=0
+                bufsize = 65536
+                with open(self.file_path) as f:
+                    while True:
+                        lines = f.readlines(bufsize)
+                        if not lines:
+                            break
+                        for line in lines:
+                            if line.startswith("FAR"):
+                                self.far_data.append(line)
+                            elif line.startswith("MIR"):
+                                self.mir_data.append(line)
+                            elif line.startswith("SDR"):
+                                self.sdr_data.append(line)
+                            elif line.startswith("PMR"):
+                                self.pmr_data.append(line)
+                            elif line.startswith("PGR"):
+                                self.pgr_data.append(line)
+                            elif line.startswith("PIR"):
+                                self.pir_data.append(line)
+                            # or line.startswith("MPR"):
+                            elif line.startswith("PTR"):
+                                self.ptr_data.append(line)
+                            elif line.startswith("MPR"):
+                                self.mpr_data.append(line)
+                            elif line.startswith("PRR"):
+                                self.prr_data.append(line)
+                            elif line.startswith("TSR"):
+                                self.tsr_data.append(line)
+                            elif line.startswith("HBR"):
+                                self.hbr_data.append(line)
+                            elif line.startswith("SBR"):
+                                self.sbr_data.append(line)
+                            elif line.startswith("PCR"):
+                                self.pcr_data.append(line)
+                            elif line.startswith("MRR"):
+                                self.mrr_data.append(line)
 
-                self.progress_bar.setValue(10)
+                            i = i +1
+                            # self.progress_bar.setValue(10 + i/len(self.data) * 20)
 
-                for i in range(0, len(self.data)):
-                    if self.data[i].startswith("FAR"):
-                        self.far_data.append(self.data[i])
-                    elif self.data[i].startswith("MIR"):
-                        self.mir_data.append(self.data[i])
-                    elif self.data[i].startswith("SDR"):
-                        self.sdr_data.append(self.data[i])
-                    elif self.data[i].startswith("PMR"):
-                        self.pmr_data.append(self.data[i])
-                    elif self.data[i].startswith("PGR"):
-                        self.pgr_data.append(self.data[i])
-                    elif self.data[i].startswith("PIR"):
-                        self.pir_data.append(self.data[i])
-                    # or self.data[i].startswith("MPR"):
-                    elif self.data[i].startswith("PTR"):
-                        self.ptr_data.append(self.data[i])
-                    elif self.data[i].startswith("MPR"):
-                        self.mpr_data.append(self.data[i])
-                    elif self.data[i].startswith("PRR"):
-                        self.prr_data.append(self.data[i])
-                    elif self.data[i].startswith("TSR"):
-                        self.tsr_data.append(self.data[i])
-                    elif self.data[i].startswith("HBR"):
-                        self.hbr_data.append(self.data[i])
-                    elif self.data[i].startswith("SBR"):
-                        self.sbr_data.append(self.data[i])
-                    elif self.data[i].startswith("PCR"):
-                        self.pcr_data.append(self.data[i])
-                    elif self.data[i].startswith("MRR"):
-                        self.mrr_data.append(self.data[i])
 
-                    self.progress_bar.setValue(10 + i/len(self.data) * 20)
+                # self.data = open(self.file_path).read().splitlines()
+
+                # self.progress_bar.setValue(10)
+
+                # for i in range(0, len(self.data)):
+                #     if self.data[i].startswith("FAR"):
+                #         self.far_data.append(self.data[i])
+                #     elif self.data[i].startswith("MIR"):
+                #         self.mir_data.append(self.data[i])
+                #     elif self.data[i].startswith("SDR"):
+                #         self.sdr_data.append(self.data[i])
+                #     elif self.data[i].startswith("PMR"):
+                #         self.pmr_data.append(self.data[i])
+                #     elif self.data[i].startswith("PGR"):
+                #         self.pgr_data.append(self.data[i])
+                #     elif self.data[i].startswith("PIR"):
+                #         self.pir_data.append(self.data[i])
+                #     # or self.data[i].startswith("MPR"):
+                #     elif self.data[i].startswith("PTR"):
+                #         self.ptr_data.append(self.data[i])
+                #     elif self.data[i].startswith("MPR"):
+                #         self.mpr_data.append(self.data[i])
+                #     elif self.data[i].startswith("PRR"):
+                #         self.prr_data.append(self.data[i])
+                #     elif self.data[i].startswith("TSR"):
+                #         self.tsr_data.append(self.data[i])
+                #     elif self.data[i].startswith("HBR"):
+                #         self.hbr_data.append(self.data[i])
+                #     elif self.data[i].startswith("SBR"):
+                #         self.sbr_data.append(self.data[i])
+                #     elif self.data[i].startswith("PCR"):
+                #         self.pcr_data.append(self.data[i])
+                #     elif self.data[i].startswith("MRR"):
+                #         self.mrr_data.append(self.data[i])
+
+                #     self.progress_bar.setValue(10 + i/len(self.data) * 20)
 
                 sdr_parse = self.sdr_data[0].split("|")
                 self.number_of_sites = int(sdr_parse[3])
