@@ -309,46 +309,41 @@ class Application(QMainWindow):  # QWidget):
 
                 self.progress_bar.setValue(0)
 
-                i=0
-                bufsize = 65536
+                i = 0
                 with open(self.file_path) as f:
-                    while True:
-                        lines = f.readlines(bufsize)
-                        if not lines:
-                            break
-                        for line in lines:
-                            if line.startswith("FAR"):
-                                self.far_data.append(line)
-                            elif line.startswith("MIR"):
-                                self.mir_data.append(line)
-                            elif line.startswith("SDR"):
-                                self.sdr_data.append(line)
-                            elif line.startswith("PMR"):
-                                self.pmr_data.append(line)
-                            elif line.startswith("PGR"):
-                                self.pgr_data.append(line)
-                            elif line.startswith("PIR"):
-                                self.pir_data.append(line)
-                            # or line.startswith("MPR"):
-                            elif line.startswith("PTR"):
-                                self.ptr_data.append(line)
-                            elif line.startswith("MPR"):
-                                self.mpr_data.append(line)
-                            elif line.startswith("PRR"):
-                                self.prr_data.append(line)
-                            elif line.startswith("TSR"):
-                                self.tsr_data.append(line)
-                            elif line.startswith("HBR"):
-                                self.hbr_data.append(line)
-                            elif line.startswith("SBR"):
-                                self.sbr_data.append(line)
-                            elif line.startswith("PCR"):
-                                self.pcr_data.append(line)
-                            elif line.startswith("MRR"):
-                                self.mrr_data.append(line)
+                    for line in f:
+                        if line.startswith("FAR"):
+                            self.far_data.append(line)
+                        elif line.startswith("MIR"):
+                            self.mir_data.append(line)
+                        elif line.startswith("SDR"):
+                            self.sdr_data.append(line)
+                        elif line.startswith("PMR"):
+                            self.pmr_data.append(line)
+                        elif line.startswith("PGR"):
+                            self.pgr_data.append(line)
+                        elif line.startswith("PIR"):
+                            self.pir_data.append(line)
+                        # or line.startswith("MPR"):
+                        elif line.startswith("PTR"):
+                            self.ptr_data.append(line)
+                        elif line.startswith("MPR"):
+                            self.mpr_data.append(line)
+                        elif line.startswith("PRR"):
+                            self.prr_data.append(line)
+                        elif line.startswith("TSR"):
+                            self.tsr_data.append(line)
+                        elif line.startswith("HBR"):
+                            self.hbr_data.append(line)
+                        elif line.startswith("SBR"):
+                            self.sbr_data.append(line)
+                        elif line.startswith("PCR"):
+                            self.pcr_data.append(line)
+                        elif line.startswith("MRR"):
+                            self.mrr_data.append(line)
 
-                            i = i +1
-                            # self.progress_bar.setValue(10 + i/len(self.data) * 20)
+                        i = i + 1
+                        # self.progress_bar.setValue(10 + i/len(self.data) * 20)
 
 
                 # self.data = open(self.file_path).read().splitlines()
