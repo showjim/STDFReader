@@ -421,7 +421,8 @@ class Application(QMainWindow):  # QWidget):
                             self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
                     except PermissionError:
                         self.status_text.setText(
-                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to generate a new one"))
+                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
+                                                                               "generate a new one"))
 
                         # Set buttons to false if upload file fail
                         self.progress_bar.setValue(0)
@@ -1386,7 +1387,8 @@ class Backend(ABC):
         # Finds where in the data to start looking for the test in question
         starting_index = 0
         for i in range(0, len(data), num_of_sites):
-            if (data[i].split("|")[1] == test_number[0]) and (data[i].split("|")[7] == test_number[1]):
+            #if (data[i].split("|")[1] == test_number[0]) and (data[i].split("|")[7] == test_number[1]): # 52 second in debug
+            if (test_number[0] in data[i]) and (test_number[1] in data[i]): # 10 second in debug, win
                 starting_index = i
                 for j in range(starting_index, (starting_index + num_of_sites)):
                     ptr_array_test.append(data[j].split("|"))
