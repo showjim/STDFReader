@@ -1380,13 +1380,14 @@ class Backend(ABC):
         ptr_array_test = []
 
         # Finds where in the data to start looking for the test in question
-        starting_index = 0
+        # starting_index = 0
         for i in range(0, len(data), num_of_sites):
             #if (data[i].split("|")[1] == test_number[0]) and (data[i].split("|")[7] == test_number[1]): # 52 second in debug
             if (test_number[0] in data[i]) and (test_number[1] in data[i]): # 10 second in debug, win
-                starting_index = i
-                for j in range(starting_index, (starting_index + num_of_sites)):
-                    ptr_array_test.append(data[j].split("|"))
+                ptr_array_test.append(data[i].split("|"))
+                # starting_index = i
+                # for j in range(starting_index, (starting_index + num_of_sites)):
+                #     ptr_array_test.append(data[j].split("|"))
 
         # Returns the array weow!
         return ptr_array_test
