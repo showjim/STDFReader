@@ -25,7 +25,7 @@
 
 import sys
 import os
-#import fix_qt_import_error
+# import fix_qt_import_error
 # from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QToolTip, QPushButton
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -43,8 +43,9 @@ import numpy as np
 
 # why not use "import matplotlib.pyplot as plt" simply? 
 # Below import statements can avoid "RuntimeError: main thread is not in main loop" in threading
-import matplotlib 
-matplotlib.use('Agg') 
+import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from decimal import Decimal
@@ -55,6 +56,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
+
 
 ###################################################
 
@@ -75,7 +77,7 @@ class Application(QMainWindow):  # QWidget):
         # Have to read the imported .txt file but I'm not totally sure how
         self.data = None
         self.far_data, self.mir_data, self.sdr_data, self.pmr_data, self.pgr_data, self.pir_data, self.ptr_data, self.prr_data, self.tsr_data, self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data, self.mpr_data = [
-        ], [], [], [], [], [], [], [], [], [], [], [], [], []
+                                                                                                                                                                                                                           ], [], [], [], [], [], [], [], [], [], [], [], [], []
 
         self.number_of_sites = None
         self.list_of_test_numbers = [['', 'ALL DATA']]
@@ -192,8 +194,8 @@ class Application(QMainWindow):  # QWidget):
 
     # Main interface method
     def main_window(self):
-        #self.setGeometry(300, 300, 300, 200)
-        #self.resize(900, 700)
+        # self.setGeometry(300, 300, 300, 200)
+        # self.resize(900, 700)
         self.setWindowTitle('STDF Reader For AP Beta V0.2')
 
         # Layout
@@ -223,7 +225,8 @@ class Application(QMainWindow):  # QWidget):
 
     def aboutecho(self):
         QMessageBox.information(
-            self, 'About', 'Author：Chao Zhou \n verion Beta 0.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ', QMessageBox.Ok)
+            self, 'About', 'Author：Chao Zhou \n verion Beta 0.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
+            QMessageBox.Ok)
 
     # Centers the window
     def center(self):
@@ -332,14 +335,13 @@ class Application(QMainWindow):  # QWidget):
                         elif line.startswith("PTR"):
                             self.ptr_data.append(line)
 
-                            if not([line.split("|")[1],line.split("|")[7]] in self.list_of_test_numbers):
+                            if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                                 self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-                            
-                            test_number_test_name = "".join(self.list_of_test_numbers[-1])
-                            if not(test_number_test_name in ptr_dic_test): 
-                                ptr_dic_test[test_number_test_name] = []
-                            ptr_dic_test[test_number_test_name].append(line.split("|")) # = line.split("|")
 
+                            test_number_test_name = line.split("|")[1] + line.split("|")[7]
+                            if not (test_number_test_name in ptr_dic_test):
+                                ptr_dic_test[test_number_test_name] = []
+                            ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
 
                         elif line.startswith("MPR"):
                             self.mpr_data.append(line)
@@ -359,7 +361,7 @@ class Application(QMainWindow):  # QWidget):
                         i = i + 1
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
-                print('读取时间：', endt-startt)
+                print('读取时间：', endt - startt)
                 sdr_parse = self.sdr_data[0].split("|")
                 self.number_of_sites = int(sdr_parse[3])
 
@@ -377,13 +379,14 @@ class Application(QMainWindow):  # QWidget):
                             if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
                                 if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
                                     list_of_duplicate_test_numbers.append(
-                                        [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7], item_to_exam[1]])
+                                        [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7],
+                                         item_to_exam[1]])
                                     break
 
                         # self.list_of_test_numbers.append(
                         #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
-                    self.progress_bar.setValue(35 + i/len(self.ptr_data) * 15)
+                    self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
                 if len(list_of_duplicate_test_numbers) > 0:
                     log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
@@ -409,14 +412,12 @@ class Application(QMainWindow):  # QWidget):
                 # Extracts the PTR data for the selected test number
                 self.list_of_test_numbers_string = ['ALL DATA']
                 for i in range(1, len(self.list_of_test_numbers)):
-
                     self.list_of_test_numbers_string.append(
                         str(self.list_of_test_numbers[i][0] + ' - ' + self.list_of_test_numbers[i][1]))
 
                     self.progress_bar.setValue(
                         50 + i / len(self.list_of_test_numbers) * 15)
 
-                
                 # # startt = time.time()
                 # # for i in range(1, len(self.list_of_test_numbers)):
 
@@ -532,6 +533,7 @@ class Application(QMainWindow):  # QWidget):
             self.selected_tests = [['', 'ALL DATA']]
 
             self.all_test = self.all_data
+            pass
 
         else:
             self.selected_tests = Backend.find_tests_of_number(
@@ -612,11 +614,15 @@ class Application(QMainWindow):  # QWidget):
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                                  list_of_test_numbers=self.list_of_test_numbers)
-   
+
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
 
             self.threaded_task.start()
+
+            self.generate_pdf_button.setEnabled(True)
+            self.select_test_menu.setEnabled(True)
+            self.limit_toggle.setEnabled(True)
             self.main_window()
 
             # # Runs through each of the tests in the list and plots it in a new figure
@@ -691,11 +697,11 @@ class Application(QMainWindow):  # QWidget):
 
 # Attempt to utilize multithreading so the program doesn't feel like it's crashing every time I do literally anything
 class PdfWriterThread(QThread):
-
     notify_progress_bar = pyqtSignal(int)
     notify_status_text = pyqtSignal(str)
 
-    def __init__(self, file_path, all_data, all_test, ptr_data, number_of_sites, selected_tests, limits_toggled, list_of_test_numbers, parent=None):
+    def __init__(self, file_path, all_data, all_test, ptr_data, number_of_sites, selected_tests, limits_toggled,
+                 list_of_test_numbers, parent=None):
         QThread.__init__(self, parent)
 
         self.file_path = file_path
@@ -716,12 +722,12 @@ class PdfWriterThread(QThread):
         if self.selected_tests == [['', 'ALL DATA']]:
 
             for i in range(1, len(self.list_of_test_numbers)):
-
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_data[i - 1], self.ptr_data, self.number_of_sites, self.list_of_test_numbers[i], self.limits_toggled))
+                    self.all_data[i - 1], self.ptr_data, self.number_of_sites, self.list_of_test_numbers[i],
+                    self.limits_toggled))
 
                 pdfTemp.close()
 
@@ -739,7 +745,6 @@ class PdfWriterThread(QThread):
         else:
 
             for i in range(0, len(self.selected_tests)):
-
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
                 plt.figure(figsize=(11, 8.5))
@@ -779,7 +784,6 @@ class PdfWriterThread(QThread):
 
 
 class TextParseThread(QThread):
-
     notify_status_text = pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -899,7 +903,6 @@ class Backend(ABC):
                 low_lim = 0
 
         if hi_lim == 'n/a' or low_lim > hi_lim:
-
             hi_lim = max(np.concatenate(test_data, axis=0))
 
         # Title for everything
@@ -988,7 +991,7 @@ class Backend(ABC):
         minimum_test = 0
         maximum_test = 1
         units = ''
-        temp = 59 #0
+        temp = 59  # 0
         not_found = True
         while not_found:
             # try:
@@ -997,7 +1000,7 @@ class Backend(ABC):
                 maximum_test = (data[temp].split("|")[14])
                 units = (data[temp].split("|")[15])
                 not_found = False
-            temp += 1 # num_of_sites
+            temp += 1  # num_of_sites
             # except IndexError:
             #     os.system('pause')
         return [minimum_test, maximum_test, units]
@@ -1311,7 +1314,7 @@ class Backend(ABC):
 
         # Damn pass/fail data exceptions everywhere
         if minimum == maximum:
-            binboi = np.linspace(minimum-1, maximum + 1, 21)
+            binboi = np.linspace(minimum - 1, maximum + 1, 21)
 
         elif minimum > maximum:
             binboi = np.linspace(minimum, max(
@@ -1371,9 +1374,8 @@ class Backend(ABC):
         # starting_index = 0
         for i in range(0, len(data)):
             pass
-            if (test_number[0] in data[i]) and (test_number[1] in data[i]): # 10 second in debug, win
+            if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
                 ptr_array_test.append(data[i].split("|"))
-
 
         # Returns the array weow!
         return ptr_array_test
