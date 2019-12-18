@@ -40,13 +40,7 @@ from pystdf.Importer import STDF2DataFrame
 from abc import ABC
 
 import numpy as np
-
-# why not use "import matplotlib.pyplot as plt" simply? 
-# Below import statements can avoid "RuntimeError: main thread is not in main loop" in threading
-import matplotlib 
-matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
-
 from decimal import Decimal
 import decimal
 import pandas as pd
@@ -309,63 +303,49 @@ class Application(QMainWindow):  # QWidget):
 
                 self.progress_bar.setValue(0)
 
-                i = 0
-                all_ptr_test = []
-                self.list_of_test_numbers = [['', 'ALL DATA']]
-                ptr_dic_test = {}
-                startt = time.time()
-                with open(self.file_path) as f:
-                    for line in f:
-                        if line.startswith("FAR"):
-                            self.far_data.append(line)
-                        elif line.startswith("MIR"):
-                            self.mir_data.append(line)
-                        elif line.startswith("SDR"):
-                            self.sdr_data.append(line)
-                        elif line.startswith("PMR"):
-                            self.pmr_data.append(line)
-                        elif line.startswith("PGR"):
-                            self.pgr_data.append(line)
-                        elif line.startswith("PIR"):
-                            self.pir_data.append(line)
-                        # or line.startswith("MPR"):
-                        elif line.startswith("PTR"):
-                            self.ptr_data.append(line)
+                self.data = open(self.file_path).read().splitlines()
 
-                            if not([line.split("|")[1],line.split("|")[7]] in self.list_of_test_numbers):
-                                self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-                            
-                            test_number_test_name = "".join(self.list_of_test_numbers[-1])
-                            if not(test_number_test_name in ptr_dic_test): 
-                                ptr_dic_test[test_number_test_name] = []
-                            ptr_dic_test[test_number_test_name].append(line.split("|")) # = line.split("|")
+                self.progress_bar.setValue(10)
 
+                for i in range(0, len(self.data)):
+                    if self.data[i].startswith("FAR"):
+                        self.far_data.append(self.data[i])
+                    elif self.data[i].startswith("MIR"):
+                        self.mir_data.append(self.data[i])
+                    elif self.data[i].startswith("SDR"):
+                        self.sdr_data.append(self.data[i])
+                    elif self.data[i].startswith("PMR"):
+                        self.pmr_data.append(self.data[i])
+                    elif self.data[i].startswith("PGR"):
+                        self.pgr_data.append(self.data[i])
+                    elif self.data[i].startswith("PIR"):
+                        self.pir_data.append(self.data[i])
+                    # or self.data[i].startswith("MPR"):
+                    elif self.data[i].startswith("PTR"):
+                        self.ptr_data.append(self.data[i])
+                    elif self.data[i].startswith("MPR"):
+                        self.mpr_data.append(self.data[i])
+                    elif self.data[i].startswith("PRR"):
+                        self.prr_data.append(self.data[i])
+                    elif self.data[i].startswith("TSR"):
+                        self.tsr_data.append(self.data[i])
+                    elif self.data[i].startswith("HBR"):
+                        self.hbr_data.append(self.data[i])
+                    elif self.data[i].startswith("SBR"):
+                        self.sbr_data.append(self.data[i])
+                    elif self.data[i].startswith("PCR"):
+                        self.pcr_data.append(self.data[i])
+                    elif self.data[i].startswith("MRR"):
+                        self.mrr_data.append(self.data[i])
 
-                        elif line.startswith("MPR"):
-                            self.mpr_data.append(line)
-                        elif line.startswith("PRR"):
-                            self.prr_data.append(line)
-                        elif line.startswith("TSR"):
-                            self.tsr_data.append(line)
-                        elif line.startswith("HBR"):
-                            self.hbr_data.append(line)
-                        elif line.startswith("SBR"):
-                            self.sbr_data.append(line)
-                        elif line.startswith("PCR"):
-                            self.pcr_data.append(line)
-                        elif line.startswith("MRR"):
-                            self.mrr_data.append(line)
+                    self.progress_bar.setValue(10 + i/len(self.data) * 20)
 
-                        i = i + 1
-                all_ptr_test = list(ptr_dic_test.values())
-                endt = time.time()
-                print('读取时间：', endt-startt)
                 sdr_parse = self.sdr_data[0].split("|")
                 self.number_of_sites = int(sdr_parse[3])
 
                 self.progress_bar.setValue(35)
 
-                # self.list_of_test_numbers = [['', 'ALL DATA']]
+                self.list_of_test_numbers = [['', 'ALL DATA']]
                 list_of_duplicate_test_numbers = []
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 for i in range(0, len(self.ptr_data), self.number_of_sites):
@@ -380,8 +360,8 @@ class Application(QMainWindow):  # QWidget):
                                         [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7], item_to_exam[1]])
                                     break
 
-                        # self.list_of_test_numbers.append(
-                        #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
+                        self.list_of_test_numbers.append(
+                            [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
                     self.progress_bar.setValue(35 + i/len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
@@ -393,8 +373,7 @@ class Application(QMainWindow):  # QWidget):
                             self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
                     except PermissionError:
                         self.status_text.setText(
-                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
-                                                                               "generate a new one"))
+                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to generate a new one"))
 
                         # Set buttons to false if upload file fail
                         self.progress_bar.setValue(0)
@@ -416,17 +395,16 @@ class Application(QMainWindow):  # QWidget):
                     self.progress_bar.setValue(
                         50 + i / len(self.list_of_test_numbers) * 15)
 
-                
-                # # startt = time.time()
-                # # for i in range(1, len(self.list_of_test_numbers)):
+                all_ptr_test = []
 
-                # #     all_ptr_test.append(Backend.ptr_extractor(
-                # #         self.number_of_sites, self.ptr_data, self.list_of_test_numbers[i]))
+                for i in range(1, len(self.list_of_test_numbers)):
 
-                # #     self.progress_bar.setValue(
-                # #         65 + i / len(self.list_of_test_numbers) * 25)
-                # # endt = time.time()
-                # # print('程序运行时间：', endt-startt)
+                    all_ptr_test.append(Backend.ptr_extractor(
+                        self.number_of_sites, self.ptr_data, self.list_of_test_numbers[i]))
+
+                    self.progress_bar.setValue(
+                        65 + i / len(self.list_of_test_numbers) * 25)
+
                 # Gathers each set of data from all runs for each site in all selected tests
 
                 self.all_test = []
@@ -612,7 +590,7 @@ class Application(QMainWindow):  # QWidget):
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                                  list_of_test_numbers=self.list_of_test_numbers)
-   
+
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
 
@@ -988,18 +966,15 @@ class Backend(ABC):
         minimum_test = 0
         maximum_test = 1
         units = ''
-        temp = 59 #0
+        temp = 0
         not_found = True
         while not_found:
-            # try:
             if data[temp].split("|")[1] == test_tuple[0]:
                 minimum_test = (data[temp].split("|")[13])
                 maximum_test = (data[temp].split("|")[14])
                 units = (data[temp].split("|")[15])
                 not_found = False
-            temp += 1 # num_of_sites
-            # except IndexError:
-            #     os.system('pause')
+            temp += num_of_sites
         return [minimum_test, maximum_test, units]
 
     # Plots the results of all sites from one test
@@ -1097,7 +1072,6 @@ class Backend(ABC):
     # Returns an array a site's final test results
     @staticmethod
     def site_array(site_data, minimum, maximum, site_number, units):
-
         if minimum == 'n/a' and maximum == 'n/a':
             minimum = 0
             maximum = 0
@@ -1107,9 +1081,6 @@ class Backend(ABC):
             maximum = 0
         # Big boi initialization
         site_results = []
-
-        if len(site_data) == 0:
-            return site_results
 
         # Not actually volts, it's actually % if it's db technically but who cares
         volt_data = []
@@ -1169,11 +1140,8 @@ class Backend(ABC):
         site_results.append(str(len(site_data)))
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
-        # try:
         site_results.append(
             str(Decimal(min(site_data)).quantize(Decimal('0.001'))))
-        # except ValueError:
-        #     os.system('pause')
         site_results.append(
             str(Decimal(mean_result).quantize(Decimal('0.001'))))
         site_results.append(
@@ -1368,12 +1336,12 @@ class Backend(ABC):
         ptr_array_test = []
 
         # Finds where in the data to start looking for the test in question
-        # starting_index = 0
-        for i in range(0, len(data)):
-            pass
-            if (test_number[0] in data[i]) and (test_number[1] in data[i]): # 10 second in debug, win
-                ptr_array_test.append(data[i].split("|"))
-
+        starting_index = 0
+        for i in range(0, len(data), num_of_sites):
+            if (data[i].split("|")[1] == test_number[0]) and (data[i].split("|")[7] == test_number[1]):
+                starting_index = i
+                for j in range(starting_index, (starting_index + num_of_sites)):
+                    ptr_array_test.append(data[j].split("|"))
 
         # Returns the array weow!
         return ptr_array_test
