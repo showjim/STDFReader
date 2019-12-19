@@ -35,7 +35,7 @@ from pystdf.IO import *
 from pystdf.Writers import *
 
 import pystdf.V4 as V4
-from pystdf.Importer import STDF2DataFrame,STDF2Text
+from pystdf.Importer import STDF2DataFrame, STDF2Text
 
 from abc import ABC
 
@@ -184,6 +184,18 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_text_parser.notify_status_text.connect(
             self.on_update_text)
 
+        f = []
+        ptr_dic_test = {}
+        list_of_duplicate_test_numbers = []
+        self.threaded_rsr_task = ReadStdfRecordThread(f, ptr_dic_test, list_of_duplicate_test_numbers,
+                                                      self.list_of_test_numbers,
+                                                      self.far_data, self.mir_data, self.sdr_data, self.pmr_data,
+                                                      self.pgr_data,
+                                                      self.pir_data, self.ptr_data, self.mpr_data, self.prr_data,
+                                                      self.tsr_data,
+                                                      self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data)
+        self.threaded_rsr_task.notify_status_text.connect(self.on_update_text)
+
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
         self.generate_summary_button.setEnabled(False)
@@ -321,10 +333,10 @@ class Application(QMainWindow):  # QWidget):
                 startt = time.time()
                 if self.file_path.endswith(".txt"):
                     with open(self.file_path) as f:
-                        self.read_stdf_record(f,ptr_dic_test,list_of_duplicate_test_numbers)
+                        self.read_stdf_record(f, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".std"):
                     tmplist = STDF2Text(self.file_path)
-                    self.read_stdf_record(tmplist,ptr_dic_test,list_of_duplicate_test_numbers)
+                    self.read_stdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
 
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
@@ -335,7 +347,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(35)
 
                 # self.list_of_test_numbers = [['', 'ALL DATA']]
-                
+
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 # # for i in range(0, len(self.ptr_data), self.number_of_sites):
                 # #     if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
@@ -350,10 +362,10 @@ class Application(QMainWindow):  # QWidget):
                 # #                          item_to_exam[1]])
                 # #                     break
 
-                        # self.list_of_test_numbers.append(
-                        #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
+                # self.list_of_test_numbers.append(
+                #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
-                    # self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
+                # self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
                 if len(list_of_duplicate_test_numbers) > 0:
                     log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
@@ -434,7 +446,7 @@ class Application(QMainWindow):  # QWidget):
                 self.status_text.setText('Please select a file')
 
     # Read each record in stdf file or atdf file
-    def read_stdf_record(self,f,ptr_dic_test,list_of_duplicate_test_numbers):
+    def read_stdf_record(self, f, ptr_dic_test, list_of_duplicate_test_numbers):
         check_duplicate_test_number = True
         for line in f:
             if line.startswith("FAR"):
@@ -454,15 +466,16 @@ class Application(QMainWindow):  # QWidget):
                 self.ptr_data.append(line)
 
                 test_number_test_name = line.split("|")[1] + line.split("|")[7]
-                
+
                 # Check the duplicate test number
                 if check_duplicate_test_number:
-                    test_number_list = np.char.array(self.list_of_test_numbers)[:,0]
-                    test_name_list = np.char.array(self.list_of_test_numbers)[:,1]
-                    i = np.where(test_number_list==(line.split("|")[1]))
-                    if test_name_list[i[0]] != line.split("|")[7]:
-                        list_of_duplicate_test_numbers.append([line.split("|")[1],test_name_list[i],line.split("|")[7]])
-                
+                    test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
+                    test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
+                    i = np.where(test_number_list == (line.split("|")[1]))
+                    if not(line.split("|")[7] in test_name_list[i]):
+                        list_of_duplicate_test_numbers.append(
+                            [line.split("|")[1], test_name_list[i], line.split("|")[7]])
+
                 if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                     self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
 
@@ -829,11 +842,13 @@ class TextParseThread(QThread):
             self.notify_status_text.emit(
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
 
+
 class ReadStdfRecordThread(QThread):
     notify_status_text = pyqtSignal(str)
-    def __init__(self, f,ptr_dic_test,list_of_duplicate_test_numbers,list_of_test_numbers, 
-                far_data,mir_data,sdr_data,pmr_data,pgr_data,pir_data,ptr_data,mpr_data,
-                prr_data,tsr_data,hbr_data,sbr_data,pcr_data,mrr_data,parent=None):
+
+    def __init__(self, f, ptr_dic_test, list_of_duplicate_test_numbers, list_of_test_numbers,
+                 far_data, mir_data, sdr_data, pmr_data, pgr_data, pir_data, ptr_data, mpr_data,
+                 prr_data, tsr_data, hbr_data, sbr_data, pcr_data, mrr_data, parent=None):
         QThread.__init__(self, parent)
         self.far_data = far_data
         self.mir_data = mir_data
@@ -849,15 +864,18 @@ class ReadStdfRecordThread(QThread):
         self.sbr_data = sbr_data
         self.pcr_data = pcr_data
         self.mrr_data = mrr_data
-        self.f = f
+        self.lines = f
         self.ptr_dic_test = ptr_dic_test
         self.list_of_duplicate_test_numbers = list_of_duplicate_test_numbers
         self.list_of_test_numbers = list_of_test_numbers
 
     def run(self):
-        pass
         check_duplicate_test_number = True
-        for line in f:
+        ii = 1
+        for line in self.lines:
+            ii = ii + 1
+            if ii % 10000 == 1:
+                self.notify_status_text.emit('Have read ' + str(ii) + 'linens.')
             if line.startswith("FAR"):
                 self.far_data.append(line)
             elif line.startswith("MIR"):
@@ -875,15 +893,17 @@ class ReadStdfRecordThread(QThread):
                 self.ptr_data.append(line)
 
                 test_number_test_name = line.split("|")[1] + line.split("|")[7]
-                
+
                 # Check the duplicate test number
                 if check_duplicate_test_number:
-                    test_number_list = np.char.array(self.list_of_test_numbers)[:,0]
-                    test_name_list = np.char.array(self.list_of_test_numbers)[:,1]
-                    i = np.where(test_number_list==(line.split("|")[1]))
-                    if test_name_list[i[0]] != line.split("|")[7]:
-                        self.list_of_duplicate_test_numbers.append([line.split("|")[1],test_name_list[i],line.split("|")[7]])
-                
+                    test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
+                    test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
+                    i = np.where(test_number_list == (line.split("|")[1]))
+
+                    if not(line.split("|")[7] in test_name_list[i]):
+                        self.list_of_duplicate_test_numbers.append(
+                            [line.split("|")[1], test_name_list[i], line.split("|")[7]])
+
                 if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                     self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
 
@@ -906,6 +926,7 @@ class ReadStdfRecordThread(QThread):
                 self.pcr_data.append(line)
             elif line.startswith("MRR"):
                 self.mrr_data.append(line)
+
 
 ###################################################
 
@@ -1547,7 +1568,7 @@ class FileReaders(ABC):
 
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
-        
+
         # Writing to a text file instead of vomiting it to the console
         with open(newFile, 'w') as fout:
             # fout writes it to the opened text file
