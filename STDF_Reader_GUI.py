@@ -313,16 +313,18 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
 
                 i = 0
+                self.ptr_data = []
                 all_ptr_test = []
                 self.list_of_test_numbers = [['', 'ALL DATA']]
                 ptr_dic_test = {}
+                list_of_duplicate_test_numbers = []
                 startt = time.time()
                 if self.file_path.endswith(".txt"):
                     with open(self.file_path) as f:
-                        self.read_stdf_record(f,ptr_dic_test)
+                        self.read_stdf_record(f,ptr_dic_test,list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".std"):
                     tmplist = STDF2Text(self.file_path)
-                    self.read_stdf_record(tmplist,ptr_dic_test)
+                    self.read_stdf_record(tmplist,ptr_dic_test,list_of_duplicate_test_numbers)
 
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
@@ -333,25 +335,25 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(35)
 
                 # self.list_of_test_numbers = [['', 'ALL DATA']]
-                list_of_duplicate_test_numbers = []
+                
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
-                for i in range(0, len(self.ptr_data), self.number_of_sites):
-                    if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
-                        pass
-                    else:
-                        # Find the duplicate test number item from list
-                        for item_to_exam in self.list_of_test_numbers:
-                            if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
-                                if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
-                                    list_of_duplicate_test_numbers.append(
-                                        [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7],
-                                         item_to_exam[1]])
-                                    break
+                # # for i in range(0, len(self.ptr_data), self.number_of_sites):
+                # #     if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
+                # #         pass
+                # #     else:
+                # #         # Find the duplicate test number item from list
+                # #         for item_to_exam in self.list_of_test_numbers:
+                # #             if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
+                # #                 if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
+                # #                     list_of_duplicate_test_numbers.append(
+                # #                         [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7],
+                # #                          item_to_exam[1]])
+                # #                     break
 
                         # self.list_of_test_numbers.append(
                         #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
-                    self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
+                    # self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
                 if len(list_of_duplicate_test_numbers) > 0:
                     log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
@@ -432,7 +434,8 @@ class Application(QMainWindow):  # QWidget):
                 self.status_text.setText('Please select a file')
 
     # Read each record in stdf file or atdf file
-    def read_stdf_record(self,f,ptr_dic_test):
+    def read_stdf_record(self,f,ptr_dic_test,list_of_duplicate_test_numbers):
+        check_duplicate_test_number = True
         for line in f:
             if line.startswith("FAR"):
                 self.far_data.append(line)
@@ -450,10 +453,19 @@ class Application(QMainWindow):  # QWidget):
             elif line.startswith("PTR"):
                 self.ptr_data.append(line)
 
+                test_number_test_name = line.split("|")[1] + line.split("|")[7]
+                
+                # Check the duplicate test number
+                if check_duplicate_test_number:
+                    test_number_list = np.char.array(self.list_of_test_numbers)[:,0]
+                    test_name_list = np.char.array(self.list_of_test_numbers)[:,1]
+                    i = np.where(test_number_list==(line.split("|")[1]))
+                    if test_name_list[i[0]] != line.split("|")[7]:
+                        list_of_duplicate_test_numbers.append([line.split("|")[1],test_name_list[i].to,line.split("|")[7]])
+                
                 if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                     self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
 
-                test_number_test_name = line.split("|")[1] + line.split("|")[7]
                 if not (test_number_test_name in ptr_dic_test):
                     ptr_dic_test[test_number_test_name] = []
                 ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
@@ -462,6 +474,7 @@ class Application(QMainWindow):  # QWidget):
                 self.mpr_data.append(line)
             elif line.startswith("PRR"):
                 self.prr_data.append(line)
+                check_duplicate_test_number = False
             elif line.startswith("TSR"):
                 self.tsr_data.append(line)
             elif line.startswith("HBR"):
@@ -1380,7 +1393,6 @@ class Backend(ABC):
         # Finds where in the data to start looking for the test in question
         # starting_index = 0
         for i in range(0, len(data)):
-            pass
             if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
                 ptr_array_test.append(data[i].split("|"))
 
