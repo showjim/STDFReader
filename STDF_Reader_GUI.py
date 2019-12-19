@@ -35,7 +35,7 @@ from pystdf.IO import *
 from pystdf.Writers import *
 
 import pystdf.V4 as V4
-from pystdf.Importer import STDF2DataFrame
+from pystdf.Importer import STDF2DataFrame,STDF2Text
 
 from abc import ABC
 
@@ -113,7 +113,7 @@ class Application(QMainWindow):  # QWidget):
             self.open_parsing_dialog_xlsx)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton('Upload parsed .txt file')
+        self.txt_upload_button = QPushButton('Upload parsed .txt or original .std file')
         self.txt_upload_button.setToolTip(
             'Browse for the .txt file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
@@ -299,9 +299,9 @@ class Application(QMainWindow):  # QWidget):
             # else:
 
             # Only accepts text files
-            filterboi = 'Text (*.txt)'
+            filterboi = 'Text (*.txt);;Stdf (*.std *.stdf)'
             filepath = QFileDialog.getOpenFileName(
-                caption='Open .txt File', filter=filterboi)
+                caption='Open .txt or .std File', filter=filterboi)
 
             self.file_path = filepath[0]
 
@@ -317,48 +317,13 @@ class Application(QMainWindow):  # QWidget):
                 self.list_of_test_numbers = [['', 'ALL DATA']]
                 ptr_dic_test = {}
                 startt = time.time()
-                with open(self.file_path) as f:
-                    for line in f:
-                        if line.startswith("FAR"):
-                            self.far_data.append(line)
-                        elif line.startswith("MIR"):
-                            self.mir_data.append(line)
-                        elif line.startswith("SDR"):
-                            self.sdr_data.append(line)
-                        elif line.startswith("PMR"):
-                            self.pmr_data.append(line)
-                        elif line.startswith("PGR"):
-                            self.pgr_data.append(line)
-                        elif line.startswith("PIR"):
-                            self.pir_data.append(line)
-                        # or line.startswith("MPR"):
-                        elif line.startswith("PTR"):
-                            self.ptr_data.append(line)
+                if self.file_path.endswith(".txt"):
+                    with open(self.file_path) as f:
+                        self.read_stdf_record(f,ptr_dic_test)
+                elif self.file_path.endswith(".std"):
+                    tmplist = STDF2Text(self.file_path)
+                    self.read_stdf_record(tmplist,ptr_dic_test)
 
-                            if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
-                                self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-
-                            test_number_test_name = line.split("|")[1] + line.split("|")[7]
-                            if not (test_number_test_name in ptr_dic_test):
-                                ptr_dic_test[test_number_test_name] = []
-                            ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
-
-                        elif line.startswith("MPR"):
-                            self.mpr_data.append(line)
-                        elif line.startswith("PRR"):
-                            self.prr_data.append(line)
-                        elif line.startswith("TSR"):
-                            self.tsr_data.append(line)
-                        elif line.startswith("HBR"):
-                            self.hbr_data.append(line)
-                        elif line.startswith("SBR"):
-                            self.sbr_data.append(line)
-                        elif line.startswith("PCR"):
-                            self.pcr_data.append(line)
-                        elif line.startswith("MRR"):
-                            self.mrr_data.append(line)
-
-                        i = i + 1
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
                 print('读取时间：', endt - startt)
@@ -465,6 +430,48 @@ class Application(QMainWindow):  # QWidget):
             else:
 
                 self.status_text.setText('Please select a file')
+
+    # Read each record in stdf file or atdf file
+    def read_stdf_record(self,f,ptr_dic_test):
+        for line in f:
+            if line.startswith("FAR"):
+                self.far_data.append(line)
+            elif line.startswith("MIR"):
+                self.mir_data.append(line)
+            elif line.startswith("SDR"):
+                self.sdr_data.append(line)
+            elif line.startswith("PMR"):
+                self.pmr_data.append(line)
+            elif line.startswith("PGR"):
+                self.pgr_data.append(line)
+            elif line.startswith("PIR"):
+                self.pir_data.append(line)
+            # or line.startswith("MPR"):
+            elif line.startswith("PTR"):
+                self.ptr_data.append(line)
+
+                if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
+                    self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
+
+                test_number_test_name = line.split("|")[1] + line.split("|")[7]
+                if not (test_number_test_name in ptr_dic_test):
+                    ptr_dic_test[test_number_test_name] = []
+                ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
+
+            elif line.startswith("MPR"):
+                self.mpr_data.append(line)
+            elif line.startswith("PRR"):
+                self.prr_data.append(line)
+            elif line.startswith("TSR"):
+                self.tsr_data.append(line)
+            elif line.startswith("HBR"):
+                self.hbr_data.append(line)
+            elif line.startswith("SBR"):
+                self.sbr_data.append(line)
+            elif line.startswith("PCR"):
+                self.pcr_data.append(line)
+            elif line.startswith("MRR"):
+                self.mrr_data.append(line)
 
     # Handler for the summary button to generate a csv table results file for a summary of the data
     def make_csv(self, merge_sites):
@@ -1451,7 +1458,7 @@ class FileReaders(ABC):
 
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
-
+        
         # Writing to a text file instead of vomiting it to the console
         with open(newFile, 'w') as fout:
             # fout writes it to the opened text file
