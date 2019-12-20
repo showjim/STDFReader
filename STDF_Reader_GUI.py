@@ -333,37 +333,17 @@ class Application(QMainWindow):  # QWidget):
                 startt = time.time()
                 if self.file_path.endswith(".txt"):
                     with open(self.file_path) as f:
-                        self.read_stdf_record(f, ptr_dic_test, list_of_duplicate_test_numbers)
+                        self.read_atdf_record(f, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".std"):
                     tmplist = STDF2Text(self.file_path)
-                    self.read_stdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
+                    self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
 
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
                 print('读取时间：', endt - startt)
                 sdr_parse = self.sdr_data[0].split("|")
                 self.number_of_sites = int(sdr_parse[3])
-
                 self.progress_bar.setValue(35)
-
-                # self.list_of_test_numbers = [['', 'ALL DATA']]
-
-                # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
-                # # for i in range(0, len(self.ptr_data), self.number_of_sites):
-                # #     if [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]] in self.list_of_test_numbers:
-                # #         pass
-                # #     else:
-                # #         # Find the duplicate test number item from list
-                # #         for item_to_exam in self.list_of_test_numbers:
-                # #             if self.ptr_data[i].split("|")[1] == item_to_exam[0]:
-                # #                 if self.ptr_data[i].split("|")[7] != item_to_exam[1]:
-                # #                     list_of_duplicate_test_numbers.append(
-                # #                         [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7],
-                # #                          item_to_exam[1]])
-                # #                     break
-
-                # self.list_of_test_numbers.append(
-                #     [self.ptr_data[i].split("|")[1], self.ptr_data[i].split("|")[7]])
 
                 # self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
                 # Log duplicate test number item from list, if exist
@@ -388,7 +368,7 @@ class Application(QMainWindow):  # QWidget):
                         self.main_window()
                         return
 
-                # Extracts the PTR data for the selected test number
+                # Extracts the test name for the selecting
                 self.list_of_test_numbers_string = ['ALL DATA']
                 for i in range(1, len(self.list_of_test_numbers)):
                     self.list_of_test_numbers_string.append(
@@ -396,18 +376,6 @@ class Application(QMainWindow):  # QWidget):
 
                     self.progress_bar.setValue(
                         50 + i / len(self.list_of_test_numbers) * 15)
-
-                # # startt = time.time()
-                # # for i in range(1, len(self.list_of_test_numbers)):
-
-                # #     all_ptr_test.append(Backend.ptr_extractor(
-                # #         self.number_of_sites, self.ptr_data, self.list_of_test_numbers[i]))
-
-                # #     self.progress_bar.setValue(
-                # #         65 + i / len(self.list_of_test_numbers) * 25)
-                # # endt = time.time()
-                # # print('程序运行时间：', endt-startt)
-                # Gathers each set of data from all runs for each site in all selected tests
 
                 self.all_test = []
                 for i in range(len(all_ptr_test)):
@@ -446,7 +414,7 @@ class Application(QMainWindow):  # QWidget):
                 self.status_text.setText('Please select a file')
 
     # Read each record in stdf file or atdf file
-    def read_stdf_record(self, f, ptr_dic_test, list_of_duplicate_test_numbers):
+    def read_atdf_record(self, f, ptr_dic_test, list_of_duplicate_test_numbers):
         check_duplicate_test_number = True
         for line in f:
             if line.startswith("FAR"):
@@ -475,10 +443,12 @@ class Application(QMainWindow):  # QWidget):
                     if not(line.split("|")[7] in test_name_list[i]):
                         list_of_duplicate_test_numbers.append(
                             [line.split("|")[1], test_name_list[i], line.split("|")[7]])
-
+                
+                # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                     self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
 
+                # 
                 if not (test_number_test_name in ptr_dic_test):
                     ptr_dic_test[test_number_test_name] = []
                 ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
