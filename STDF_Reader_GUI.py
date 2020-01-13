@@ -291,6 +291,12 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.setText(
                 str(filepath[0].split('/')[-1] + '_excel.xlsx created!'))
 
+    # Opens and reads a stdf to parse the data to an xlsx which is btter for review
+    def extract_data_to_xlsx(self):
+        pass
+        # File Start Lot SubLot temp TestCode TestFlow tester program WaferID Dut SITE locate_X Locate_Y RC Softbin Hardbin Testtime TestCount
+
+
     # Checks if the toggle by limits mark is checked or not
     def toggler(self, state):
 
@@ -377,11 +383,14 @@ class Application(QMainWindow):  # QWidget):
                     self.progress_bar.setValue(
                         50 + i / len(self.list_of_test_numbers) * 15)
 
+                startt = time.time()
                 self.all_test = []
                 for i in range(len(all_ptr_test)):
                     self.all_test.append(Backend.single_test_data(
                         self.number_of_sites, all_ptr_test[i]))
                     self.progress_bar.setValue(90 + i / len(all_ptr_test) * 9)
+                endt = time.time()
+                print('PTR提取时间：', endt - startt)
 
                 self.all_data = self.all_test
 
