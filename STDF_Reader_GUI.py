@@ -324,7 +324,7 @@ class Application(QMainWindow):  # QWidget):
             self.file_path = filepath[0]
 
             # Because you can open it and select nothing smh
-            if self.file_path is not '':
+            if self.file_path != '':
 
                 # self.txt_upload_button.setEnabled(False)
 
