@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from pystdf.IO import *
+from pystdf.IO import Parser
 from pystdf.Writers import *
 
 import pystdf.V4 as V4
@@ -184,17 +184,17 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_text_parser.notify_status_text.connect(
             self.on_update_text)
 
-        f = []
-        ptr_dic_test = {}
-        list_of_duplicate_test_numbers = []
-        self.threaded_rsr_task = ReadStdfRecordThread(f, ptr_dic_test, list_of_duplicate_test_numbers,
-                                                      self.list_of_test_numbers,
-                                                      self.far_data, self.mir_data, self.sdr_data, self.pmr_data,
-                                                      self.pgr_data,
-                                                      self.pir_data, self.ptr_data, self.mpr_data, self.prr_data,
-                                                      self.tsr_data,
-                                                      self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data)
-        self.threaded_rsr_task.notify_status_text.connect(self.on_update_text)
+        # f = []
+        # ptr_dic_test = {}
+        # list_of_duplicate_test_numbers = []
+        # self.threaded_rsr_task = ReadStdfRecordThread(f, ptr_dic_test, list_of_duplicate_test_numbers,
+        #                                               self.list_of_test_numbers,
+        #                                               self.far_data, self.mir_data, self.sdr_data, self.pmr_data,
+        #                                               self.pgr_data,
+        #                                               self.pir_data, self.ptr_data, self.mpr_data, self.prr_data,
+        #                                               self.tsr_data,
+        #                                               self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data)
+        # self.threaded_rsr_task.notify_status_text.connect(self.on_update_text)
 
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
@@ -293,9 +293,9 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a stdf to parse the data to an xlsx which is btter for review
     def extract_data_to_xlsx(self):
+        self.status_text.setText('Parsing to .csv data file, please wait...')
         pass
         # File Start Lot SubLot temp TestCode TestFlow tester program WaferID Dut SITE locate_X Locate_Y RC Softbin Hardbin Testtime TestCount
-
 
     # Checks if the toggle by limits mark is checked or not
     def toggler(self, state):
@@ -449,10 +449,10 @@ class Application(QMainWindow):  # QWidget):
                     test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
                     test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
                     i = np.where(test_number_list == (line.split("|")[1]))
-                    if not(line.split("|")[7] in test_name_list[i]):
+                    if not (line.split("|")[7] in test_name_list[i]):
                         list_of_duplicate_test_numbers.append(
                             [line.split("|")[1], test_name_list[i], line.split("|")[7]])
-                
+
                 # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
                 if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
                     self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
@@ -821,32 +821,31 @@ class TextParseThread(QThread):
             self.notify_status_text.emit(
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
 
-
-class ReadStdfRecordThread(QThread):
-    notify_status_text = pyqtSignal(str)
-
-    def __init__(self, f, ptr_dic_test, list_of_duplicate_test_numbers, list_of_test_numbers,
-                 far_data, mir_data, sdr_data, pmr_data, pgr_data, pir_data, ptr_data, mpr_data,
-                 prr_data, tsr_data, hbr_data, sbr_data, pcr_data, mrr_data, parent=None):
-        QThread.__init__(self, parent)
-        self.far_data = far_data
-        self.mir_data = mir_data
-        self.sdr_data = sdr_data
-        self.pmr_data = pmr_data
-        self.pgr_data = pgr_data
-        self.pir_data = pir_data
-        self.ptr_data = ptr_data
-        self.mpr_data = mpr_data
-        self.prr_data = prr_data
-        self.tsr_data = tsr_data
-        self.hbr_data = hbr_data
-        self.sbr_data = sbr_data
-        self.pcr_data = pcr_data
-        self.mrr_data = mrr_data
-        self.lines = f
-        self.ptr_dic_test = ptr_dic_test
-        self.list_of_duplicate_test_numbers = list_of_duplicate_test_numbers
-        self.list_of_test_numbers = list_of_test_numbers
+    # class ReadStdfRecordThread(QThread):
+    #     notify_status_text = pyqtSignal(str)
+    #
+    #     def __init__(self, f, ptr_dic_test, list_of_duplicate_test_numbers, list_of_test_numbers,
+    #                  far_data, mir_data, sdr_data, pmr_data, pgr_data, pir_data, ptr_data, mpr_data,
+    #                  prr_data, tsr_data, hbr_data, sbr_data, pcr_data, mrr_data, parent=None):
+    #         QThread.__init__(self, parent)
+    #         self.far_data = far_data
+    #         self.mir_data = mir_data
+    #         self.sdr_data = sdr_data
+    #         self.pmr_data = pmr_data
+    #         self.pgr_data = pgr_data
+    #         self.pir_data = pir_data
+    #         self.ptr_data = ptr_data
+    #         self.mpr_data = mpr_data
+    #         self.prr_data = prr_data
+    #         self.tsr_data = tsr_data
+    #         self.hbr_data = hbr_data
+    #         self.sbr_data = sbr_data
+    #         self.pcr_data = pcr_data
+    #         self.mrr_data = mrr_data
+    #         self.lines = f
+    #         self.ptr_dic_test = ptr_dic_test
+    #         self.list_of_duplicate_test_numbers = list_of_duplicate_test_numbers
+    #         self.list_of_test_numbers = list_of_test_numbers
 
     def run(self):
         check_duplicate_test_number = True
@@ -879,7 +878,7 @@ class ReadStdfRecordThread(QThread):
                     test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
                     i = np.where(test_number_list == (line.split("|")[1]))
 
-                    if not(line.split("|")[7] in test_name_list[i]):
+                    if not (line.split("|")[7] in test_name_list[i]):
                         self.list_of_duplicate_test_numbers.append(
                             [line.split("|")[1], test_name_list[i], line.split("|")[7]])
 
@@ -1548,14 +1547,20 @@ class FileReaders(ABC):
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
 
+        startt = time.time() # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+
         # Writing to a text file instead of vomiting it to the console
         with open(newFile, 'w') as fout:
             # fout writes it to the opened text file
-            p.addSink(TextWriter(stream=fout))
+            # p.addSink(TextWriter(stream=fout))
+            p.addSink(MyTestResultProfiler)
             p.parse()
 
         # We don't need to keep that file open
         f.close()
+
+        endt = time.time()
+        print('STDF处理时间：', endt - startt)
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
@@ -1587,6 +1592,55 @@ class FileReaders(ABC):
                 #     os.system('pause')
 
         writer.save()
+
+
+# Get the test time, small case from pystdf
+class MyTestTimeProfiler:
+    def __init__(self):
+        self.total = 0
+        self.count = 0
+
+    def after_begin(self):
+        self.total = 0
+        self.count = 0
+
+    def after_send(self, data):
+        rectype, fields = data
+        if rectype == V4.prr and fields[V4.prr.TEST_T]:
+            self.total += fields[V4.prr.TEST_T]
+            self.count += 1
+
+    def after_complete(self):
+        if self.count:
+            mean = self.total / self.count
+            print("Total test time: %f s, avg: %f s" % (self.total / 1000.0, mean))
+        else:
+            print("No test time samples found :(")
+
+
+# Get all PTR,PIR,FTR result
+class MyTestResultProfiler:
+    def __init__(self):
+        self.total = 0
+        self.count = 0
+
+    def after_begin(self):
+        self.total = 0
+        self.count = 0
+
+    def after_send(self, data):
+        rectype, fields = data
+        if rectype == V4.prr: # and fields[V4.prr.SITE_NUM]:
+            self.total += fields[V4.prr.SITE_NUM]
+            self.count += 1
+
+    def after_complete(self):
+        if self.count:
+            mean = self.total / self.count
+            print("Total site: %f" % (self.total))
+            print("Count site: %f" % (self.count))
+        else:
+            print("No test time samples found :(")
 
 
 # Execute me
