@@ -1621,18 +1621,73 @@ class MyTestTimeProfiler:
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
     def __init__(self):
+        self.reset_flag = False
         self.total = 0
         self.count = 0
+        self.site_count = 0
+        self.site_array = []
+        self.test_result_dict = {}
 
     def after_begin(self):
+        self.reset_flag = False
         self.total = 0
         self.count = 0
+        self.site_count = 0
+        self.site_array = []
+        self.test_result_dict = {}
+
+        self.test_result_dict['SITE_NUM'] = []
+        self.test_result_dict['X_COORD'] = []
+        self.test_result_dict['Y_COORD'] = []
+        self.test_result_dict['PART_ID'] = []
+        self.test_result_dict['HARD_BIN'] = []
+        self.test_result_dict['SOFT_BIN'] = []
+        self.test_result_dict['TEST_T'] = []
 
     def after_send(self, data):
         rectype, fields = data
+        if rectype == V4.pir:
+            if self.reset_flag == True:
+                self.reset_flag = False
+                self.site_count = 0
+                self.site_array = []
+                self.test_result_dict = {}
+                self.test_result_dict['SITE_NUM'] = []
+                self.test_result_dict['X_COORD'] = []
+                self.test_result_dict['Y_COORD'] = []
+                self.test_result_dict['PART_ID'] = []
+                self.test_result_dict['HARD_BIN'] = []
+                self.test_result_dict['SOFT_BIN'] = []
+                self.test_result_dict['TEST_T'] = []
+            self.site_count += 1
+            self.site_array.append(fields[V4.pir.SITE_NUM])
+            self.test_result_dict['SITE_NUM'] = self.site_array
+        if rectype == V4.eps:
+            self.reset_flag = True
+        if rectype == V4.ptr: # and fields[V4.prr.SITE_NUM]:
+            for i in range(self.site_count):
+                if fields[V4.ptr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
+                    tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + fields[V4.ptr.TEST_TXT]
+                    if not (tname_tnumber in self.test_result_dict):
+                        self.test_result_dict[tname_tnumber] = []
+                    self.test_result_dict[tname_tnumber].append(fields[V4.ptr.RESULT])
         if rectype == V4.prr: # and fields[V4.prr.SITE_NUM]:
-            self.total += fields[V4.prr.SITE_NUM]
-            self.count += 1
+            for i in range(self.site_count):
+                if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
+                    die_x = fields[V4.prr.X_COORD]
+                    die_y = fields[V4.prr.Y_COORD]
+                    part_id = fields[V4.prr.PART_ID]
+                    h_bin = fields[V4.prr.HARD_BIN]
+                    s_bin = fields[V4.prr.SOFT_BIN]
+                    test_time = fields[V4.prr.TEST_T]
+
+                    self.test_result_dict['X_COORD'].append(die_x)
+                    self.test_result_dict['Y_COORD'].append(die_y)
+                    self.test_result_dict['PART_ID'].append(part_id)
+                    self.test_result_dict['HARD_BIN'].append(h_bin)
+                    self.test_result_dict['SOFT_BIN'].append(s_bin)
+                    self.test_result_dict['TEST_T'].append(test_time)
+        pass
 
     def after_complete(self):
         if self.count:
