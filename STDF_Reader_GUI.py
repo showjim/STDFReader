@@ -1635,7 +1635,6 @@ class MyTestResultProfiler:
         self.site_count = 0
         self.site_array = []
         self.test_result_dict = {}
-
         self.test_result_dict['SITE_NUM'] = []
         self.test_result_dict['X_COORD'] = []
         self.test_result_dict['Y_COORD'] = []
@@ -1643,6 +1642,7 @@ class MyTestResultProfiler:
         self.test_result_dict['HARD_BIN'] = []
         self.test_result_dict['SOFT_BIN'] = []
         self.test_result_dict['TEST_T'] = []
+        self.all_test_result_pd = pd.DataFrame()
 
     def after_send(self, data):
         rectype, fields = data
@@ -1651,6 +1651,7 @@ class MyTestResultProfiler:
                 self.reset_flag = False
                 self.site_count = 0
                 self.site_array = []
+                self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
                 self.test_result_dict = {}
                 self.test_result_dict['SITE_NUM'] = []
                 self.test_result_dict['X_COORD'] = []
@@ -1659,6 +1660,7 @@ class MyTestResultProfiler:
                 self.test_result_dict['HARD_BIN'] = []
                 self.test_result_dict['SOFT_BIN'] = []
                 self.test_result_dict['TEST_T'] = []
+
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
@@ -1690,12 +1692,11 @@ class MyTestResultProfiler:
         pass
 
     def after_complete(self):
-        if self.count:
-            mean = self.total / self.count
-            print("Total site: %f" % (self.total))
-            print("Count site: %f" % (self.count))
+        if self.all_test_result_pd.empty == False :
+            frame = self.all_test_result_pd
+            frame.to_csv('test.csv')
         else:
-            print("No test time samples found :(")
+            print("No test result samples found :(")
 
 
 # Execute me
