@@ -1552,8 +1552,7 @@ class FileReaders(ABC):
         # Writing to a text file instead of vomiting it to the console
         with open(newFile, 'w') as fout:
             # fout writes it to the opened text file
-            # p.addSink(TextWriter(stream=fout))
-            p.addSink(MyTestResultProfiler)
+            p.addSink(TextWriter(stream=fout))
             p.parse()
 
         # We don't need to keep that file open
@@ -1565,33 +1564,51 @@ class FileReaders(ABC):
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
     def to_excel(filename):
-        # Converts the stdf to a data frame... somehow
-        # (i do not ever intend on looking how he managed to parse this gross file format)
-        tables = STDF2DataFrame(filename)
+        if True:
+            # Open that bad boi up
+            f = open(filename, 'rb')
+            reopen_fn = None
 
-        # The name of the new file, preserving the directory of the previous
-        fname = filename + "_excel.xlsx"
+            # I guess I'm making a parsing object here, but again I didn't write this part
+            p = Parser(inp=f, reopen_fn=reopen_fn)
 
-        # Writing object to work with excel documents
-        writer = pd.ExcelWriter(fname, engine='xlsxwriter')
+            fname = filename + "_csv_log.csv"
+            startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
-        # Not mine and I don't really know what's going on here, but it works, so I won't question him.
-        # It actually write the data frame as an excel document
-        for k, v in tables.items():
-            # Make sure the order of columns complies the specs
-            record = [r for r in V4.records if r.__class__.__name__.upper() == k]
-            if len(record) == 0:
-                print("Ignore exporting table %s: No such record type exists." % k)
-            else:
-                columns = [field[0] for field in record[0].fieldMap]
-                if len(record[0].fieldMap) > 0:
-                    # try:
-                    v.to_excel(writer, sheet_name=k, columns=columns,
-                               index=False, na_rep="N/A")
-                # except BaseException:
-                #     os.system('pause')
+            # Writing to a text file instead of vomiting it to the console
+            p.addSink(MyTestResultProfiler(filename = fname))
+            p.parse()
 
-        writer.save()
+            endt = time.time()
+            print('STDF处理时间：', endt - startt)
+        else:
+            # Converts the stdf to a data frame... somehow
+            # (i do not ever intend on looking how he managed to parse this gross file format)
+            tables = STDF2DataFrame(filename)
+
+            # The name of the new file, preserving the directory of the previous
+            fname = filename + "_excel.xlsx"
+
+            # Writing object to work with excel documents
+            writer = pd.ExcelWriter(fname, engine='xlsxwriter')
+
+            # Not mine and I don't really know what's going on here, but it works, so I won't question him.
+            # It actually write the data frame as an excel document
+            for k, v in tables.items():
+                # Make sure the order of columns complies the specs
+                record = [r for r in V4.records if r.__class__.__name__.upper() == k]
+                if len(record) == 0:
+                    print("Ignore exporting table %s: No such record type exists." % k)
+                else:
+                    columns = [field[0] for field in record[0].fieldMap]
+                    if len(record[0].fieldMap) > 0:
+                        # try:
+                        v.to_excel(writer, sheet_name=k, columns=columns,
+                                   index=False, na_rep="N/A")
+                    # except BaseException:
+                    #     os.system('pause')
+
+            writer.save()
 
 
 # Get the test time, small case from pystdf
@@ -1620,7 +1637,8 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self.reset_flag = False
         self.total = 0
         self.count = 0
@@ -1628,38 +1646,26 @@ class MyTestResultProfiler:
         self.site_array = []
         self.test_result_dict = {}
 
-    def after_begin(self):
+    def after_begin(self, dataSource):
         self.reset_flag = False
         self.total = 0
         self.count = 0
         self.site_count = 0
         self.site_array = []
-        self.test_result_dict = {}
-        self.test_result_dict['SITE_NUM'] = []
-        self.test_result_dict['X_COORD'] = []
-        self.test_result_dict['Y_COORD'] = []
-        self.test_result_dict['PART_ID'] = []
-        self.test_result_dict['HARD_BIN'] = []
-        self.test_result_dict['SOFT_BIN'] = []
-        self.test_result_dict['TEST_T'] = []
+        self.test_result_dict = {'SITE_NUM': [], 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [],
+                                 'SOFT_BIN': [], 'TEST_T': []}
         self.all_test_result_pd = pd.DataFrame()
 
-    def after_send(self, data):
+    def after_send(self, dataSource, data):
         rectype, fields = data
         if rectype == V4.pir:
-            if self.reset_flag == True:
+            if self.reset_flag:
                 self.reset_flag = False
                 self.site_count = 0
                 self.site_array = []
-                self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
-                self.test_result_dict = {}
-                self.test_result_dict['SITE_NUM'] = []
-                self.test_result_dict['X_COORD'] = []
-                self.test_result_dict['Y_COORD'] = []
-                self.test_result_dict['PART_ID'] = []
-                self.test_result_dict['HARD_BIN'] = []
-                self.test_result_dict['SOFT_BIN'] = []
-                self.test_result_dict['TEST_T'] = []
+                # self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
+                self.test_result_dict = {'SITE_NUM': [], 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [],
+                                         'SOFT_BIN': [], 'TEST_T': []}
 
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
@@ -1689,16 +1695,20 @@ class MyTestResultProfiler:
                     self.test_result_dict['HARD_BIN'].append(h_bin)
                     self.test_result_dict['SOFT_BIN'].append(s_bin)
                     self.test_result_dict['TEST_T'].append(test_time)
+            # Send current part result to all test result pd
+            if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][-1]:
+                self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
         pass
 
-    def after_complete(self):
-        if self.all_test_result_pd.empty == False :
+    def after_complete(self, dataSource):
+        start_t = time.time()
+        if not self.all_test_result_pd.empty:
             frame = self.all_test_result_pd
-            frame.to_csv('test.csv')
+            frame.to_csv(self.filename)
         else:
             print("No test result samples found :(")
-
-
+        end_t = time.time()
+        print('CSV生成时间：', end_t - start_t)
 # Execute me
 if __name__ == '__main__':
     app = QApplication(sys.argv)
