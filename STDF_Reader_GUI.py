@@ -104,13 +104,13 @@ class Application(QMainWindow):  # QWidget):
             'Browse for a file ending in .std or .stdf to create a parsed .txt file')
         self.stdf_upload_button.clicked.connect(self.open_parsing_dialog)
 
-        # Button to parse to .xlsx
+        # Button to parse to .csv/.xlsx
         self.stdf_upload_button_xlsx = QPushButton(
-            'Parse to .xlsx (not recommended)')
+            'Parse to .csv type log (you know it)')
         self.stdf_upload_button_xlsx.setToolTip(
-            'Browse for stdf to create .xlsx file. This is slow and unnecessary, but good for seeing parsed structure.')
+            'Browse for stdf to create .csv file. This is helpful when doing data analysis')
         self.stdf_upload_button_xlsx.clicked.connect(
-            self.open_parsing_dialog_xlsx)
+            self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
         self.txt_upload_button = QPushButton('Upload parsed .txt or original .std file')
@@ -272,9 +272,9 @@ class Application(QMainWindow):  # QWidget):
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
 
     # Opens and reads a file to parse the data to an xlsx
-    def open_parsing_dialog_xlsx(self):
+    def open_parsing_dialog_csv(self):
 
-        self.status_text.setText('Parsing to .xlsx, please wait...')
+        self.status_text.setText('Parsing to .csv file, please wait...')
         filterboi = 'STDF (*.stdf *.std)'
         filepath = QFileDialog.getOpenFileName(
             caption='Open STDF File', filter=filterboi)
@@ -289,7 +289,7 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.update()
             FileReaders.to_excel(filepath[0])
             self.status_text.setText(
-                str(filepath[0].split('/')[-1] + '_excel.xlsx created!'))
+                str(filepath[0].split('/')[-1] + '_csv_log.csv created!'))
 
     # Opens and reads a stdf to parse the data to an xlsx which is btter for review
     def extract_data_to_xlsx(self):
@@ -1547,7 +1547,7 @@ class FileReaders(ABC):
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
 
-        startt = time.time() # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+        startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
         # Writing to a text file instead of vomiting it to the console
         with open(newFile, 'w') as fout:
@@ -1576,7 +1576,7 @@ class FileReaders(ABC):
             startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
             # Writing to a text file instead of vomiting it to the console
-            p.addSink(MyTestResultProfiler(filename = fname))
+            p.addSink(MyTestResultProfiler(filename=fname))
             p.parse()
 
             endt = time.time()
@@ -1646,40 +1646,75 @@ class MyTestResultProfiler:
         self.site_array = []
         self.test_result_dict = {}
 
+        self.lot_id = ''
+        self.wafer_id = ''
+        self.job_nam = ''
+
     def after_begin(self, dataSource):
         self.reset_flag = False
         self.total = 0
         self.count = 0
         self.site_count = 0
         self.site_array = []
-        self.test_result_dict = {'SITE_NUM': [], 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [],
-                                 'SOFT_BIN': [], 'TEST_T': []}
+        self.test_result_dict = {'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [], 'X_COORD': [],
+                                 'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
+
         self.all_test_result_pd = pd.DataFrame()
+
+        self.lot_id = ''
+        self.wafer_id = ''
 
     def after_send(self, dataSource, data):
         rectype, fields = data
+        # First, get lot/wafer ID etc.
+        if rectype == V4.mir:
+            self.job_nam = str(fields[V4.mir.JOB_NAM])
+            self.lot_id = str(fields[V4.mir.LOT_ID])
+        if rectype == V4.wir:
+            self.wafer_id = str(fields[V4.wir.WAFER_ID])
+        # Then, yummy parametric results
         if rectype == V4.pir:
             if self.reset_flag:
                 self.reset_flag = False
                 self.site_count = 0
                 self.site_array = []
                 # self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
-                self.test_result_dict = {'SITE_NUM': [], 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [],
-                                         'SOFT_BIN': [], 'TEST_T': []}
+                self.test_result_dict = {'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [], 'X_COORD': [],
+                                         'Y_COORD': [], 'PART_ID': [], 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
 
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
-        if rectype == V4.eps:
-            self.reset_flag = True
-        if rectype == V4.ptr: # and fields[V4.prr.SITE_NUM]:
+        if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             for i in range(self.site_count):
                 if fields[V4.ptr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
                     tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + fields[V4.ptr.TEST_TXT]
                     if not (tname_tnumber in self.test_result_dict):
                         self.test_result_dict[tname_tnumber] = []
+                    else:
+                        if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
+                            # print('Duplicate test number found for test: ', tname_tnumber)
+                            return
                     self.test_result_dict[tname_tnumber].append(fields[V4.ptr.RESULT])
-        if rectype == V4.prr: # and fields[V4.prr.SITE_NUM]:
+        # This is the functional test results
+        if rectype == V4.ftr:
+            for i in range(self.site_count):
+                if fields[V4.ftr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
+                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + fields[V4.ftr.TEST_TXT] # fields[V4.ftr.VECT_NAM]
+                    if not (tname_tnumber in self.test_result_dict):
+                        self.test_result_dict[tname_tnumber] = []
+                    else:
+                        if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
+                            # print('Duplicate test number found for test: ', tname_tnumber)
+                            return
+                    if fields[V4.ftr.TEST_FLG] == 0:
+                        ftr_result = '-1'
+                    else:
+                        ftr_result = '0(F)'
+                    self.test_result_dict[tname_tnumber].append(ftr_result)
+        if rectype == V4.eps:
+            self.reset_flag = True
+        if rectype == V4.prr:  # and fields[V4.prr.SITE_NUM]:
             for i in range(self.site_count):
                 if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
                     die_x = fields[V4.prr.X_COORD]
@@ -1689,6 +1724,10 @@ class MyTestResultProfiler:
                     s_bin = fields[V4.prr.SOFT_BIN]
                     test_time = fields[V4.prr.TEST_T]
 
+                    self.test_result_dict['JOB_NAM'].append(self.job_nam)
+                    self.test_result_dict['LOT_ID'].append(self.lot_id)
+                    self.test_result_dict['WAFER_ID'].append(self.wafer_id)
+
                     self.test_result_dict['X_COORD'].append(die_x)
                     self.test_result_dict['Y_COORD'].append(die_y)
                     self.test_result_dict['PART_ID'].append(part_id)
@@ -1697,7 +1736,8 @@ class MyTestResultProfiler:
                     self.test_result_dict['TEST_T'].append(test_time)
             # Send current part result to all test result pd
             if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][-1]:
-                self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
+                tmp_pd = pd.DataFrame(self.test_result_dict)
+                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False)
         pass
 
     def after_complete(self, dataSource):
@@ -1709,6 +1749,8 @@ class MyTestResultProfiler:
             print("No test result samples found :(")
         end_t = time.time()
         print('CSV生成时间：', end_t - start_t)
+
+
 # Execute me
 if __name__ == '__main__':
     app = QApplication(sys.argv)
