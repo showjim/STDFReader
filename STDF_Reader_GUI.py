@@ -1650,6 +1650,8 @@ class MyTestResultProfiler:
         self.wafer_id = ''
         self.job_nam = ''
 
+        self.tname_tnumber_dict = {}
+
     def after_begin(self, dataSource):
         self.reset_flag = False
         self.total = 0
@@ -1663,6 +1665,8 @@ class MyTestResultProfiler:
 
         self.lot_id = ''
         self.wafer_id = ''
+
+        self.tname_tnumber_dict = {}
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -1686,21 +1690,52 @@ class MyTestResultProfiler:
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
+            tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
+            if not (tname_tnumber in self.tname_tnumber_dict):
+                self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.ptr.TEST_NUM]) + '|' + \
+                                                         str(fields[V4.ptr.TEST_TXT]) + '|' + \
+                                                         str(fields[V4.ptr.HI_LIMIT]) + '|' + \
+                                                         str(fields[V4.ptr.LO_LIMIT]) + '|' + \
+                                                         str(fields[V4.ptr.UNITS])
             for i in range(self.site_count):
                 if fields[V4.ptr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-                    tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + fields[V4.ptr.TEST_TXT]
-                    if not (tname_tnumber in self.test_result_dict):
-                        self.test_result_dict[tname_tnumber] = []
+                    # Be careful here, Hi/Low limit only stored in first PTR
+                    # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
+                    #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
+                    #                 str(fields[V4.ptr.UNITS])
+                    current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
+                    full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
+                    if not(full_tname_tnumber in self.test_result_dict):
+                        self.test_result_dict[full_tname_tnumber] = []
                     else:
-                        if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
+                        if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
                             # print('Duplicate test number found for test: ', tname_tnumber)
                             return
-                    self.test_result_dict[tname_tnumber].append(fields[V4.ptr.RESULT])
+                    if fields[V4.ptr.TEST_FLG] == 0:
+                        ptr_result = str(fields[V4.ptr.RESULT])
+                    else:
+                        ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
+                    self.test_result_dict[full_tname_tnumber].append(ptr_result)
+
+                    if False:
+                        # Check the dict keys contain current_tname_tnumber or not
+                        tmp_key = [x for x in self.test_result_dict if current_tname_tnumber in x]
+                        if not(any(tmp_key)): # not(isinstance(value, (str,int)) for key,value in self.test_result_dict.items() if current_tname_tnumber in key):
+                            self.test_result_dict[tname_tnumber] = []
+                        else:
+                            # If found existed key, then take it out to replace tname_tnumber
+                            tname_tnumber = tmp_key[0]
+                            if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
+                                # print('Duplicate test number found for test: ', tname_tnumber)
+                                return
+                        self.test_result_dict[tname_tnumber].append(fields[V4.ptr.RESULT])
         # This is the functional test results
         if rectype == V4.ftr:
             for i in range(self.site_count):
                 if fields[V4.ftr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + fields[V4.ftr.TEST_TXT] # fields[V4.ftr.VECT_NAM]
+
+                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' +\
+                                    fields[V4.ftr.VECT_NAM]
                     if not (tname_tnumber in self.test_result_dict):
                         self.test_result_dict[tname_tnumber] = []
                     else:
@@ -1743,7 +1778,35 @@ class MyTestResultProfiler:
     def after_complete(self, dataSource):
         start_t = time.time()
         if not self.all_test_result_pd.empty:
+
             frame = self.all_test_result_pd
+            # Edit multi-level header
+            # frame.set_index(['JOB_NAM', 'LOT_ID', 'WAFER_ID', 'SITE_NUM', 'X_COORD',
+            #                              'Y_COORD', 'PART_ID', 'HARD_BIN', 'SOFT_BIN', 'TEST_T'])
+
+            tname_list = []
+            tnumber_list = []
+            hilimit_list = []
+            lolimit_list = []
+            unit_vect_nam_list = []
+            tmplist = frame.columns.values.tolist()
+            for i in range(len(tmplist)):
+                if len(tmplist[i].split('|')) == 1:
+                    tname_list.append('')
+                    tnumber_list.append(tmplist[i].split('|')[0])
+                    hilimit_list.append('')
+                    lolimit_list.append('')
+                    unit_vect_nam_list.append('')
+                else:
+                    tname_list.append(tmplist[i].split('|')[1])
+                    tnumber_list.append(tmplist[i].split('|')[0])
+                    hilimit_list.append(tmplist[i].split('|')[2])
+                    lolimit_list.append(tmplist[i].split('|')[3])
+                    unit_vect_nam_list.append(tmplist[i].split('|')[4])
+            frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
+            # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
+            # frame.Mu
+            # new_frame = pd.DataFrame(frame.iloc[:,:], columns=mcol)
             frame.to_csv(self.filename)
         else:
             print("No test result samples found :(")
