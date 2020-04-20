@@ -1821,6 +1821,40 @@ class MyTestResultProfiler:
         print('CSV生成时间：', end_t - start_t)
 
 
+# Get STR, PSR data from STDF V4-2007.1
+class My_STDF_V4_2007_1_Profiler:
+    def __init__(self):
+        self.is_V4_2007_1 = False
+        self.pmr_dict = {}
+        self.pat_nam_dict = {}
+        self.mod_nam_dict = {}
+        self.str_dict = {}
+
+    def after_begin(self):
+        self.is_V4_2007_1 = False
+        self.pmr_dict = {}
+
+    def after_send(self, data):
+        rectype, fields = data
+        if rectype == V4.vur and fields[V4.vur.UPD_NAM] == 'Scan:2007.1':
+            self.is_V4_2007_1 = True
+        if rectype == V4.pmr:
+            self.pmr_dict[str(fields[V4.pmr.PMR_INDX])] = str(fields[V4.pmr.LOG_NAM])
+        if rectype == V4.psr:
+            psr_nam = str(fields[V4.psr.PSR_NAM])
+            self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[0]
+            self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[1]
+        if rectype == V4.str:
+            self.str_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.psr.CYCL_OFST]
+
+    def after_complete(self):
+        if self.count:
+            mean = self.total / self.count
+            print("Total test time: %f s, avg: %f s" % (self.total / 1000.0, mean))
+        else:
+            print("No test time samples found :(")
+
+
 # Execute me
 if __name__ == '__main__':
     app = QApplication(sys.argv)
