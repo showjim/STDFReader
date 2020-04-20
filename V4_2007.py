@@ -208,6 +208,17 @@ class Atr(RecordType, metaclass=StdfRecordMeta):
     ('CMD_LINE', 'Cn')
   )
 
+class Vur(RecordType, metaclass=StdfRecordMeta):
+  '''
+  Version Update Record (VUR)
+  '''
+  typ = 0
+  sub = 30
+  fieldMap = (
+    ('UPD_CNT', 'U1'),
+    ('UPD_NAM', 'k0Cn')
+  )
+
 class Mir(RecordType, metaclass=StdfRecordMeta):
   """
   **Master Information Record (MIR)**
@@ -1947,6 +1958,42 @@ class Mpr(RecordType, metaclass=StdfRecordMeta):
     ('HI_SPEC','R4')
   )
 
+class Psr(RecordType, metaclass=StdfRecordMeta):
+  '''
+  Pattern Sequence Record (PSR)
+  '''
+  typ = 1
+  sub = 90
+  fieldMap = (
+    ('CONT_FLG','B1'),
+    ('PSR_INDX','U2'),
+    ('PSR_NAM','Cn'),
+    ('OPT_FLG','B1'),
+    ('TOTP_CNT','U2'),
+    ('LOCP_CNT','U2'),
+    ('PAT_BGN','k5U8'),
+    ('PAT_END','k5U8'),
+    ('PAT_FILE','k5Cn'),
+    ('PAT_LBL','k5Cn'),
+    ('FILE_UID','k5Cn'),
+    ('ATPG_DSC','k5Cn'),
+    ('SRC_ID','k5Cn')
+  )
+
+class Nmr(RecordType, metaclass=StdfRecordMeta):
+  '''
+  Name Map Record (NMR)
+  '''
+  typ = 1
+  sub = 91
+  fieldMap = (
+    ('CONT_FLG','B1'),
+    ('TOTM_CNT','U2'),
+    ('LOCM_CNT','U2'),
+    ('PMR_INDX','k2U2'),
+    ('ATPG_NAM','k2Cn')
+  )
+
 class Ftr(RecordType, metaclass=StdfRecordMeta):
   """
   **Functional Test Record (FTR)**
@@ -2229,6 +2276,9 @@ class Ftr(RecordType, metaclass=StdfRecordMeta):
   )
 
 class Str(RecordType, metaclass=StdfRecordMeta):
+  '''
+  Scan Test Record(STR)
+  '''
   typ = 15
   sub = 30
   fieldMap = (
@@ -2511,6 +2561,7 @@ class Dtr(RecordType, metaclass=StdfRecordMeta):
 
 far = Far()
 atr = Atr()
+vur = Vur()
 mir = Mir()
 mrr = Mrr()
 pcr = Pcr()
@@ -2529,6 +2580,8 @@ prr = Prr()
 tsr = Tsr()
 ptr = Ptr()
 mpr = Mpr()
+psr = Psr()
+nmr = Nmr()
 ftr = Ftr()
 str = Str()
 bps = Bps()
@@ -2539,6 +2592,7 @@ dtr = Dtr()
 records = (
   far,
   atr,
+  vur,
   mir,
   mrr,
   pcr,
@@ -2557,6 +2611,8 @@ records = (
   tsr,
   ptr,
   mpr,
+  psr,
+  nmr,
   ftr,
   str,
   bps,
