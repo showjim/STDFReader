@@ -1828,11 +1828,21 @@ class My_STDF_V4_2007_1_Profiler:
         self.pmr_dict = {}
         self.pat_nam_dict = {}
         self.mod_nam_dict = {}
-        self.str_dict = {}
+        self.str_cyc_ofst_dict = {}
+        self.str_fail_pin_dict = {}
+        self.str_exp_data_dict = {}
+        self.str_cap_data_dict = {}
 
     def after_begin(self):
+        self.reset_flag = False
         self.is_V4_2007_1 = False
         self.pmr_dict = {}
+        self.pat_nam_dict = {}
+        self.mod_nam_dict = {}
+        self.str_cyc_ofst_dict = {}
+        self.str_fail_pin_dict = {}
+        self.str_exp_data_dict = {}
+        self.str_cap_data_dict = {}
 
     def after_send(self, data):
         rectype, fields = data
@@ -1845,7 +1855,14 @@ class My_STDF_V4_2007_1_Profiler:
             self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[0]
             self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[1]
         if rectype == V4.str:
-            self.str_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.psr.CYCL_OFST]
+            self.str_cyc_ofst_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.CYC_OFST]
+            self.str_fail_pin_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.PMR_INDX]
+            self.str_exp_data_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.EXP_DATA]
+            self.str_cap_data_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.CAP_DATA]
+        if rectype == V4.eps:
+            pass
+        if rectype == V4.prr:
+            pass
 
     def after_complete(self):
         if self.count:

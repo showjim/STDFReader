@@ -2317,8 +2317,8 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('LIM_INDX','k21U2'),
     ('LIM_SPEC','k21U4'),
     ('COND_LST','k20Cn'),
-    ('CYCL_CNT','U2'),
-    ('CYCL_OFST','k35U8'),
+    ('CYCO_CNT','U2'),
+    ('CYC_OFST','k35U8'),
     ('PMR_CNT','U2'),
     ('PMR_INDX','k37U2'),
     ('CHN_CNT','U2'),
@@ -2328,9 +2328,9 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('CAP_CNT','U2'),
     ('CAP_DATA','k43U1'),
     ('NEW_CNT','U2'),
-    ('NEW_DATA','k45U1'),
-    ('PAT_CNT','U2'),
-    ('PAT_NUM','k47U4')
+    ('NEW_DATA','k45U1')
+    # ('PAT_CNT','U2'),
+    # ('PAT_NUM','k47U4')
   )
 
 class Bps(RecordType, metaclass=StdfRecordMeta):
