@@ -160,7 +160,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
-        self.setWindowTitle('STDF Reader For AP Beta V0.2')
+        self.setWindowTitle('STDF Reader For AP Beta V0.2.1')
 
         self.test_text = QLabel()
         self.test_text.setText("test")
@@ -208,7 +208,7 @@ class Application(QMainWindow):  # QWidget):
     def main_window(self):
         # self.setGeometry(300, 300, 300, 200)
         # self.resize(900, 700)
-        self.setWindowTitle('STDF Reader For AP Beta V0.2')
+        self.setWindowTitle('STDF Reader For AP Beta V0.2.1')
 
         # Layout
         layout = QGridLayout()
@@ -237,7 +237,7 @@ class Application(QMainWindow):  # QWidget):
 
     def aboutecho(self):
         QMessageBox.information(
-            self, 'About', 'Author：Chao Zhou \n verion Beta 0.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
+            self, 'About', 'Author：Chao Zhou \n verion Beta 0.2.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
             QMessageBox.Ok)
 
     # Centers the window
