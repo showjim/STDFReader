@@ -846,64 +846,64 @@ class TextParseThread(QThread):
     #         self.ptr_dic_test = ptr_dic_test
     #         self.list_of_duplicate_test_numbers = list_of_duplicate_test_numbers
     #         self.list_of_test_numbers = list_of_test_numbers
-
-    def run(self):
-        check_duplicate_test_number = True
-        ii = 1
-        for line in self.lines:
-            ii = ii + 1
-            if ii % 10000 == 1:
-                self.notify_status_text.emit('Have read ' + str(ii) + 'linens.')
-            if line.startswith("FAR"):
-                self.far_data.append(line)
-            elif line.startswith("MIR"):
-                self.mir_data.append(line)
-            elif line.startswith("SDR"):
-                self.sdr_data.append(line)
-            elif line.startswith("PMR"):
-                self.pmr_data.append(line)
-            elif line.startswith("PGR"):
-                self.pgr_data.append(line)
-            elif line.startswith("PIR"):
-                self.pir_data.append(line)
-            # or line.startswith("MPR"):
-            elif line.startswith("PTR"):
-                self.ptr_data.append(line)
-
-                test_number_test_name = line.split("|")[1] + line.split("|")[7]
-
-                # Check the duplicate test number
-                if check_duplicate_test_number:
-                    test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
-                    test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
-                    i = np.where(test_number_list == (line.split("|")[1]))
-
-                    if not (line.split("|")[7] in test_name_list[i]):
-                        self.list_of_duplicate_test_numbers.append(
-                            [line.split("|")[1], test_name_list[i], line.split("|")[7]])
-
-                if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
-                    self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-
-                if not (test_number_test_name in self.ptr_dic_test):
-                    self.ptr_dic_test[test_number_test_name] = []
-                self.ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
-
-            elif line.startswith("MPR"):
-                self.mpr_data.append(line)
-            elif line.startswith("PRR"):
-                self.prr_data.append(line)
-                check_duplicate_test_number = False
-            elif line.startswith("TSR"):
-                self.tsr_data.append(line)
-            elif line.startswith("HBR"):
-                self.hbr_data.append(line)
-            elif line.startswith("SBR"):
-                self.sbr_data.append(line)
-            elif line.startswith("PCR"):
-                self.pcr_data.append(line)
-            elif line.startswith("MRR"):
-                self.mrr_data.append(line)
+    #
+    # def run(self):
+    #     check_duplicate_test_number = True
+    #     ii = 1
+    #     for line in self.lines:
+    #         ii = ii + 1
+    #         if ii % 10000 == 1:
+    #             self.notify_status_text.emit('Have read ' + str(ii) + 'linens.')
+    #         if line.startswith("FAR"):
+    #             self.far_data.append(line)
+    #         elif line.startswith("MIR"):
+    #             self.mir_data.append(line)
+    #         elif line.startswith("SDR"):
+    #             self.sdr_data.append(line)
+    #         elif line.startswith("PMR"):
+    #             self.pmr_data.append(line)
+    #         elif line.startswith("PGR"):
+    #             self.pgr_data.append(line)
+    #         elif line.startswith("PIR"):
+    #             self.pir_data.append(line)
+    #         # or line.startswith("MPR"):
+    #         elif line.startswith("PTR"):
+    #             self.ptr_data.append(line)
+    #
+    #             test_number_test_name = line.split("|")[1] + line.split("|")[7]
+    #
+    #             # Check the duplicate test number
+    #             if check_duplicate_test_number:
+    #                 test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
+    #                 test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
+    #                 i = np.where(test_number_list == (line.split("|")[1]))
+    #
+    #                 if not (line.split("|")[7] in test_name_list[i]):
+    #                     self.list_of_duplicate_test_numbers.append(
+    #                         [line.split("|")[1], test_name_list[i], line.split("|")[7]])
+    #
+    #             if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
+    #                 self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
+    #
+    #             if not (test_number_test_name in self.ptr_dic_test):
+    #                 self.ptr_dic_test[test_number_test_name] = []
+    #             self.ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
+    #
+    #         elif line.startswith("MPR"):
+    #             self.mpr_data.append(line)
+    #         elif line.startswith("PRR"):
+    #             self.prr_data.append(line)
+    #             check_duplicate_test_number = False
+    #         elif line.startswith("TSR"):
+    #             self.tsr_data.append(line)
+    #         elif line.startswith("HBR"):
+    #             self.hbr_data.append(line)
+    #         elif line.startswith("SBR"):
+    #             self.sbr_data.append(line)
+    #         elif line.startswith("PCR"):
+    #             self.pcr_data.append(line)
+    #         elif line.startswith("MRR"):
+    #             self.mrr_data.append(line)
 
 
 ###################################################
