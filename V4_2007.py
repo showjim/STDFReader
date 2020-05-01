@@ -2324,26 +2324,26 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('PMR_CNT','U2'),
     ('PMR_INDX','k37U2'),
     ('CHN_CNT','U2'),
-    ('CHN_NUM','k39U0'),
+    ('CHN_NUM','k39U1'),
     ('EXP_CNT','U2'),
     ('EXP_DATA','k41U1'),
     ('CAP_CNT','U2'),
     ('CAP_DATA','k43U1'),
     ('NEW_CNT','U2'),
     ('NEW_DATA','k45U1'),
-    # I do not know the U*f, use U4 instead, Jeremy
+    # I do not know the U*f, use U1 instead, Jeremy
     ('PAT_CNT','U2'),
-    ('PAT_NUM','k47U4'),
+    ('PAT_NUM','k47U1'),
     ('BPOS_CNT','U2'),
-    ('BIT_POS','k49U4'),
+    ('BIT_POS','k49U1'),
     ('USR1_CNT','U2'),
-    ('USR1','k51U4'),
+    ('USR1','k51U1'),
     ('USR2_CNT','U2'),
-    ('USR2','k53U4'),
+    ('USR2','k53U1'),
     ('USR3_CNT','U2'),
-    ('USR3','k55U4'),
+    ('USR3','k55U1'),
     ('TXT_CNT','U2'),
-    ('USER_TXT','k57U4')
+    ('USER_TXT','k57U1')
   )
 
 class Bps(RecordType, metaclass=StdfRecordMeta):
