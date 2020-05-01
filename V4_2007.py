@@ -216,7 +216,9 @@ class Vur(RecordType, metaclass=StdfRecordMeta):
   sub = 30
   fieldMap = (
     ('UPD_CNT', 'U1'),
-    ('UPD_NAM', 'k0Cn')
+    ('UPD_NAM', 'k0Cn'),
+    # VUR_DUMMY is to compatible with the STDF from UF Plus, Jeremy
+    ('VUR_DUMMY', 'U1')
   )
 
 class Mir(RecordType, metaclass=StdfRecordMeta):
@@ -2328,9 +2330,20 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('CAP_CNT','U2'),
     ('CAP_DATA','k43U1'),
     ('NEW_CNT','U2'),
-    ('NEW_DATA','k45U1')
-    # ('PAT_CNT','U2'),
-    # ('PAT_NUM','k47U4')
+    ('NEW_DATA','k45U1'),
+    # I do not know the U*f, use U4 instead, Jeremy
+    ('PAT_CNT','U2'),
+    ('PAT_NUM','k47U4'),
+    ('BPOS_CNT','U2'),
+    ('BIT_POS','k49U4'),
+    ('USR1_CNT','U2'),
+    ('USR1','k51U4'),
+    ('USR2_CNT','U2'),
+    ('USR2','k53U4'),
+    ('USR3_CNT','U2'),
+    ('USR3','k55U4'),
+    ('TXT_CNT','U2'),
+    ('USER_TXT','k57U4')
   )
 
 class Bps(RecordType, metaclass=StdfRecordMeta):
