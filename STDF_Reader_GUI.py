@@ -317,9 +317,9 @@ class Application(QMainWindow):  # QWidget):
             # else:
 
             # Only accepts text files
-            filterboi = 'Text (*.txt);;Stdf (*.std *.stdf)'
+            filterboi = 'Text (*.txt);;Stdf (*.std *.stdf);;Csv Table (*.csv)'
             filepath = QFileDialog.getOpenFileName(
-                caption='Open .txt or .std File', filter=filterboi)
+                caption='Open .txt/.std/.csv File', filter=filterboi)
 
             self.file_path = filepath[0]
 
@@ -344,6 +344,8 @@ class Application(QMainWindow):  # QWidget):
                     tmplist = STDF2Text(self.file_path)
                     self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".csv"):
+                    df_csv = pd.read_csv(self.file_path,header=[0,1,2,3,4])
+                    self.list_of_test_numbers_string = df_csv.columns.values.tolist()
                     pass
 
                 all_ptr_test = list(ptr_dic_test.values())
