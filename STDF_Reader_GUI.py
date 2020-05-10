@@ -344,14 +344,15 @@ class Application(QMainWindow):  # QWidget):
                     tmplist = STDF2Text(self.file_path)
                     self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".csv"):
-                    df_csv = pd.read_csv(self.file_path,header=[0,1,2,3,4])
+                    df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
                     tmp_pd = df_csv.columns
                     tmp_tname_list = tmp_pd.get_level_values(0).values.tolist()
                     tmp_tnumber_list = tmp_pd.get_level_values(4).values.tolist()
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tmp_tname_list, tmp_tnumber_list)]
                     self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string[12:]
-
-
+                    # self.all_test = [df_csv[i].tolist() for i in df_csv.columns[12:]]
+                    self.all_test = df_csv.T.values.tolist()
+                    self.all_test = self.all_test[12:]
                     pass
 
                 all_ptr_test = list(ptr_dic_test.values())
