@@ -343,6 +343,8 @@ class Application(QMainWindow):  # QWidget):
                 elif self.file_path.endswith(".std"):
                     tmplist = STDF2Text(self.file_path)
                     self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
+                elif self.file_path.endswith(".csv"):
+                    pass
 
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
