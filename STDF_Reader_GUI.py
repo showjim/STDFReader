@@ -1030,6 +1030,7 @@ class Backend(ABC):
         plt.subplot(224)
         Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit)
         plt.xlabel(units)
+        plt.xticks(rotation=45)  # Tilted 45 degree angle
         plt.ylabel("Trials")
         plt.title("Histogram")
         plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
@@ -1686,7 +1687,8 @@ class MyTestResultProfiler:
                 self.site_array = []
                 # self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
                 self.test_result_dict = {'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [], 'X_COORD': [],
-                                         'Y_COORD': [], 'PART_ID': [], 'RC': [], 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
+                                         'Y_COORD': [], 'PART_ID': [], 'RC': [], 'HARD_BIN': [], 'SOFT_BIN': [],
+                                         'TEST_T': []}
 
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
@@ -1707,7 +1709,7 @@ class MyTestResultProfiler:
                     #                 str(fields[V4.ptr.UNITS])
                     current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
                     full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
-                    if not(full_tname_tnumber in self.test_result_dict):
+                    if not (full_tname_tnumber in self.test_result_dict):
                         self.test_result_dict[full_tname_tnumber] = []
                     else:
                         if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
@@ -1722,7 +1724,8 @@ class MyTestResultProfiler:
                     if False:
                         # Check the dict keys contain current_tname_tnumber or not
                         tmp_key = [x for x in self.test_result_dict if current_tname_tnumber in x]
-                        if not(any(tmp_key)): # not(isinstance(value, (str,int)) for key,value in self.test_result_dict.items() if current_tname_tnumber in key):
+                        if not (any(
+                                tmp_key)):  # not(isinstance(value, (str,int)) for key,value in self.test_result_dict.items() if current_tname_tnumber in key):
                             self.test_result_dict[tname_tnumber] = []
                         else:
                             # If found existed key, then take it out to replace tname_tnumber
@@ -1736,7 +1739,7 @@ class MyTestResultProfiler:
             for i in range(self.site_count):
                 if fields[V4.ftr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
 
-                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' +\
+                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' + \
                                     fields[V4.ftr.VECT_NAM]
                     if not (tname_tnumber in self.test_result_dict):
                         self.test_result_dict[tname_tnumber] = []
