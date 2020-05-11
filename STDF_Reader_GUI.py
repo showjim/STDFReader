@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 ###################################################
 # STDF Reader GUI                                 #
-# Version: Beta 0.1                               #
+# Version: Beta 0.3                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A project forked from Thomas Kaunzinger         #
@@ -83,6 +83,8 @@ class Application(QMainWindow):  # QWidget):
         self.list_of_test_numbers = [['', 'ALL DATA']]
         self.list_of_test_numbers_string = []
 
+        self.test_info_list = []
+
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
         exitAct.triggered.connect(qApp.quit)
@@ -160,7 +162,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
-        self.setWindowTitle('STDF Reader For AP Beta V0.2.1')
+        self.setWindowTitle('STDF Reader For AP Beta V0.3')
 
         self.test_text = QLabel()
         self.test_text.setText("test")
@@ -173,7 +175,7 @@ class Application(QMainWindow):  # QWidget):
         self.all_data = self.all_test
 
         self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.all_data, all_test=self.all_test,
-                                             ptr_data=self.ptr_data, number_of_sites=self.number_of_sites,
+                                             ptr_data=self.test_info_list, number_of_sites=self.number_of_sites,
                                              selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                              list_of_test_numbers=self.list_of_test_numbers)
 
@@ -237,7 +239,7 @@ class Application(QMainWindow):  # QWidget):
 
     def aboutecho(self):
         QMessageBox.information(
-            self, 'About', 'Author：Chao Zhou \n verion Beta 0.2.1 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
+            self, 'About', 'Author：Chao Zhou \n verion Beta 0.3 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
             QMessageBox.Ok)
 
     # Centers the window
@@ -349,10 +351,16 @@ class Application(QMainWindow):  # QWidget):
 
                     # Extracts the test name for the selecting
                     tmp_pd = df_csv.columns
-                    tmp_tname_list = tmp_pd.get_level_values(0).values.tolist()
-                    tmp_tnumber_list = tmp_pd.get_level_values(4).values.tolist()
-                    self.list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tmp_tname_list, tmp_tnumber_list)]
-                    self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string[12:]
+                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
+                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
+                    self.test_info_list = tmp_pd.values.tolist()[12:]
+                    self.list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(self.tname_list, self.tnumber_list)]
+                    self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string #[12:]
+
+                    # Extract the test name and test number list
+                    # self.list_of_test_numbers = [('','ALL DATA')]
+                    self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+                    self.list_of_test_numbers = [['','ALL DATA']] + self.list_of_test_numbers
 
                     # Get site array
                     sdr_parse = df_csv.iloc[:, 4].unique()
@@ -475,7 +483,7 @@ class Application(QMainWindow):  # QWidget):
 
             self.progress_bar.setValue(0)
 
-            table = self.get_summary_table(self.all_test, self.ptr_data, self.number_of_sites,
+            table = self.get_summary_table(self.all_test, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers[1: len(self.list_of_test_numbers)], merge_sites)
 
             self.progress_bar.setValue(10)
@@ -543,13 +551,13 @@ class Application(QMainWindow):  # QWidget):
             all_ptr_test = []
             for i in range(0, len(self.selected_tests)):
                 all_ptr_test.append(Backend.ptr_extractor(
-                    self.number_of_sites, self.ptr_data, self.selected_tests[i]))
+                    self.number_of_sites, self.list_of_test_numbers_string, self.all_data, self.selected_tests[i]))
 
             # Gathers each set of data from all runs for each site in all selected tests
-            self.all_test = []
-            for i in range(len(all_ptr_test)):
-                self.all_test.append(Backend.single_test_data(
-                    self.number_of_sites, all_ptr_test[i]))
+            self.all_test = all_ptr_test #[]
+            # for i in range(len(all_ptr_test)):
+            #     self.all_test.append(Backend.single_test_data(
+            #         self.number_of_sites, all_ptr_test[i]))
 
     # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
     def get_summary_table(self, test_list_data, data, num_of_sites, test_list, merge_sites):
@@ -611,7 +619,7 @@ class Application(QMainWindow):  # QWidget):
             self.limit_toggle.setEnabled(False)
 
             self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.all_data,
-                                                 all_test=self.all_test, ptr_data=self.ptr_data,
+                                                 all_test=self.all_test, ptr_data=self.test_info_list,
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                                  list_of_test_numbers=self.list_of_test_numbers)
@@ -708,7 +716,7 @@ class PdfWriterThread(QThread):
         self.file_path = file_path
         self.all_data = all_data
         self.all_test = all_test
-        self.ptr_data = ptr_data
+        self.test_info_list = ptr_data
         self.number_of_sites = number_of_sites
         self.selected_tests = selected_tests
         self.limits_toggled = limits_toggled
@@ -727,7 +735,7 @@ class PdfWriterThread(QThread):
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_data[i - 1], self.ptr_data, self.number_of_sites, self.list_of_test_numbers[i],
+                    self.all_data[i - 1], self.test_info_list, self.number_of_sites, self.list_of_test_numbers[i],
                     self.limits_toggled))
 
                 pdfTemp.close()
@@ -750,7 +758,7 @@ class PdfWriterThread(QThread):
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_test[i], self.ptr_data, self.number_of_sites, self.selected_tests[i], self.limits_toggled))
+                    self.all_test[i], self.test_info_list, self.number_of_sites, self.selected_tests[i], self.limits_toggled))
 
                 pdfTemp.close()
 
@@ -1077,14 +1085,20 @@ class Backend(ABC):
         minimum_test = 0
         maximum_test = 1
         units = ''
-        temp = 59  # 0
+        temp = 0
         not_found = True
         while not_found:
             # try:
-            if data[temp].split("|")[1] == test_tuple[0]:
-                minimum_test = (data[temp].split("|")[13])
-                maximum_test = (data[temp].split("|")[14])
-                units = (data[temp].split("|")[15])
+            # if data[temp].split("|")[1] == test_tuple[0]:
+            #     minimum_test = (data[temp].split("|")[13])
+            #     maximum_test = (data[temp].split("|")[14])
+            #     units = (data[temp].split("|")[15])
+            #     not_found = False
+
+            if data[temp][4] == test_tuple[0]:
+                minimum_test = data[temp][2]
+                maximum_test = data[temp][1]
+                units = data[temp][3]
                 not_found = False
             temp += 1  # num_of_sites
             # except IndexError:
@@ -1451,17 +1465,19 @@ class Backend(ABC):
     #   Returns -> array with just the relevant test data parsed along '|'
     # It grabs the data for a certain test in the PTR data and turns that specific test into an array of arrays
     @staticmethod
-    def ptr_extractor(num_of_sites, data, test_number):
+    def ptr_extractor(num_of_sites, tname_list, data, test_number):
 
         # Initializes an array of the data from one of the tests for all test sites
         ptr_array_test = []
 
         # Finds where in the data to start looking for the test in question
-        # starting_index = 0
-        for i in range(0, len(data)):
-            if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
-                ptr_array_test.append(data[i].split("|"))
+        # for i in range(0, len(data)):
+        #     if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
+        #         ptr_array_test.append(data[i].split("|"))
 
+        test_index = tname_list.index(test_number[0] + ' - ' + test_number[1])
+        if test_index >= 1:
+            ptr_array_test = data[test_index - 1]
         # Returns the array weow!
         return ptr_array_test
 
