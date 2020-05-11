@@ -57,7 +57,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
 
-
+Version = 'Beta 0.3'
 ###################################################
 
 ########################
@@ -101,21 +101,21 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button = QPushButton('Parse STD/STDF to .txt')
+        self.stdf_upload_button = QPushButton('Parse STD/STDF to .xlsx table (very slow)')
         self.stdf_upload_button.setToolTip(
-            'Browse for a file ending in .std or .stdf to create a parsed .txt file')
-        self.stdf_upload_button.clicked.connect(self.open_parsing_dialog)
+            'Browse for a file ending in .std to create a parsed .xlsx file')
+        self.stdf_upload_button.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv/.xlsx
         self.stdf_upload_button_xlsx = QPushButton(
-            'Parse to .csv type log (you know it)')
+            'Parse STD/STDF to .csv log')
         self.stdf_upload_button_xlsx.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
         self.stdf_upload_button_xlsx.clicked.connect(
             self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton('Upload parsed .txt or original .std file')
+        self.txt_upload_button = QPushButton('Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
             'Browse for the .txt file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
@@ -162,7 +162,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
-        self.setWindowTitle('STDF Reader For AP Beta V0.3')
+        self.setWindowTitle('STDF Reader For AP ' + Version)
 
         self.test_text = QLabel()
         self.test_text.setText("test")
@@ -210,7 +210,7 @@ class Application(QMainWindow):  # QWidget):
     def main_window(self):
         # self.setGeometry(300, 300, 300, 200)
         # self.resize(900, 700)
-        self.setWindowTitle('STDF Reader For AP Beta V0.2.1')
+        self.setWindowTitle('STDF Reader For AP ' + Version)
 
         # Layout
         layout = QGridLayout()
@@ -239,7 +239,7 @@ class Application(QMainWindow):  # QWidget):
 
     def aboutecho(self):
         QMessageBox.information(
-            self, 'About', 'Author：Chao Zhou \n verion Beta 0.3 \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
+            self, 'About', 'Author：Chao Zhou \n verion ' + Version + ' \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
             QMessageBox.Ok)
 
     # Centers the window
@@ -273,7 +273,7 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.setText(
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
 
-    # Opens and reads a file to parse the data to an xlsx
+    # Opens and reads a file to parse the data to an csv
     def open_parsing_dialog_csv(self):
 
         self.status_text.setText('Parsing to .csv file, please wait...')
@@ -289,15 +289,29 @@ class Application(QMainWindow):  # QWidget):
         else:
 
             self.status_text.update()
-            FileReaders.to_excel(filepath[0])
+            FileReaders.to_csv(filepath[0])
             self.status_text.setText(
                 str(filepath[0].split('/')[-1] + '_csv_log.csv created!'))
 
-    # Opens and reads a stdf to parse the data to an xlsx which is btter for review
-    def extract_data_to_xlsx(self):
-        self.status_text.setText('Parsing to .csv data file, please wait...')
-        pass
-        # File Start Lot SubLot temp TestCode TestFlow tester program WaferID Dut SITE locate_X Locate_Y RC Softbin Hardbin Testtime TestCount
+    # Opens and reads a file to parse the data to an xlsx
+    def open_parsing_dialog_xlsx(self):
+
+        self.status_text.setText('Parsing to .xlsx file, please wait...')
+        filterboi = 'STDF (*.stdf *.std)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open STDF File', filter=filterboi)
+
+        if filepath[0] == '':
+
+            self.status_text.setText('Please select a file')
+            pass
+
+        else:
+
+            self.status_text.update()
+            FileReaders.to_excel(filepath[0])
+            self.status_text.setText(
+                str(filepath[0].split('/')[-1] + '_excel.xlsx created!'))
 
     # Checks if the toggle by limits mark is checked or not
     def toggler(self, state):
@@ -319,9 +333,9 @@ class Application(QMainWindow):  # QWidget):
             # else:
 
             # Only accepts text files
-            filterboi = 'Text (*.txt);;Stdf (*.std *.stdf);;Csv Table (*.csv)'
+            filterboi = 'CSV Table (*.csv)'
             filepath = QFileDialog.getOpenFileName(
-                caption='Open .txt/.std/.csv File', filter=filterboi)
+                caption='Open .csv File', filter=filterboi)
 
             self.file_path = filepath[0]
 
@@ -1569,52 +1583,57 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
+    def to_csv(filename):
+
+        # Open that bad boi up
+        f = open(filename, 'rb')
+        reopen_fn = None
+
+        # I guess I'm making a parsing object here, but again I didn't write this part
+        p = Parser(inp=f, reopen_fn=reopen_fn)
+
+        fname = filename + "_csv_log.csv"
+        startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+
+        # Writing to a text file instead of vomiting it to the console
+        p.addSink(MyTestResultProfiler(filename=fname))
+        p.parse()
+
+        endt = time.time()
+        print('STDF处理时间：', endt - startt)
+
+
+    # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
+    @staticmethod
     def to_excel(filename):
-        if True:
-            # Open that bad boi up
-            f = open(filename, 'rb')
-            reopen_fn = None
 
-            # I guess I'm making a parsing object here, but again I didn't write this part
-            p = Parser(inp=f, reopen_fn=reopen_fn)
+        # Converts the stdf to a data frame... somehow
+        # (i do not ever intend on looking how he managed to parse this gross file format)
+        tables = STDF2DataFrame(filename)
 
-            fname = filename + "_csv_log.csv"
-            startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+        # The name of the new file, preserving the directory of the previous
+        fname = filename + "_excel.xlsx"
 
-            # Writing to a text file instead of vomiting it to the console
-            p.addSink(MyTestResultProfiler(filename=fname))
-            p.parse()
+        # Writing object to work with excel documents
+        writer = pd.ExcelWriter(fname, engine='xlsxwriter')
 
-            endt = time.time()
-            print('STDF处理时间：', endt - startt)
-        else:
-            # Converts the stdf to a data frame... somehow
-            # (i do not ever intend on looking how he managed to parse this gross file format)
-            tables = STDF2DataFrame(filename)
+        # Not mine and I don't really know what's going on here, but it works, so I won't question him.
+        # It actually write the data frame as an excel document
+        for k, v in tables.items():
+            # Make sure the order of columns complies the specs
+            record = [r for r in V4.records if r.__class__.__name__.upper() == k]
+            if len(record) == 0:
+                print("Ignore exporting table %s: No such record type exists." % k)
+            else:
+                columns = [field[0] for field in record[0].fieldMap]
+                if len(record[0].fieldMap) > 0:
+                    # try:
+                    v.to_excel(writer, sheet_name=k, columns=columns,
+                               index=False, na_rep="N/A")
+                # except BaseException:
+                #     os.system('pause')
 
-            # The name of the new file, preserving the directory of the previous
-            fname = filename + "_excel.xlsx"
-
-            # Writing object to work with excel documents
-            writer = pd.ExcelWriter(fname, engine='xlsxwriter')
-
-            # Not mine and I don't really know what's going on here, but it works, so I won't question him.
-            # It actually write the data frame as an excel document
-            for k, v in tables.items():
-                # Make sure the order of columns complies the specs
-                record = [r for r in V4.records if r.__class__.__name__.upper() == k]
-                if len(record) == 0:
-                    print("Ignore exporting table %s: No such record type exists." % k)
-                else:
-                    columns = [field[0] for field in record[0].fieldMap]
-                    if len(record[0].fieldMap) > 0:
-                        # try:
-                        v.to_excel(writer, sheet_name=k, columns=columns,
-                                   index=False, na_rep="N/A")
-                    # except BaseException:
-                    #     os.system('pause')
-
-            writer.save()
+        writer.save()
 
 
 # Get the test time, small case from pystdf
