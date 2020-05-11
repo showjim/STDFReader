@@ -398,6 +398,28 @@ class Application(QMainWindow):  # QWidget):
 
                     self.all_data = self.all_test
 
+                    # Check the duplicate test number
+                    test_number_list = self.tnumber_list
+                    test_name_list = self.tname_list
+                    if len(test_number_list) != len(set(test_number_list)):
+                        for i in range(len(test_number_list)):
+                            dup_list = self.list_duplicates_of(test_number_list[i:], test_number_list[i], i)
+                            if len(dup_list) > 1:
+                                list_of_duplicate_test_numbers.append(
+                                    [test_number_list[dup_list[0]], test_name_list[i], test_name_list[dup_list[1]]])
+                    # Log duplicate test number item from list, if exist
+                    if len(list_of_duplicate_test_numbers) > 0:
+                        log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
+                                               columns=['Test Number', 'Test Name', 'Test Name'])
+                        try:
+                            log_csv.to_csv(path_or_buf=str(
+                                self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
+                        except PermissionError:
+                            self.status_text.setText(
+                                str(
+                                    "Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
+                                                                                   "generate a new one"))
+
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
                 print('读取时间：', endt - startt)
@@ -432,6 +454,22 @@ class Application(QMainWindow):  # QWidget):
             else:
 
                 self.status_text.setText('Please select a file')
+
+    def list_duplicates_of(self, seq, item, start_index): # start_index is to reduce the complex
+        start_at = -1
+        locs = []
+        while True:
+            try:
+                loc = seq.index(item, start_at + 1)
+            except ValueError:
+                break
+            else:
+                locs.append(start_index + loc)
+                start_at = loc
+                # Just find the first duplicate to reduce complex
+                if len(locs) == 2:
+                    break
+        return locs
 
     # Read each record in stdf file or atdf file
     def read_atdf_record(self, f, ptr_dic_test, list_of_duplicate_test_numbers):
@@ -831,90 +869,6 @@ class TextParseThread(QThread):
             FileReaders.process_file(filepath[0])
             self.notify_status_text.emit(
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
-
-    # class ReadStdfRecordThread(QThread):
-    #     notify_status_text = pyqtSignal(str)
-    #
-    #     def __init__(self, f, ptr_dic_test, list_of_duplicate_test_numbers, list_of_test_numbers,
-    #                  far_data, mir_data, sdr_data, pmr_data, pgr_data, pir_data, ptr_data, mpr_data,
-    #                  prr_data, tsr_data, hbr_data, sbr_data, pcr_data, mrr_data, parent=None):
-    #         QThread.__init__(self, parent)
-    #         self.far_data = far_data
-    #         self.mir_data = mir_data
-    #         self.sdr_data = sdr_data
-    #         self.pmr_data = pmr_data
-    #         self.pgr_data = pgr_data
-    #         self.pir_data = pir_data
-    #         self.ptr_data = ptr_data
-    #         self.mpr_data = mpr_data
-    #         self.prr_data = prr_data
-    #         self.tsr_data = tsr_data
-    #         self.hbr_data = hbr_data
-    #         self.sbr_data = sbr_data
-    #         self.pcr_data = pcr_data
-    #         self.mrr_data = mrr_data
-    #         self.lines = f
-    #         self.ptr_dic_test = ptr_dic_test
-    #         self.list_of_duplicate_test_numbers = list_of_duplicate_test_numbers
-    #         self.list_of_test_numbers = list_of_test_numbers
-    #
-    # def run(self):
-    #     check_duplicate_test_number = True
-    #     ii = 1
-    #     for line in self.lines:
-    #         ii = ii + 1
-    #         if ii % 10000 == 1:
-    #             self.notify_status_text.emit('Have read ' + str(ii) + 'linens.')
-    #         if line.startswith("FAR"):
-    #             self.far_data.append(line)
-    #         elif line.startswith("MIR"):
-    #             self.mir_data.append(line)
-    #         elif line.startswith("SDR"):
-    #             self.sdr_data.append(line)
-    #         elif line.startswith("PMR"):
-    #             self.pmr_data.append(line)
-    #         elif line.startswith("PGR"):
-    #             self.pgr_data.append(line)
-    #         elif line.startswith("PIR"):
-    #             self.pir_data.append(line)
-    #         # or line.startswith("MPR"):
-    #         elif line.startswith("PTR"):
-    #             self.ptr_data.append(line)
-    #
-    #             test_number_test_name = line.split("|")[1] + line.split("|")[7]
-    #
-    #             # Check the duplicate test number
-    #             if check_duplicate_test_number:
-    #                 test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
-    #                 test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
-    #                 i = np.where(test_number_list == (line.split("|")[1]))
-    #
-    #                 if not (line.split("|")[7] in test_name_list[i]):
-    #                     self.list_of_duplicate_test_numbers.append(
-    #                         [line.split("|")[1], test_name_list[i], line.split("|")[7]])
-    #
-    #             if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
-    #                 self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-    #
-    #             if not (test_number_test_name in self.ptr_dic_test):
-    #                 self.ptr_dic_test[test_number_test_name] = []
-    #             self.ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
-    #
-    #         elif line.startswith("MPR"):
-    #             self.mpr_data.append(line)
-    #         elif line.startswith("PRR"):
-    #             self.prr_data.append(line)
-    #             check_duplicate_test_number = False
-    #         elif line.startswith("TSR"):
-    #             self.tsr_data.append(line)
-    #         elif line.startswith("HBR"):
-    #             self.hbr_data.append(line)
-    #         elif line.startswith("SBR"):
-    #             self.sbr_data.append(line)
-    #         elif line.startswith("PCR"):
-    #             self.pcr_data.append(line)
-    #         elif line.startswith("MRR"):
-    #             self.mrr_data.append(line)
 
 
 ###################################################
