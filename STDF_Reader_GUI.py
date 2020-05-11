@@ -366,6 +366,7 @@ class Application(QMainWindow):  # QWidget):
                         a, b = np.shape(self.all_test)
                         self.all_test = np.reshape(self.all_test,(a,self.number_of_sites,int(b/self.number_of_sites)), order='F').tolist()
                     else:
+                        # The hard way
                         for j in range(len(tmp_tname_list[12:])):
                             all_test_list = []
                             for i in sdr_parse:
