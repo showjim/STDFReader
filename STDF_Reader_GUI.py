@@ -331,6 +331,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
 
                 i = 0
+                self.all_test = []
                 self.ptr_data = []
                 all_ptr_test = []
                 self.list_of_test_numbers = [['', 'ALL DATA']]
@@ -345,65 +346,41 @@ class Application(QMainWindow):  # QWidget):
                     self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".csv"):
                     df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
+
+                    # Extracts the test name for the selecting
                     tmp_pd = df_csv.columns
                     tmp_tname_list = tmp_pd.get_level_values(0).values.tolist()
                     tmp_tnumber_list = tmp_pd.get_level_values(4).values.tolist()
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tmp_tname_list, tmp_tnumber_list)]
                     self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string[12:]
-                    # self.all_test = [df_csv[i].tolist() for i in df_csv.columns[12:]]
-                    self.all_test = df_csv.T.values.tolist()
-                    self.all_test = self.all_test[12:]
-                    pass
+
+                    # Get site array
+                    sdr_parse = df_csv.iloc[:, 4].unique()
+                    self.number_of_sites = len(sdr_parse)
+
+                    # Get all PTR/FTR data
+                    if True:
+                        # This is the easy way, require data should be same size of all site
+                        self.all_test = df_csv.T.values.tolist()
+                        self.all_test = self.all_test[12:]
+                        a, b = np.shape(self.all_test)
+                        self.all_test = np.reshape(self.all_test,(a,self.number_of_sites,int(b/self.number_of_sites)), order='F').tolist()
+                    else:
+                        for j in range(len(tmp_tname_list[12:])):
+                            all_test_list = []
+                            for i in sdr_parse:
+                                tmp_df = df_csv[df_csv.iloc[:,4] == i]
+                                all_test_list.append(tmp_df.iloc[:,j+12].values.tolist())
+                            self.all_test.append(all_test_list)
+
+                    self.all_data = self.all_test
 
                 all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
                 print('读取时间：', endt - startt)
-                sdr_parse = self.sdr_data[0].split("|")
-                self.number_of_sites = int(sdr_parse[3])
+                # sdr_parse = self.sdr_data[0].split("|")
+
                 self.progress_bar.setValue(35)
-
-                # self.progress_bar.setValue(35 + i / len(self.ptr_data) * 15)
-                # Log duplicate test number item from list, if exist
-                if len(list_of_duplicate_test_numbers) > 0:
-                    log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
-                                           columns=['Test Number', 'Test Name', 'Test Name'])
-                    try:
-                        log_csv.to_csv(path_or_buf=str(
-                            self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
-                    except PermissionError:
-                        self.status_text.setText(
-                            str("Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
-                                                                               "generate a new one"))
-
-                        # Set buttons to false if upload file fail
-                        self.progress_bar.setValue(0)
-                        self.generate_pdf_button.setEnabled(False)
-                        self.select_test_menu.setEnabled(False)
-                        self.generate_summary_button.setEnabled(False)
-                        self.generate_summary_button_split.setEnabled(False)
-                        self.limit_toggle.setEnabled(False)
-                        self.main_window()
-                        return
-
-                # Extracts the test name for the selecting
-                self.list_of_test_numbers_string = ['ALL DATA']
-                for i in range(1, len(self.list_of_test_numbers)):
-                    self.list_of_test_numbers_string.append(
-                        str(self.list_of_test_numbers[i][0] + ' - ' + self.list_of_test_numbers[i][1]))
-
-                    self.progress_bar.setValue(
-                        50 + i / len(self.list_of_test_numbers) * 15)
-
-                startt = time.time()
-                self.all_test = []
-                for i in range(len(all_ptr_test)):
-                    self.all_test.append(Backend.single_test_data(
-                        self.number_of_sites, all_ptr_test[i]))
-                    self.progress_bar.setValue(90 + i / len(all_ptr_test) * 9)
-                endt = time.time()
-                print('PTR提取时间：', endt - startt)
-
-                self.all_data = self.all_test
 
                 self.file_selected = True
 
