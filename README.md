@@ -5,11 +5,12 @@ This project is designed for AP team to process and analyze Teradyne's STDF/STD 
 
 ## How to use
 
-1. Convert STDF/STD file to ASCII txt file by click buttun "Parse STD/STDF to .txt", and select the stdf file;
-2. Upload the txt file which generated in step 1 by click button "Upload parsed .txt file";
-3. Or, you can generate a csv data log to review PIR/FIR;
-4. More buttons on the UI you can try to analyse STDF data;
+1. Convert STDF/STD file to ASCII CSV file by click button "Parse STD/STDF to .csv log", and select the stdf file;
+2. Upload the CSV file which generated in step 1 by click button "Upload parsed .csv file";
+3. Or, you can generate a XLSX table by click button "Upload parsed .csv file", to exam the structure, like PSR/STR/PTR etc;
+![Semantic description of image](https://github.com/showjim/STDFReader/blob/master/img/Xlsx_Capture.PNG)
+4. More buttons on the UI you can try to analyse STDF data, but loop data accept only for now, I will try to support autorun data in the future;
 ![Semantic description of image](https://github.com/showjim/STDFReader/blob/master/img/Win_Capture3.PNG)
-5. You can generete CSV version report of mean/cp/cpk by click "Generate summary of all results";
+5. You can generate CSV version report of mean/cp/cpk by click "Generate summary of all results", site-aware analysis supported;
 6. Or you can generate pdf report to review the trend and histogram;
 ![Semantic description of image](https://github.com/showjim/STDFReader/blob/master/img/PDF_Capture.PNG)

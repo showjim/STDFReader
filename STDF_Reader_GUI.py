@@ -56,6 +56,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
+import xlsxwriter
 
 Version = 'Beta 0.3'
 ###################################################
