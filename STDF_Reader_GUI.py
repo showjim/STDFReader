@@ -117,7 +117,7 @@ class Application(QMainWindow):  # QWidget):
         # Button to upload the .txt file to work with
         self.txt_upload_button = QPushButton('Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
-            'Browse for the .txt file containing the parsed STDF data')
+            'Browse for the .csv file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
 
         # Generates a summary of the loaded text
@@ -437,9 +437,9 @@ class Application(QMainWindow):  # QWidget):
                 # log parsed document, if duplicate test number exist, show warning !
                 if len(list_of_duplicate_test_numbers) > 0:
                     self.status_text.setText(
-                        'Parsed .txt uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
+                        'Parsed .csv uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
                 else:
-                    self.status_text.setText('Parsed .txt uploaded!')
+                    self.status_text.setText('Parsed .csv uploaded!')
 
                 self.progress_bar.setValue(100)
 
