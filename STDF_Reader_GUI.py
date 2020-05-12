@@ -59,6 +59,8 @@ import time
 import xlsxwriter
 
 Version = 'Beta 0.3'
+
+
 ###################################################
 
 ########################
@@ -369,13 +371,14 @@ class Application(QMainWindow):  # QWidget):
                     self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
                     self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
                     self.test_info_list = tmp_pd.values.tolist()[12:]
-                    self.list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(self.tname_list, self.tnumber_list)]
-                    self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string #[12:]
+                    self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
+                                                        zip(self.tname_list, self.tnumber_list)]
+                    self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string  # [12:]
 
                     # Extract the test name and test number list
                     # self.list_of_test_numbers = [('','ALL DATA')]
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
-                    self.list_of_test_numbers = [['','ALL DATA']] + self.list_of_test_numbers
+                    self.list_of_test_numbers = [['', 'ALL DATA']] + self.list_of_test_numbers
 
                     # Get site array
                     sdr_parse = df_csv.iloc[:, 4].unique()
@@ -387,14 +390,16 @@ class Application(QMainWindow):  # QWidget):
                         self.all_test = df_csv.T.values.tolist()
                         self.all_test = self.all_test[12:]
                         a, b = np.shape(self.all_test)
-                        self.all_test = np.reshape(self.all_test,(a,self.number_of_sites,int(b/self.number_of_sites)), order='F').tolist()
+                        self.all_test = np.reshape(self.all_test,
+                                                   (a, self.number_of_sites, int(b / self.number_of_sites)),
+                                                   order='F').tolist()
                     else:
                         # The hard way
                         for j in range(len(tmp_tname_list[12:])):
                             all_test_list = []
                             for i in sdr_parse:
-                                tmp_df = df_csv[df_csv.iloc[:,4] == i]
-                                all_test_list.append(tmp_df.iloc[:,j+12].values.tolist())
+                                tmp_df = df_csv[df_csv.iloc[:, 4] == i]
+                                all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
                             self.all_test.append(all_test_list)
 
                     self.all_data = self.all_test
@@ -456,7 +461,7 @@ class Application(QMainWindow):  # QWidget):
 
                 self.status_text.setText('Please select a file')
 
-    def list_duplicates_of(self, seq, item, start_index): # start_index is to reduce the complex
+    def list_duplicates_of(self, seq, item, start_index):  # start_index is to reduce the complex
         start_at = -1
         locs = []
         while True:
@@ -607,7 +612,7 @@ class Application(QMainWindow):  # QWidget):
                     self.number_of_sites, self.list_of_test_numbers_string, self.all_data, self.selected_tests[i]))
 
             # Gathers each set of data from all runs for each site in all selected tests
-            self.all_test = all_ptr_test #[]
+            self.all_test = all_ptr_test  # []
             # for i in range(len(all_ptr_test)):
             #     self.all_test.append(Backend.single_test_data(
             #         self.number_of_sites, all_ptr_test[i]))
@@ -811,7 +816,8 @@ class PdfWriterThread(QThread):
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_test[i], self.test_info_list, self.number_of_sites, self.selected_tests[i], self.limits_toggled))
+                    self.all_test[i], self.test_info_list, self.number_of_sites, self.selected_tests[i],
+                    self.limits_toggled))
 
                 pdfTemp.close()
 
@@ -998,7 +1004,7 @@ class Backend(ABC):
         plt.ylabel("Trials")
         plt.title("Histogram")
         plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
-
+        plt.legend(loc='best')
     # TestNumber (string) + ListOfTests (list of tuples) -> ListOfTests with TestNumber as the 0th index (list of tuples)
     # Takes a string representing a test number and returns any test names associated with that test number
     #   e.g. one test number may be 1234 and might have 40 tests run on it, but it may be 20 tests under
@@ -1310,7 +1316,7 @@ class Backend(ABC):
         # Plots each site one at a time
         for i in range(0, len(test_data)):
             Backend.plot_single_site_hist(
-                test_data[i], new_minimum, new_maximum, test_data)
+                test_data[i], new_minimum, new_maximum, test_data, i)
 
         if fail_limit == False:
 
@@ -1373,7 +1379,7 @@ class Backend(ABC):
 
     # Plots a single site's results as a histogram
     @staticmethod
-    def plot_single_site_hist(site_data, minimum, maximum, test_data):
+    def plot_single_site_hist(site_data, minimum, maximum, test_data, site_num):
 
         # if (minimum == float('-inf')) or (maximum == float('inf')):
         #     minimum = 0
@@ -1399,7 +1405,7 @@ class Backend(ABC):
         else:
             binboi = np.linspace(minimum, maximum, 21)
         # try:
-        plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5)
+        plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         # except ValueError:
         #     print(binboi)
         #     print(type(minimum))
@@ -1556,7 +1562,6 @@ class FileReaders(ABC):
 
         endt = time.time()
         print('STDF处理时间：', endt - startt)
-
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
