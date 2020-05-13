@@ -57,6 +57,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
 import xlsxwriter
+from numba import jit
 
 Version = 'Beta 0.3'
 
@@ -394,13 +395,14 @@ class Application(QMainWindow):  # QWidget):
                                                    (a, self.number_of_sites, int(b / self.number_of_sites)),
                                                    order='F').tolist()
                     else:
-                        # The hard way
-                        for j in range(len(tmp_tname_list[12:])):
-                            all_test_list = []
-                            for i in sdr_parse:
-                                tmp_df = df_csv[df_csv.iloc[:, 4] == i]
-                                all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
-                            self.all_test.append(all_test_list)
+                        self.all_test = self.hard_way_to_reorder(self.tname_list[12:], sdr_parse, df_csv)
+                        # # The hard way
+                        # for j in range(len(self.tname_list[12:])):
+                        #     all_test_list = []
+                        #     for i in sdr_parse:
+                        #         tmp_df = df_csv[df_csv.iloc[:, 4] == i]
+                        #         all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
+                        #     self.all_test.append(all_test_list)
 
                     self.all_data = self.all_test
 
@@ -460,6 +462,18 @@ class Application(QMainWindow):  # QWidget):
             else:
 
                 self.status_text.setText('Please select a file')
+
+    @jit
+    def hard_way_to_reorder(self, tname_list, sdr_parse, df_csv):
+        # The hard way
+        all_test_data_list = []
+        for j in range(len(tname_list)):
+            all_test_list = []
+            for i in sdr_parse:
+                tmp_df = df_csv[df_csv.iloc[:, 4] == i]
+                all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
+            all_test_data_list.append(all_test_list)
+        return all_test_data_list
 
     def list_duplicates_of(self, seq, item, start_index):  # start_index is to reduce the complex
         start_at = -1
@@ -1765,7 +1779,9 @@ class MyTestResultProfiler:
                     self.test_result_dict['TEST_T'].append(test_time)
             # Send current part result to all test result pd
             if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][-1]:
-                tmp_pd = pd.DataFrame(self.test_result_dict)
+                # tmp_pd = pd.DataFrame(self.test_result_dict)
+                tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
+                # tmp_pd.transpose()
                 self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False)
         pass
 
@@ -1785,18 +1801,18 @@ class MyTestResultProfiler:
             unit_vect_nam_list = []
             tmplist = frame.columns.values.tolist()
             for i in range(len(tmplist)):
-                if len(tmplist[i].split('|')) == 1:
+                if len(str(tmplist[i]).split('|')) == 1:
                     tname_list.append('')
-                    tnumber_list.append(tmplist[i].split('|')[0])
+                    tnumber_list.append(str(tmplist[i]).split('|')[0])
                     hilimit_list.append('')
                     lolimit_list.append('')
                     unit_vect_nam_list.append('')
                 else:
-                    tname_list.append(tmplist[i].split('|')[1])
-                    tnumber_list.append(tmplist[i].split('|')[0])
-                    hilimit_list.append(tmplist[i].split('|')[2])
-                    lolimit_list.append(tmplist[i].split('|')[3])
-                    unit_vect_nam_list.append(tmplist[i].split('|')[4])
+                    tname_list.append(str(tmplist[i]).split('|')[1])
+                    tnumber_list.append(str(tmplist[i]).split('|')[0])
+                    hilimit_list.append(str(tmplist[i]).split('|')[2])
+                    lolimit_list.append(str(tmplist[i]).split('|')[3])
+                    unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
             frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
             # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
             # frame.Mu
