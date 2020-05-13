@@ -365,10 +365,10 @@ class Application(QMainWindow):  # QWidget):
                     tmplist = STDF2Text(self.file_path)
                     self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
                 elif self.file_path.endswith(".csv"):
-                    df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
+                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
 
                     # Extracts the test name for the selecting
-                    tmp_pd = df_csv.columns
+                    tmp_pd = self.df_csv.columns
                     self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
                     self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
                     self.test_info_list = tmp_pd.values.tolist()[12:]
@@ -382,20 +382,20 @@ class Application(QMainWindow):  # QWidget):
                     self.list_of_test_numbers = [['', 'ALL DATA']] + self.list_of_test_numbers
 
                     # Get site array
-                    sdr_parse = df_csv.iloc[:, 4].unique()
-                    self.number_of_sites = len(sdr_parse)
+                    self.sdr_parse = self.df_csv.iloc[:, 4].unique()
+                    self.number_of_sites = len(self.sdr_parse)
 
                     # Get all PTR/FTR data
                     if True:
                         # This is the easy way, require data should be same size of all site
-                        self.all_test = df_csv.T.values.tolist()
+                        self.all_test = self.df_csv.T.values.tolist()
                         self.all_test = self.all_test[12:]
                         a, b = np.shape(self.all_test)
                         self.all_test = np.reshape(self.all_test,
                                                    (a, self.number_of_sites, int(b / self.number_of_sites)),
                                                    order='F').tolist()
                     else:
-                        self.all_test = self.hard_way_to_reorder(self.tname_list[12:], sdr_parse, df_csv)
+                        self.all_test = self.hard_way_to_reorder(self.tname_list[12:], self.sdr_parse, self.df_csv)
                         # # The hard way
                         # for j in range(len(self.tname_list[12:])):
                         #     all_test_list = []
@@ -639,10 +639,13 @@ class Application(QMainWindow):  # QWidget):
 
         summary_results = []
 
+        df_csv = self.df_csv #.iloc[:,12:]
+        sdr_parse = self.sdr_parse
+
         for i in range(0, len(test_list_data)):
             # merge all sites data
-            all_data_array = np.concatenate(test_list_data[i], axis=0)
-
+            # all_data_array = np.concatenate(test_list_data[i], axis=0)
+            all_data_array = df_csv.iloc[:,i+12].to_numpy()
             units = Backend.get_units(data, test_list[i], num_of_sites)
 
             minimum = Backend.get_plot_min(data, test_list[i], num_of_sites)
@@ -653,9 +656,11 @@ class Application(QMainWindow):  # QWidget):
                 summary_results.append(Backend.site_array(
                     all_data_array, minimum, maximum, units, units))
             else:
-                for j in range(0, len(test_list_data[i])):
+                for j in sdr_parse: # range(0, len(test_list_data[i])):
+                    site_test_data = df_csv[df_csv.iloc[:, 4] == j]
+                    site_test_data = site_test_data.iloc[:,i+12].to_numpy()
                     summary_results.append(Backend.site_array(
-                        test_list_data[i][j], minimum, maximum, j, units))
+                        site_test_data, minimum, maximum, j, units))
 
             self.progress_bar.setValue(60 + i / len(test_list_data) * 20)
 
@@ -663,7 +668,7 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # add for split multi-site
-            for j in range(0, len(test_list_data[i])):
+            for j in range(0, len(sdr_parse)):
                 test_names.append(test_list[i][1])
                 # if merge sites data, only plot test name
                 if merge_sites == True:
@@ -1261,17 +1266,23 @@ class Backend(ABC):
         site_results.append(str(len(site_data)))
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
-        # try:
+        try:
+            site_results.append(
+                str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+        except TypeError:
+            os.system('pause')
         site_results.append(
-            str(Decimal(min(site_data)).quantize(Decimal('0.001'))))
-        # except ValueError:
-        #     os.system('pause')
-        site_results.append(
-            str(Decimal(mean_result).quantize(Decimal('0.001'))))
-        site_results.append(
-            str(Decimal(max(site_data)).quantize(Decimal('0.001'))))
-        site_results.append(
-            str(Decimal(max(site_data) - min(site_data)).quantize(Decimal('0.001'))))
+            str(Decimal(mean_result).quantize(Decimal('0.000001'))))
+        try:
+            site_results.append(
+                str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
+        except TypeError:
+            os.system('pause')
+        try:
+            site_results.append(
+                str(Decimal(float(max(site_data) - min(site_data))).quantize(Decimal('0.000001'))))
+        except TypeError:
+            os.system('pause')
         site_results.append(std_string)
         site_results.append(cp_result)
         site_results.append(cpl_result)
