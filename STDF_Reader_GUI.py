@@ -369,12 +369,17 @@ class Application(QMainWindow):  # QWidget):
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
+                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:12]
                     self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
                     self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
                     self.test_info_list = tmp_pd.values.tolist()[12:]
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
                                                         zip(self.tname_list, self.tnumber_list)]
+                    # Change the multi-level columns to single level columns
+                    self.single_columns = self.single_columns + self.list_of_test_numbers_string
+                    self.df_csv.columns = self.single_columns
                     self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string  # [12:]
+
 
                     # Extract the test name and test number list
                     # self.list_of_test_numbers = [('','ALL DATA')]
@@ -640,11 +645,18 @@ class Application(QMainWindow):  # QWidget):
         summary_results = []
 
         df_csv = self.df_csv #.iloc[:,12:]
+
         sdr_parse = self.sdr_parse
+        startt = time.time()
+
+        # Extract test data per for later usage, to improve time performance
+        if merge_sites != True:
+            site_test_data_dic = {}
+            for j in sdr_parse:
+                site_test_data_dic[str(j)] = df_csv[df_csv.SITE_NUM == j]
 
         for i in range(0, len(test_list_data)):
             # merge all sites data
-            # all_data_array = np.concatenate(test_list_data[i], axis=0)
             all_data_array = df_csv.iloc[:,i+12].to_numpy()
             units = Backend.get_units(data, test_list[i], num_of_sites)
 
@@ -656,14 +668,15 @@ class Application(QMainWindow):  # QWidget):
                 summary_results.append(Backend.site_array(
                     all_data_array, minimum, maximum, units, units))
             else:
-                for j in sdr_parse: # range(0, len(test_list_data[i])):
-                    site_test_data = df_csv[df_csv.iloc[:, 4] == j]
-                    site_test_data = site_test_data.iloc[:,i+12].to_numpy()
+                for j in sdr_parse:
+                    site_test_data_df = site_test_data_dic[str(j)]
+                    site_test_data = site_test_data_df.iloc[:,i+12].to_numpy()
                     summary_results.append(Backend.site_array(
                         site_test_data, minimum, maximum, j, units))
 
             self.progress_bar.setValue(60 + i / len(test_list_data) * 20)
-
+        endt = time.time()
+        print('Site Data Analysis Time: ', endt - startt)
         test_names = []
 
         for i in range(0, len(test_list)):
