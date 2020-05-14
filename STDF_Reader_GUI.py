@@ -59,7 +59,7 @@ import time
 import xlsxwriter
 from numba import jit
 
-Version = 'Beta 0.3'
+Version = 'Beta 0.3.1'
 
 
 ###################################################
@@ -88,6 +88,8 @@ class Application(QMainWindow):  # QWidget):
         self.list_of_test_numbers_string = []
 
         self.test_info_list = []
+        self.df_csv = pd.DataFrame()
+        self.sdr_parse = []
 
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
@@ -178,10 +180,10 @@ class Application(QMainWindow):  # QWidget):
         self.all_test = []
         self.all_data = self.all_test
 
-        self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.all_data, all_test=self.all_test,
+        self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.df_csv,
                                              ptr_data=self.test_info_list, number_of_sites=self.number_of_sites,
                                              selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
-                                             list_of_test_numbers=self.list_of_test_numbers)
+                                             list_of_test_numbers=self.list_of_test_numbers, site_list=self.sdr_parse)
 
         self.threaded_task.notify_progress_bar.connect(self.on_progress)
         self.threaded_task.notify_status_text.connect(self.on_update_text)
@@ -390,26 +392,19 @@ class Application(QMainWindow):  # QWidget):
                     self.sdr_parse = self.df_csv.iloc[:, 4].unique()
                     self.number_of_sites = len(self.sdr_parse)
 
-                    # Get all PTR/FTR data
-                    if True:
-                        # This is the easy way, require data should be same size of all site
-                        self.all_test = self.df_csv.T.values.tolist()
-                        self.all_test = self.all_test[12:]
-                        a, b = np.shape(self.all_test)
-                        self.all_test = np.reshape(self.all_test,
-                                                   (a, self.number_of_sites, int(b / self.number_of_sites)),
-                                                   order='F').tolist()
-                    else:
-                        self.all_test = self.hard_way_to_reorder(self.tname_list[12:], self.sdr_parse, self.df_csv)
-                        # # The hard way
-                        # for j in range(len(self.tname_list[12:])):
-                        #     all_test_list = []
-                        #     for i in sdr_parse:
-                        #         tmp_df = df_csv[df_csv.iloc[:, 4] == i]
-                        #         all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
-                        #     self.all_test.append(all_test_list)
-
-                    self.all_data = self.all_test
+                    # # Get all PTR/FTR data
+                    # if True:
+                    #     # This is the easy way, require data should be same size of all site
+                    #     self.all_test = self.df_csv.T.values.tolist()
+                    #     self.all_test = self.all_test[12:]
+                    #     a, b = np.shape(self.all_test)
+                    #     self.all_test = np.reshape(self.all_test,
+                    #                                (a, self.number_of_sites, int(b / self.number_of_sites)),
+                    #                                order='F').tolist()
+                    # else:
+                    #     self.all_test = self.hard_way_to_reorder(self.tname_list[12:], self.sdr_parse, self.df_csv)
+                    #
+                    # self.all_data = self.all_test
 
                     # Check the duplicate test number
                     test_number_list = self.tnumber_list
@@ -468,7 +463,6 @@ class Application(QMainWindow):  # QWidget):
 
                 self.status_text.setText('Please select a file')
 
-    @jit
     def hard_way_to_reorder(self, tname_list, sdr_parse, df_csv):
         # The hard way
         all_test_data_list = []
@@ -560,7 +554,7 @@ class Application(QMainWindow):  # QWidget):
 
             self.progress_bar.setValue(0)
 
-            table = self.get_summary_table(self.all_test, self.test_info_list, self.number_of_sites,
+            table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers[1: len(self.list_of_test_numbers)], merge_sites)
 
             self.progress_bar.setValue(10)
@@ -618,33 +612,32 @@ class Application(QMainWindow):  # QWidget):
         if i == 'ALL DATA':
             self.selected_tests = [['', 'ALL DATA']]
 
-            self.all_test = self.all_data
+            # self.all_test = self.df_csv
             pass
 
         else:
-            self.selected_tests = Backend.find_tests_of_number(
-                i.split(' - ')[0], self.list_of_test_numbers[1:])
-
-            all_ptr_test = []
-            for i in range(0, len(self.selected_tests)):
-                all_ptr_test.append(Backend.ptr_extractor(
-                    self.number_of_sites, self.list_of_test_numbers_string, self.all_data, self.selected_tests[i]))
+            self.selected_tests = i.split(' - ') # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
+            pass
+            # all_ptr_test = []
+            # for i in range(0, len(self.selected_tests)):
+            #     all_ptr_test.append(Backend.ptr_extractor(
+            #         self.number_of_sites, self.list_of_test_numbers_string, self.df_csv, self.selected_tests[i]))
 
             # Gathers each set of data from all runs for each site in all selected tests
-            self.all_test = all_ptr_test  # []
+            # self.all_test = all_ptr_test  # []
             # for i in range(len(all_ptr_test)):
             #     self.all_test.append(Backend.single_test_data(
             #         self.number_of_sites, all_ptr_test[i]))
 
     # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
-    def get_summary_table(self, test_list_data, data, num_of_sites, test_list, merge_sites):
+    def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites):
 
         parameters = ['Units', 'Runs', 'Fails', 'Min', 'Mean',
                       'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         summary_results = []
 
-        df_csv = self.df_csv #.iloc[:,12:]
+        df_csv = all_test_data
 
         sdr_parse = self.sdr_parse
         startt = time.time()
@@ -655,14 +648,14 @@ class Application(QMainWindow):  # QWidget):
             for j in sdr_parse:
                 site_test_data_dic[str(j)] = df_csv[df_csv.SITE_NUM == j]
 
-        for i in range(0, len(test_list_data)):
+        for i in range(0, len(test_list)):
             # merge all sites data
             all_data_array = df_csv.iloc[:,i+12].to_numpy()
-            units = Backend.get_units(data, test_list[i], num_of_sites)
+            units = Backend.get_units(test_info_list, test_list[i], num_of_sites)
 
-            minimum = Backend.get_plot_min(data, test_list[i], num_of_sites)
+            minimum = Backend.get_plot_min(test_info_list, test_list[i], num_of_sites)
 
-            maximum = Backend.get_plot_max(data, test_list[i], num_of_sites)
+            maximum = Backend.get_plot_max(test_info_list, test_list[i], num_of_sites)
 
             if merge_sites == True:
                 summary_results.append(Backend.site_array(
@@ -674,7 +667,7 @@ class Application(QMainWindow):  # QWidget):
                     summary_results.append(Backend.site_array(
                         site_test_data, minimum, maximum, j, units))
 
-            self.progress_bar.setValue(60 + i / len(test_list_data) * 20)
+            self.progress_bar.setValue(60 + i / len(test_list) * 20)
         endt = time.time()
         print('Site Data Analysis Time: ', endt - startt)
         test_names = []
@@ -708,11 +701,11 @@ class Application(QMainWindow):  # QWidget):
             self.select_test_menu.setEnabled(False)
             self.limit_toggle.setEnabled(False)
 
-            self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.all_data,
-                                                 all_test=self.all_test, ptr_data=self.test_info_list,
+            self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.df_csv,
+                                                 ptr_data=self.test_info_list,
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
-                                                 list_of_test_numbers=self.list_of_test_numbers)
+                                                 list_of_test_numbers=self.list_of_test_numbers, site_list = self.sdr_parse)
 
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
@@ -799,33 +792,43 @@ class PdfWriterThread(QThread):
     notify_progress_bar = pyqtSignal(int)
     notify_status_text = pyqtSignal(str)
 
-    def __init__(self, file_path, all_data, all_test, ptr_data, number_of_sites, selected_tests, limits_toggled,
-                 list_of_test_numbers, parent=None):
+    def __init__(self, file_path, all_data, ptr_data, number_of_sites, selected_tests, limits_toggled,
+                 list_of_test_numbers, site_list, parent=None):
         QThread.__init__(self, parent)
 
         self.file_path = file_path
-        self.all_data = all_data
-        self.all_test = all_test
+        self.df_csv = all_data
+        # self.all_test = all_test
         self.test_info_list = ptr_data
         self.number_of_sites = number_of_sites
         self.selected_tests = selected_tests
         self.limits_toggled = limits_toggled
         self.list_of_test_numbers = list_of_test_numbers
+        self.sdr_parse = site_list
 
     def run(self):
-
+        startt = time.time()
         self.notify_progress_bar.emit(0)
 
         pp = PdfFileMerger()
 
+        site_test_data_dic = {}
+        for j in self.sdr_parse:
+            site_test_data_dic[str(j)] = self.df_csv[self.df_csv.SITE_NUM == j]
+
         if self.selected_tests == [['', 'ALL DATA']]:
 
             for i in range(1, len(self.list_of_test_numbers)):
+                site_test_data_list = []
+                for j in self.sdr_parse:
+                    site_test_data = site_test_data_dic[str(j)].iloc[:, i - 1 + 12].values.tolist()
+                    site_test_data_list.append(site_test_data)
+                all_data_array = site_test_data_list
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_data[i - 1], self.test_info_list, self.number_of_sites, self.list_of_test_numbers[i],
+                    all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites, self.list_of_test_numbers[i],
                     self.limits_toggled))
 
                 pdfTemp.close()
@@ -843,27 +846,31 @@ class PdfWriterThread(QThread):
 
         else:
 
-            for i in range(0, len(self.selected_tests)):
-                pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
+            # for i in range(0, len(self.selected_tests)):
+            pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
+            plt.figure(figsize=(11, 8.5))
+            site_test_data_list = []
+            column_name = ' - '.join(self.selected_tests)
+            for j in self.sdr_parse:
+                site_test_data = site_test_data_dic[str(j)][column_name].values.tolist()
+                site_test_data_list.append(site_test_data)
+            pdfTemp.savefig(Backend.plot_everything_from_one_test(
+                site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites, self.selected_tests,
+                self.limits_toggled))
 
-                plt.figure(figsize=(11, 8.5))
-                pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    self.all_test[i], self.test_info_list, self.number_of_sites, self.selected_tests[i],
-                    self.limits_toggled))
+            pdfTemp.close()
 
-                pdfTemp.close()
+            pp.append(PdfFileReader(
+                str(self.file_path + "_results_temp"), "rb"))
 
-                pp.append(PdfFileReader(
-                    str(self.file_path + "_results_temp"), "rb"))
+            self.notify_status_text.emit(
+                str("Parsed csv test results completed"))
 
-                self.notify_status_text.emit(
-                    str(str(i) + "/" + str(len(self.selected_tests)) + " test results completed"))
+            self.notify_progress_bar.emit(90)
 
-                self.notify_progress_bar.emit(
-                    int((i + 1) / len(self.selected_tests) * 90))
-
-                plt.close()
-
+            plt.close()
+        endt = time.time()
+        print('PDF Data Analysis Time: ', endt - startt)
         os.remove(str(self.file_path + "_results_temp"))
 
         # Makes sure that the pdf isn't open and prompts you to close it if it is
@@ -985,7 +992,7 @@ class Backend(ABC):
 
     # Plots the results of everything from one test
     @staticmethod
-    def plot_everything_from_one_test(test_data, data, num_of_sites, test_tuple, fail_limit):
+    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit):
 
         # Find the limits
         low_lim = Backend.get_plot_min(data, test_tuple, num_of_sites)
@@ -1010,7 +1017,7 @@ class Backend(ABC):
             str("Test: " + test_tuple[0] + " - " + test_tuple[1] + " - Units: " + units))
 
         # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
-        table = Backend.table_of_results(test_data, low_lim, hi_lim, units)
+        table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
         table = table[0:17]
         plt.subplot(211)
         cell_text = []
@@ -1183,7 +1190,7 @@ class Backend(ABC):
 
     # Returns the table of the results of all the tests to visualize the data
     @staticmethod
-    def table_of_results(test_data, minimum, maximum, units):
+    def table_of_results(test_data, sdr_parse, minimum, maximum, units):
         parameters = ['Site', 'Runs', 'Fails', 'Min', 'Mean',
                       'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
@@ -1196,9 +1203,9 @@ class Backend(ABC):
         test_results = [Backend.site_array(
             all_data, minimum, maximum, 'ALL', units)]
 
-        for i in range(0, len(test_data)):
+        for i in range(0, len(sdr_parse)):
             test_results.append(Backend.site_array(
-                test_data[i], minimum, maximum, i, units))
+                test_data[i], minimum, maximum, sdr_parse[i], units))
 
         table = pd.DataFrame(test_results, columns=parameters)
 
@@ -1480,9 +1487,6 @@ class Backend(ABC):
     @staticmethod
     def ptr_extractor(num_of_sites, tname_list, data, test_number):
 
-        # Initializes an array of the data from one of the tests for all test sites
-        ptr_array_test = []
-
         # Finds where in the data to start looking for the test in question
         # for i in range(0, len(data)):
         #     if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
@@ -1490,7 +1494,7 @@ class Backend(ABC):
 
         test_index = tname_list.index(test_number[0] + ' - ' + test_number[1])
         if test_index >= 1:
-            ptr_array_test = data[test_index - 1]
+            ptr_array_test = data[:, test_index + 12]
         # Returns the array weow!
         return ptr_array_test
 
