@@ -35,7 +35,7 @@ from pystdf.IO import Parser
 from pystdf.Writers import *
 
 import pystdf.V4 as V4
-from pystdf.Importer import STDF2DataFrame, STDF2Text
+from pystdf.Importer import STDF2DataFrame
 
 from abc import ABC
 
@@ -49,7 +49,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from decimal import Decimal
-import decimal
 import pandas as pd
 
 from matplotlib.backends.backend_pdf import PdfPages
@@ -57,6 +56,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
 import xlsxwriter
+
 # from numba import jit
 
 Version = 'Beta 0.3.1'
@@ -86,6 +86,8 @@ class Application(QMainWindow):  # QWidget):
         self.number_of_sites = None
         self.list_of_test_numbers = [['', 'ALL DATA']]
         self.list_of_test_numbers_string = []
+        self.tnumber_list = []
+        self.tname_list = []
 
         self.test_info_list = []
         self.df_csv = pd.DataFrame()
@@ -332,12 +334,6 @@ class Application(QMainWindow):  # QWidget):
 
         # Change to allow to upload file without restart program
         if True:  # self.file_selected:
-
-            #     self.status_text.setText(
-            #         'Parsed .txt file already uploaded. Please restart program to upload another.')
-
-            # else:
-
             # Only accepts text files
             filterboi = 'CSV Table (*.csv)'
             filepath = QFileDialog.getOpenFileName(
@@ -352,14 +348,12 @@ class Application(QMainWindow):  # QWidget):
 
                 self.progress_bar.setValue(0)
 
-                i = 0
                 self.all_test = []
                 self.ptr_data = []
-                all_ptr_test = []
                 self.list_of_test_numbers = [['', 'ALL DATA']]
-                ptr_dic_test = {}
                 list_of_duplicate_test_numbers = []
                 startt = time.time()
+
                 if self.file_path.endswith(".txt"):
                     pass
                 elif self.file_path.endswith(".std"):
@@ -380,7 +374,6 @@ class Application(QMainWindow):  # QWidget):
                     self.df_csv.columns = self.single_columns
                     self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string  # [12:]
 
-
                     # Extract the test name and test number list
                     # self.list_of_test_numbers = [('','ALL DATA')]
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -389,20 +382,6 @@ class Application(QMainWindow):  # QWidget):
                     # Get site array
                     self.sdr_parse = self.df_csv.iloc[:, 4].unique()
                     self.number_of_sites = len(self.sdr_parse)
-
-                    # # Get all PTR/FTR data
-                    # if True:
-                    #     # This is the easy way, require data should be same size of all site
-                    #     self.all_test = self.df_csv.T.values.tolist()
-                    #     self.all_test = self.all_test[12:]
-                    #     a, b = np.shape(self.all_test)
-                    #     self.all_test = np.reshape(self.all_test,
-                    #                                (a, self.number_of_sites, int(b / self.number_of_sites)),
-                    #                                order='F').tolist()
-                    # else:
-                    #     self.all_test = self.hard_way_to_reorder(self.tname_list[12:], self.sdr_parse, self.df_csv)
-                    #
-                    # self.all_data = self.all_test
 
                     # Check the duplicate test number
                     test_number_list = self.tnumber_list
@@ -426,7 +405,6 @@ class Application(QMainWindow):  # QWidget):
                                     "Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
                                                                                    "generate a new one"))
 
-                all_ptr_test = list(ptr_dic_test.values())
                 endt = time.time()
                 print('读取时间：', endt - startt)
                 # sdr_parse = self.sdr_data[0].split("|")
@@ -558,7 +536,8 @@ class Application(QMainWindow):  # QWidget):
             pass
 
         else:
-            self.selected_tests = i.split(' - ') # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
+            self.selected_tests = i.split(
+                ' - ')  # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
             pass
             # all_ptr_test = []
             # for i in range(0, len(self.selected_tests)):
@@ -592,7 +571,7 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = pd.to_numeric(df_csv.iloc[:,i+12], errors='coerce').to_numpy()
+            all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
             units = Backend.get_units(test_info_list, test_list[i], num_of_sites)
 
@@ -600,13 +579,13 @@ class Application(QMainWindow):  # QWidget):
 
             maximum = Backend.get_plot_max(test_info_list, test_list[i], num_of_sites)
 
-            if merge_sites == True:
+            if merge_sites:
                 summary_results.append(Backend.site_array(
                     all_data_array, minimum, maximum, units, units))
             else:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = pd.to_numeric(site_test_data_df.iloc[:,i+12], errors='coerce').to_numpy()
+                    site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
                     summary_results.append(Backend.site_array(
@@ -622,7 +601,7 @@ class Application(QMainWindow):  # QWidget):
             for j in range(0, len(sdr_parse)):
                 test_names.append(test_list[i][1])
                 # if merge sites data, only plot test name
-                if merge_sites == True:
+                if merge_sites:
                     break
 
             self.progress_bar.setValue(80 + i / len(test_list) * 10)
@@ -636,7 +615,7 @@ class Application(QMainWindow):  # QWidget):
 
     # Given a set of data for each test, the full set of ptr data, the number of sites, and the list of names/tests for the
     #   set of data needed, expect each item in this set of data to be plotted in a new figure
-    # test_list_data should be an array of arrays of arrays with the same length as test_list, which is an array of tuples
+    # test_info_list should be an array of arrays of arrays with the same length as test_list, which is an array of tuples
     #   with each tuple representing the test number and name of the test data in that specific trial
     def plot_list_of_tests(self):
 
@@ -650,7 +629,8 @@ class Application(QMainWindow):  # QWidget):
                                                  ptr_data=self.test_info_list,
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
-                                                 list_of_test_numbers=self.list_of_test_numbers, site_list = self.sdr_parse)
+                                                 list_of_test_numbers=self.list_of_test_numbers,
+                                                 site_list=self.sdr_parse)
 
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
@@ -706,14 +686,16 @@ class PdfWriterThread(QThread):
             for i in range(1, len(self.list_of_test_numbers)):
                 site_test_data_list = []
                 for j in self.sdr_parse:
-                    site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12], errors='coerce').dropna().values.tolist()
+                    site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
+                                                   errors='coerce').dropna().values.tolist()
                     site_test_data_list.append(site_test_data)
                 all_data_array = site_test_data_list
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites, self.list_of_test_numbers[i],
+                    all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
+                    self.list_of_test_numbers[i],
                     self.limits_toggled))
 
                 pdfTemp.close()
@@ -737,7 +719,8 @@ class PdfWriterThread(QThread):
             site_test_data_list = []
             column_name = ' - '.join(self.selected_tests)
             for j in self.sdr_parse:
-                site_test_data = pd.to_numeric(site_test_data_dic[str(j)][column_name], errors='coerce').dropna().values.tolist()
+                site_test_data = pd.to_numeric(site_test_data_dic[str(j)][column_name],
+                                               errors='coerce').dropna().values.tolist()
                 site_test_data_list.append(site_test_data)
             pdfTemp.savefig(Backend.plot_everything_from_one_test(
                 site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites, self.selected_tests,
@@ -813,8 +796,6 @@ class TextParseThread(QThread):
 # IMPORTANT DOCUMENTATION I NEED TO FILL OUT TO MAKE SURE PEOPLE KNOW WHAT THE HELL IS GOING ON
 
 # ~~~~~~~~~~ Data definition explanations (in functions) ~~~~~~~~~~ #
-# data --> ptr_data                                                 #
-#   gathered in main()                                              #
 #                                                                   #
 # test_tuple --> ['test_number', 'test_name']                       #
 #   Structure for associating a test's name with its test number    #
@@ -826,13 +807,13 @@ class TextParseThread(QThread):
 # num_of_sites --> number of testing sites for each test run        #
 #   number_of_sites = int(sdr_parse[3]) in main()                   #
 #                                                                   #
-# test_list_data --> list of sets of site_data                      #
+# test_info_list --> list of sets of site_data                      #
 #   (sorted in the same order as corresponding tests in test_list)  #
 #                                                                   #
 # site_data --> array of float data points number_of_sites long     #
 #   raw data for a single corresponding test_tuple                  #
 #                                                                   #
-# test_list and test_list_data are the same length                  #
+# test_list and test_info_list are the same length                  #
 #                                                                   #
 # minimum, maximum --> floats                                       #
 #   lower and upper extremes for a site_data from a corresponding   #
@@ -929,6 +910,7 @@ class Backend(ABC):
         plt.title("Histogram")
         plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
         plt.legend(loc='best')
+
     # TestNumber (string) + ListOfTests (list of tuples) -> ListOfTests with TestNumber as the 0th index (list of tuples)
     # Takes a string representing a test number and returns any test names associated with that test number
     #   e.g. one test number may be 1234 and might have 40 tests run on it, but it may be 20 tests under
@@ -1104,7 +1086,7 @@ class Backend(ABC):
             minimum = 0
             maximum = 0
 
-        if (minimum == float('-inf')) or (maximum == float('inf')) or (minimum == '=-inf'):
+        if (minimum == float('-inf')) or (maximum == float('inf')):
             minimum = 0
             maximum = 0
         # Big boi initialization
