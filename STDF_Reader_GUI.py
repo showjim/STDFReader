@@ -361,11 +361,9 @@ class Application(QMainWindow):  # QWidget):
                 list_of_duplicate_test_numbers = []
                 startt = time.time()
                 if self.file_path.endswith(".txt"):
-                    with open(self.file_path) as f:
-                        self.read_atdf_record(f, ptr_dic_test, list_of_duplicate_test_numbers)
+                    pass
                 elif self.file_path.endswith(".std"):
-                    tmplist = STDF2Text(self.file_path)
-                    self.read_atdf_record(tmplist, ptr_dic_test, list_of_duplicate_test_numbers)
+                    pass
                 elif self.file_path.endswith(".csv"):
                     self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
 
@@ -1627,19 +1625,6 @@ class MyTestResultProfiler:
                         ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
                     self.test_result_dict[full_tname_tnumber].append(ptr_result)
 
-                    if False:
-                        # Check the dict keys contain current_tname_tnumber or not
-                        tmp_key = [x for x in self.test_result_dict if current_tname_tnumber in x]
-                        if not (any(
-                                tmp_key)):  # not(isinstance(value, (str,int)) for key,value in self.test_result_dict.items() if current_tname_tnumber in key):
-                            self.test_result_dict[tname_tnumber] = []
-                        else:
-                            # If found existed key, then take it out to replace tname_tnumber
-                            tname_tnumber = tmp_key[0]
-                            if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
-                                # print('Duplicate test number found for test: ', tname_tnumber)
-                                return
-                        self.test_result_dict[tname_tnumber].append(fields[V4.ptr.RESULT])
         # This is the functional test results
         if rectype == V4.ftr:
             for i in range(self.site_count):
