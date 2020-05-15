@@ -57,7 +57,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
 import xlsxwriter
-from numba import jit
+# from numba import jit
 
 Version = 'Beta 0.3.1'
 
@@ -490,62 +490,6 @@ class Application(QMainWindow):  # QWidget):
                     break
         return locs
 
-    # Read each record in stdf file or atdf file
-    def read_atdf_record(self, f, ptr_dic_test, list_of_duplicate_test_numbers):
-        check_duplicate_test_number = True
-        for line in f:
-            if line.startswith("FAR"):
-                self.far_data.append(line)
-            elif line.startswith("MIR"):
-                self.mir_data.append(line)
-            elif line.startswith("SDR"):
-                self.sdr_data.append(line)
-            elif line.startswith("PMR"):
-                self.pmr_data.append(line)
-            elif line.startswith("PGR"):
-                self.pgr_data.append(line)
-            elif line.startswith("PIR"):
-                self.pir_data.append(line)
-            # or line.startswith("MPR"):
-            elif line.startswith("PTR"):
-                self.ptr_data.append(line)
-
-                test_number_test_name = line.split("|")[1] + line.split("|")[7]
-
-                # Check the duplicate test number
-                if check_duplicate_test_number:
-                    test_number_list = np.char.array(self.list_of_test_numbers)[:, 0]
-                    test_name_list = np.char.array(self.list_of_test_numbers)[:, 1]
-                    i = np.where(test_number_list == (line.split("|")[1]))
-                    if not (line.split("|")[7] in test_name_list[i]):
-                        list_of_duplicate_test_numbers.append(
-                            [line.split("|")[1], test_name_list[i], line.split("|")[7]])
-
-                # Gathers a list of the test numbers and the tests ran for each site, avoiding repeats from rerun tests
-                if not ([line.split("|")[1], line.split("|")[7]] in self.list_of_test_numbers):
-                    self.list_of_test_numbers.append([line.split("|")[1], line.split("|")[7]])
-
-                # 
-                if not (test_number_test_name in ptr_dic_test):
-                    ptr_dic_test[test_number_test_name] = []
-                ptr_dic_test[test_number_test_name].append(line.split("|"))  # = line.split("|")
-
-            elif line.startswith("MPR"):
-                self.mpr_data.append(line)
-            elif line.startswith("PRR"):
-                self.prr_data.append(line)
-                check_duplicate_test_number = False
-            elif line.startswith("TSR"):
-                self.tsr_data.append(line)
-            elif line.startswith("HBR"):
-                self.hbr_data.append(line)
-            elif line.startswith("SBR"):
-                self.sbr_data.append(line)
-            elif line.startswith("PCR"):
-                self.pcr_data.append(line)
-            elif line.startswith("MRR"):
-                self.mrr_data.append(line)
-
     # Handler for the summary button to generate a csv table results file for a summary of the data
     def make_csv(self, merge_sites):
 
@@ -650,7 +594,8 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = df_csv.iloc[:,i+12].to_numpy()
+            all_data_array = pd.to_numeric(df_csv.iloc[:,i+12], errors='coerce').to_numpy()
+            all_data_array = all_data_array[~np.isnan(all_data_array)]
             units = Backend.get_units(test_info_list, test_list[i], num_of_sites)
 
             minimum = Backend.get_plot_min(test_info_list, test_list[i], num_of_sites)
@@ -663,7 +608,9 @@ class Application(QMainWindow):  # QWidget):
             else:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = site_test_data_df.iloc[:,i+12].to_numpy()
+                    site_test_data = pd.to_numeric(site_test_data_df.iloc[:,i+12], errors='coerce').to_numpy()
+                    # Series.dropna() can remove NaN, but slower than numpy.isnan
+                    site_test_data = site_test_data[~np.isnan(site_test_data)]
                     summary_results.append(Backend.site_array(
                         site_test_data, minimum, maximum, j, units))
 
@@ -716,66 +663,6 @@ class Application(QMainWindow):  # QWidget):
             self.select_test_menu.setEnabled(True)
             self.limit_toggle.setEnabled(True)
             self.main_window()
-
-            # # Runs through each of the tests in the list and plots it in a new figure
-            # self.progress_bar.setValue(0)
-            #
-            # pp = PdfFileMerger()
-            #
-            # if self.selected_tests == [['', 'ALL DATA']]:
-            #
-            #     for i in range(1, len(self.list_of_test_numbers)):
-            #
-            #         pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
-            #
-            #         plt.figure(figsize=(11, 8.5))
-            #         pdfTemp.savefig(Backend.plot_everything_from_one_test(self.all_data[i - 1], self.ptr_data, self.number_of_sites, self.list_of_test_numbers[i], self.limits_toggled))
-            #
-            #         pdfTemp.close()
-            #
-            #         pp.append(PdfFileReader(str(self.file_path + "_results_temp"), "rb"))
-            #
-            #         self.status_text.setText(str(i) + "/" + str(len(self.list_of_test_numbers[1:])) + " test results completed")
-            #
-            #         self.progress_bar.setValue((i + 1) / len(self.list_of_test_numbers[1:]) * 90)
-            #
-            #         plt.close()
-            #
-            # else:
-            #
-            #     for i in range(0, len(self.selected_tests)):
-            #
-            #         pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
-            #
-            #         plt.figure(figsize=(11, 8.5))
-            #         pdfTemp.savefig(Backend.plot_everything_from_one_test(self.all_test[i], self.ptr_data, self.number_of_sites, self.selected_tests[i], self.limits_toggled))
-            #
-            #         pdfTemp.close()
-            #
-            #         pp.append(PdfFileReader(str(self.file_path + "_results_temp"), "rb"))
-            #
-            #         self.status_text.setText(str(i) + "/" + str(len(self.selected_tests)) + " test results completed")
-            #
-            #         self.progress_bar.setValue((i + 1) / len(self.selected_tests) * 90)
-            #
-            #         plt.close()
-            #
-            # os.remove(str(self.file_path + "_results_temp"))
-            #
-            # # Makes sure that the pdf isn't open and prompts you to close it if it is
-            # written = False
-            # while not written:
-            #     try:
-            #         pp.write(str(self.file_path + "_results.pdf"))
-            #         self.status_text.setText('PDF written successfully!')
-            #         self.progress_bar.setValue(100)
-            #         written = True
-            #
-            #     except PermissionError:
-            #         self.status_text.setText(str('Please close ' + str(self.file_path + "_results.pdf") + ' and try again.'))
-            #         time.sleep(1)
-            #         self.progress_bar.setValue(99)
-
         else:
 
             self.status_text.setText('Please select a file')
@@ -821,7 +708,7 @@ class PdfWriterThread(QThread):
             for i in range(1, len(self.list_of_test_numbers)):
                 site_test_data_list = []
                 for j in self.sdr_parse:
-                    site_test_data = site_test_data_dic[str(j)].iloc[:, i - 1 + 12].values.tolist()
+                    site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12], errors='coerce').dropna().values.tolist()
                     site_test_data_list.append(site_test_data)
                 all_data_array = site_test_data_list
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
@@ -852,7 +739,7 @@ class PdfWriterThread(QThread):
             site_test_data_list = []
             column_name = ' - '.join(self.selected_tests)
             for j in self.sdr_parse:
-                site_test_data = site_test_data_dic[str(j)][column_name].values.tolist()
+                site_test_data = pd.to_numeric(site_test_data_dic[str(j)][column_name], errors='coerce').dropna().values.tolist()
                 site_test_data_list.append(site_test_data)
             pdfTemp.savefig(Backend.plot_everything_from_one_test(
                 site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites, self.selected_tests,
@@ -1219,7 +1106,7 @@ class Backend(ABC):
             minimum = 0
             maximum = 0
 
-        if (minimum == float('-inf')) or (maximum == float('inf')):
+        if (minimum == float('-inf')) or (maximum == float('inf')) or (minimum == '=-inf'):
             minimum = 0
             maximum = 0
         # Big boi initialization
@@ -1286,23 +1173,18 @@ class Backend(ABC):
         site_results.append(str(len(site_data)))
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
-        try:
-            site_results.append(
-                str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
-        except TypeError:
-            os.system('pause')
+        # try:
+        site_results.append(
+            str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+        # except TypeError:
+        #     os.system('pause')
         site_results.append(
             str(Decimal(mean_result).quantize(Decimal('0.000001'))))
-        try:
-            site_results.append(
-                str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
-        except TypeError:
-            os.system('pause')
-        try:
-            site_results.append(
-                str(Decimal(float(max(site_data) - min(site_data))).quantize(Decimal('0.000001'))))
-        except TypeError:
-            os.system('pause')
+        site_results.append(
+            str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
+        site_results.append(
+            str(Decimal(float(max(site_data) - min(site_data))).quantize(Decimal('0.000001'))))
+
         site_results.append(std_string)
         site_results.append(cp_result)
         site_results.append(cpl_result)
