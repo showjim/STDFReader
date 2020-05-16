@@ -338,7 +338,7 @@ class Application(QMainWindow):  # QWidget):
                 elif self.file_path.endswith(".std"):
                     pass
                 elif self.file_path.endswith(".csv"):
-                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])
+                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4]) # , dtype=str)
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
@@ -552,6 +552,7 @@ class Application(QMainWindow):  # QWidget):
             # merge all sites data
             all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
+            # all_data_array = df_csv.iloc[:, i + 12].str.replace(r'\(F\)', '').astype(float).to_numpy()
             units = Backend.get_units(test_info_list, test_list[i], num_of_sites)
 
             minimum = Backend.get_plot_min(test_info_list, test_list[i], num_of_sites)
