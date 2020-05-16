@@ -80,9 +80,6 @@ class Application(QMainWindow):  # QWidget):
 
         # Have to read the imported .txt file but I'm not totally sure how
         self.data = None
-        self.far_data, self.mir_data, self.sdr_data, self.pmr_data, self.pgr_data, self.pir_data, self.ptr_data, self.prr_data, self.tsr_data, self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data, self.mpr_data = [
-                                                                                                                                                                                                                           ], [], [], [], [], [], [], [], [], [], [], [], [], []
-
         self.number_of_sites = None
         self.list_of_test_numbers = [['', 'ALL DATA']]
         self.list_of_test_numbers_string = []
@@ -179,9 +176,6 @@ class Application(QMainWindow):  # QWidget):
 
         self.file_selected = False
 
-        self.all_test = []
-        self.all_data = self.all_test
-
         self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.df_csv,
                                              ptr_data=self.test_info_list, number_of_sites=self.number_of_sites,
                                              selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
@@ -193,18 +187,6 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_text_parser = TextParseThread()
         self.threaded_text_parser.notify_status_text.connect(
             self.on_update_text)
-
-        # f = []
-        # ptr_dic_test = {}
-        # list_of_duplicate_test_numbers = []
-        # self.threaded_rsr_task = ReadStdfRecordThread(f, ptr_dic_test, list_of_duplicate_test_numbers,
-        #                                               self.list_of_test_numbers,
-        #                                               self.far_data, self.mir_data, self.sdr_data, self.pmr_data,
-        #                                               self.pgr_data,
-        #                                               self.pir_data, self.ptr_data, self.mpr_data, self.prr_data,
-        #                                               self.tsr_data,
-        #                                               self.hbr_data, self.sbr_data, self.pcr_data, self.mrr_data)
-        # self.threaded_rsr_task.notify_status_text.connect(self.on_update_text)
 
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
@@ -247,7 +229,7 @@ class Application(QMainWindow):  # QWidget):
 
     def aboutecho(self):
         QMessageBox.information(
-            self, 'About', 'Author：Chao Zhou \n verion ' + Version + ' \n 感谢您的使用！ \n chao.zhou@teradyne-china.com ',
+            self, 'About', 'Author：Chao Zhou \n verion ' + Version + ' \n 感谢您的使用！ \n zhouchao486@gmail.com ',
             QMessageBox.Ok)
 
     # Centers the window
@@ -347,9 +329,6 @@ class Application(QMainWindow):  # QWidget):
                 # self.txt_upload_button.setEnabled(False)
 
                 self.progress_bar.setValue(0)
-
-                self.all_test = []
-                self.ptr_data = []
                 self.list_of_test_numbers = [['', 'ALL DATA']]
                 list_of_duplicate_test_numbers = []
                 startt = time.time()
@@ -663,7 +642,6 @@ class PdfWriterThread(QThread):
 
         self.file_path = file_path
         self.df_csv = all_data
-        # self.all_test = all_test
         self.test_info_list = ptr_data
         self.number_of_sites = number_of_sites
         self.selected_tests = selected_tests
