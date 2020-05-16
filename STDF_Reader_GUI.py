@@ -543,7 +543,7 @@ class Application(QMainWindow):  # QWidget):
         startt = time.time()
 
         # Extract test data per for later usage, to improve time performance
-        if merge_sites != True:
+        if not merge_sites:
             site_test_data_dic = {}
             for j in sdr_parse:
                 site_test_data_dic[str(j)] = df_csv[df_csv.SITE_NUM == j]
