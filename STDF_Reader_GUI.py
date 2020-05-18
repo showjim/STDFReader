@@ -576,6 +576,9 @@ class Application(QMainWindow):  # QWidget):
             else:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
+                    site_test_data = site_test_data_df.iloc[:, i + 12].to_numpy()
+
+                    ## Get rid of (F) and conver to float on series
                     site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
