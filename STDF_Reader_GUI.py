@@ -338,11 +338,13 @@ class Application(QMainWindow):  # QWidget):
                 elif self.file_path.endswith(".std"):
                     pass
                 elif self.file_path.endswith(".csv"):
-                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4]) # , dtype=str)
+                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
+                    # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
+                    # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
-                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:12]
+                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:12]  # Get the part info
                     self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
                     self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
                     self.test_info_list = tmp_pd.values.tolist()[12:]
@@ -352,6 +354,10 @@ class Application(QMainWindow):  # QWidget):
                     self.single_columns = self.single_columns + self.list_of_test_numbers_string
                     self.df_csv.columns = self.single_columns
                     self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string  # [12:]
+
+                    # Data cleaning, get rid of '(F)'
+                    self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
+                    self.df_csv.iloc[:, 12:] = self.df_csv.iloc[:, 12:].astype('float')
 
                     # Extract the test name and test number list
                     # self.list_of_test_numbers = [('','ALL DATA')]
@@ -550,9 +556,14 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
-            all_data_array = all_data_array[~np.isnan(all_data_array)]
+            all_data_array = df_csv.iloc[:, i + 12].to_numpy()
+            ## Get rid of all no-string value to NaN, and replace to None
+            # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
+            # all_data_array = all_data_array[~np.isnan(all_data_array)]
+
+            ## Get rid of (F) and conver to float on series
             # all_data_array = df_csv.iloc[:, i + 12].str.replace(r'\(F\)', '').astype(float).to_numpy()
+
             units = Backend.get_units(test_info_list, test_list[i], num_of_sites)
 
             minimum = Backend.get_plot_min(test_info_list, test_list[i], num_of_sites)
