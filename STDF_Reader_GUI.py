@@ -1539,6 +1539,7 @@ class MyTestResultProfiler:
         self.job_nam = ''
 
         self.tname_tnumber_dict = {}
+        self.sbin_description = {}
 
     def after_begin(self, dataSource):
         self.reset_flag = False
@@ -1555,6 +1556,7 @@ class MyTestResultProfiler:
         self.wafer_id = ''
 
         self.tname_tnumber_dict = {}
+        self.sbin_description = {}
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -1661,8 +1663,19 @@ class MyTestResultProfiler:
                 self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False)
         pass
 
+        if rectype == V4.sbr:
+            sbin_num = str(fields[V4.sbr.SBIN_NUM])
+            sbin_nam = fields[V4.sbr.SBIN_NAM]
+            self.sbin_description[sbin_num] = sbin_nam
+            pass
+
     def after_complete(self, dataSource):
         start_t = time.time()
+        self.generate_data_summary()
+        end_t = time.time()
+        print('CSV生成时间：', end_t - start_t)
+
+    def generate_data_summary(self):
         if not self.all_test_result_pd.empty:
 
             frame = self.all_test_result_pd
@@ -1696,8 +1709,9 @@ class MyTestResultProfiler:
             frame.to_csv(self.filename)
         else:
             print("No test result samples found :(")
-        end_t = time.time()
-        print('CSV生成时间：', end_t - start_t)
+
+    def generate_bin_summary(self):
+        pass
 
 
 # Get STR, PSR data from STDF V4-2007.1
