@@ -1429,7 +1429,7 @@ class FileReaders(ABC):
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
 
-        fname = filename + "_csv_log.csv"
+        fname = filename # + "_csv_log.csv"
         startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
         # Writing to a text file instead of vomiting it to the console
@@ -1680,7 +1680,7 @@ class MyTestResultProfiler:
             # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
             # frame.Mu
             # new_frame = pd.DataFrame(frame.iloc[:,:], columns=mcol)
-            frame.to_csv(self.filename)
+            frame.to_csv(self.filename + "_csv_log.csv")
         else:
             print("No test result samples found :(")
 
@@ -1689,7 +1689,7 @@ class MyTestResultProfiler:
         self.sbin_counts = self.all_test_result_pd.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
                                                                aggfunc='count', margins=True).copy()
         self.bin_summary_pd = self.sbin_counts.rename(index=self.sbin_description).copy()
-        self.bin_summary_pd.to_csv('bin_summary.csv')
+        self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
         pass
 
 
