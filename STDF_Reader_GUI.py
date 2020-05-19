@@ -1639,7 +1639,7 @@ class MyTestResultProfiler:
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
-            self.sbin_description[sbin_num] = str(sbin_num) + ' - ' + sbin_nam
+            self.sbin_description[sbin_num] = str(sbin_num) + ' - ' + str(sbin_nam)
             pass
 
     def after_complete(self, dataSource):
