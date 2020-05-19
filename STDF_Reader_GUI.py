@@ -473,42 +473,15 @@ class Application(QMainWindow):  # QWidget):
 
             # In case someone has the file open
             try:
-
-                # Names the file appropriately
-                if self.file_path.endswith('_parsed.txt'):
-
-                    table.to_csv(path_or_buf=csv_summary_name)
-                    self.status_text.setText(
-                        str(csv_summary_name + " written successfully!"))
-
-                    self.progress_bar.setValue(100)
-
-                else:
-
-                    table.to_csv(path_or_buf=csv_summary_name)
-                    self.status_text.setText(
-                        str(csv_summary_name + " written successfully!"))
-
-                    self.progress_bar.setValue(100)
-
+                table.to_csv(path_or_buf=csv_summary_name)
+                self.status_text.setText(
+                    str(csv_summary_name + " written successfully!"))
+                self.progress_bar.setValue(100)
             except PermissionError:
-
-                if self.file_path.endswith('_parsed.txt'):
-
-                    self.status_text.setText(
-                        str("Please close " + csv_summary_name + "_summary.csv"))
-
-                    self.progress_bar.setValue(0)
-
-                else:
-
-                    self.status_text.setText(str(
-                        "Please close " + csv_summary_name.split('/')[-1] + "_summary.csv"))
-
-                    self.progress_bar.setValue(0)
-
+                self.status_text.setText(
+                    str("Please close " + csv_summary_name + "_summary.csv"))
+                self.progress_bar.setValue(0)
         else:
-
             self.status_text.setText('Please select a file')
 
     # Chooses the tests to be run for the graphical processing
@@ -1664,14 +1637,14 @@ class MyTestResultProfiler:
         pass
 
         if rectype == V4.sbr:
-            sbin_num = str(fields[V4.sbr.SBIN_NUM])
+            sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
-            self.sbin_description[sbin_num] = sbin_nam
+            self.sbin_description[sbin_num] = str(sbin_num) + ' - ' + sbin_nam
             pass
 
     def after_complete(self, dataSource):
         start_t = time.time()
-        # self.generate_bin_summary()
+        self.generate_bin_summary()
         self.generate_data_summary()
         end_t = time.time()
         print('CSV生成时间：', end_t - start_t)
@@ -1712,9 +1685,10 @@ class MyTestResultProfiler:
             print("No test result samples found :(")
 
     def generate_bin_summary(self):
-        self.sbin_counts = self.all_test_result_pd['SOFT_BIN'].value_counts().to_dict()
-        # self.all_test_result_pd['PART_ID'].groupby([self.all_test_result_pd['SITE_NUM'],self.all_test_result_pd['SOFT_BIN']]).count()
-        self.bin_summary_pd = pd.DataFrame.from_dict(self.sbin_description, orient='index')
+
+        self.sbin_counts = self.all_test_result_pd.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
+                                                               aggfunc='count', margins=True).copy()
+        self.bin_summary_pd = self.sbin_counts.rename(index=self.sbin_description).copy()
         self.bin_summary_pd.to_csv('bin_summary.csv')
         pass
 
