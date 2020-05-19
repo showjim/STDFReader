@@ -1671,6 +1671,7 @@ class MyTestResultProfiler:
 
     def after_complete(self, dataSource):
         start_t = time.time()
+        # self.generate_bin_summary()
         self.generate_data_summary()
         end_t = time.time()
         print('CSV生成时间：', end_t - start_t)
@@ -1711,6 +1712,10 @@ class MyTestResultProfiler:
             print("No test result samples found :(")
 
     def generate_bin_summary(self):
+        self.sbin_counts = self.all_test_result_pd['SOFT_BIN'].value_counts().to_dict()
+        # self.all_test_result_pd['PART_ID'].groupby([self.all_test_result_pd['SITE_NUM'],self.all_test_result_pd['SOFT_BIN']]).count()
+        self.bin_summary_pd = pd.DataFrame.from_dict(self.sbin_description, orient='index')
+        self.bin_summary_pd.to_csv('bin_summary.csv')
         pass
 
 
