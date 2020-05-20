@@ -1513,6 +1513,7 @@ class MyTestResultProfiler:
 
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
+        self.DIE_ID = []
 
     def after_begin(self, dataSource):
         self.reset_flag = False
@@ -1530,6 +1531,7 @@ class MyTestResultProfiler:
 
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
+        self.DIE_ID = []
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -1539,6 +1541,7 @@ class MyTestResultProfiler:
             self.lot_id = str(fields[V4.mir.LOT_ID])
         if rectype == V4.wir:
             self.wafer_id = str(fields[V4.wir.WAFER_ID])
+            self.DIE_ID = []
         # Then, yummy parametric results
         if rectype == V4.pir:
             if self.reset_flag:
@@ -1612,11 +1615,13 @@ class MyTestResultProfiler:
                     s_bin = fields[V4.prr.SOFT_BIN]
                     test_time = fields[V4.prr.TEST_T]
                     # To judge the device is retested or not
-                    if (part_flg & 0x1) ^ (part_flg & 0x2) == 1:
+                    die_id = self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
+                    if (part_flg & 0x1) ^ (part_flg & 0x2) == 1 or (die_id in self.DIE_ID):
                         rc = 'Retest'
                     else:
                         rc = 'First'
-
+                    self.DIE_ID.append(die_id)
+                    
                     self.test_result_dict['JOB_NAM'].append(self.job_nam)
                     self.test_result_dict['LOT_ID'].append(self.lot_id)
                     self.test_result_dict['WAFER_ID'].append(self.wafer_id)
@@ -1628,6 +1633,7 @@ class MyTestResultProfiler:
                     self.test_result_dict['HARD_BIN'].append(h_bin)
                     self.test_result_dict['SOFT_BIN'].append(s_bin)
                     self.test_result_dict['TEST_T'].append(test_time)
+
             # Send current part result to all test result pd
             if fields[V4.prr.SITE_NUM] == self.test_result_dict['SITE_NUM'][-1]:
                 # tmp_pd = pd.DataFrame(self.test_result_dict)
