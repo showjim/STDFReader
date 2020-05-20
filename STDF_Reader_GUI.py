@@ -59,7 +59,7 @@ import xlsxwriter
 
 # from numba import jit
 
-Version = 'Beta 0.3.1'
+Version = 'Beta 0.3.2'
 
 
 ###################################################
