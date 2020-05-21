@@ -106,17 +106,17 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button = QPushButton('Parse STD/STDF to .xlsx table (very slow)')
-        self.stdf_upload_button.setToolTip(
-            'Browse for a file ending in .std to create a parsed .xlsx file')
-        self.stdf_upload_button.clicked.connect(self.open_parsing_dialog_xlsx)
-
-        # Button to parse to .csv/.xlsx
-        self.stdf_upload_button_xlsx = QPushButton(
-            'Parse STD/STDF to .csv log')
+        self.stdf_upload_button_xlsx = QPushButton('Parse STD/STDF to .xlsx table (very slow)')
         self.stdf_upload_button_xlsx.setToolTip(
+            'Browse for a file ending in .std to create a parsed .xlsx file')
+        self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
+
+        # Button to parse to .csv
+        self.stdf_upload_button = QPushButton(
+            'Parse STD/STDF to .csv log')
+        self.stdf_upload_button.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
-        self.stdf_upload_button_xlsx.clicked.connect(
+        self.stdf_upload_button.clicked.connect(
             self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
@@ -184,8 +184,8 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_task.notify_progress_bar.connect(self.on_progress)
         self.threaded_task.notify_status_text.connect(self.on_update_text)
 
-        self.threaded_text_parser = TextParseThread()
-        self.threaded_text_parser.notify_status_text.connect(
+        self.threaded_csv_parser = CsvParseThread()
+        self.threaded_csv_parser.notify_status_text.connect(
             self.on_update_text)
 
         self.generate_pdf_button.setEnabled(False)
@@ -208,8 +208,8 @@ class Application(QMainWindow):  # QWidget):
 
         # Adds the widgets together in the grid
         layout.addWidget(self.status_text, 0, 0, 1, 2)
-        layout.addWidget(self.stdf_upload_button, 1, 0)
-        layout.addWidget(self.stdf_upload_button_xlsx, 1, 1)
+        layout.addWidget(self.stdf_upload_button_xlsx, 1, 0)
+        layout.addWidget(self.stdf_upload_button, 1, 1)
         layout.addWidget(self.txt_upload_button, 2, 0, 1, 2)
         layout.addWidget(self.generate_summary_button, 3, 0)  # , 1, 2)
         layout.addWidget(self.generate_summary_button_split, 3, 1)
@@ -265,23 +265,30 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a file to parse the data to an csv
     def open_parsing_dialog_csv(self):
-
-        self.status_text.setText('Parsing to .csv file, please wait...')
-        filterboi = 'STDF (*.stdf *.std)'
-        filepath = QFileDialog.getOpenFileName(
-            caption='Open STDF File', filter=filterboi)
-
-        if filepath[0] == '':
-
-            self.status_text.setText('Please select a file')
-            pass
-
+        if True:
+            self.stdf_upload_button.setEnabled(False)
+            self.threaded_csv_parser = CsvParseThread()
+            self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
+            self.threaded_csv_parser.start()
+            self.stdf_upload_button.setEnabled(True)
+            self.main_window()
         else:
+            self.status_text.setText('Parsing to .csv file, please wait...')
+            filterboi = 'STDF (*.stdf *.std)'
+            filepath = QFileDialog.getOpenFileName(
+                caption='Open STDF File', filter=filterboi)
 
-            self.status_text.update()
-            FileReaders.to_csv(filepath[0])
-            self.status_text.setText(
-                str(filepath[0].split('/')[-1] + '_csv_log.csv created!'))
+            if filepath[0] == '':
+
+                self.status_text.setText('Please select a file')
+                pass
+
+            else:
+
+                self.status_text.update()
+                FileReaders.to_csv(filepath[0])
+                self.status_text.setText(
+                    str(filepath[0].split('/')[-1] + '_csv_log.csv created!'))
 
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
@@ -757,6 +764,32 @@ class TextParseThread(QThread):
                 str(filepath[0].split('/')[-1] + '_parsed.txt created!'))
 
 
+class CsvParseThread(QThread):
+    notify_status_text = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+
+        QThread.__init__(self, parent)
+
+    # Opens and reads a file to parse the data
+    def run(self):
+
+        self.notify_status_text.emit('Parsing to .csv, please wait...')
+        filterboi = 'STDF (*.stdf *.std)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open STDF File', filter=filterboi)
+
+        if filepath[0] == '':
+
+            self.notify_status_text.emit('Please select a file')
+            pass
+
+        else:
+
+            FileReaders.to_csv(filepath[0])
+            self.notify_status_text.emit(
+                str(filepath[0].split('/')[-1] + '_csv_log.csv created!'))
+
 ###################################################
 
 #####################
@@ -1059,6 +1092,10 @@ class Backend(ABC):
             maximum = 0
 
         if (minimum == float('-inf')) or (maximum == float('inf')):
+            minimum = 0
+            maximum = 0
+
+        if (minimum is None) and (maximum is None):
             minimum = 0
             maximum = 0
         # Big boi initialization
