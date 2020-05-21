@@ -188,6 +188,10 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_csv_parser.notify_status_text.connect(
             self.on_update_text)
 
+        self.threaded_xlsx_parser = XlsxParseThread(file_path=self.file_path)
+        self.threaded_xlsx_parser.notify_status_text.connect(
+            self.on_update_text)
+
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
         self.generate_summary_button.setEnabled(False)
@@ -286,28 +290,30 @@ class Application(QMainWindow):  # QWidget):
         self.stdf_upload_button.setEnabled(True)
         self.main_window()
 
-    def set_progress_bar_max(self):
-        self.progress_bar.setMaximum(100)
-
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
+
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(0)
 
         self.status_text.setText('Parsing to .xlsx file, please wait...')
         filterboi = 'STDF (*.stdf *.std)'
         filepath = QFileDialog.getOpenFileName(
             caption='Open STDF File', filter=filterboi)
 
-        if filepath[0] == '':
+        self.status_text.update()
+        self.stdf_upload_button_xlsx.setEnabled(False)
+        self.threaded_xlsx_parser = XlsxParseThread(filepath[0])
+        self.threaded_xlsx_parser.notify_status_text.connect(self.on_update_text)
+        self.threaded_xlsx_parser.finished.connect(self.set_progress_bar_max)
+        self.threaded_xlsx_parser.start()
+        self.stdf_upload_button_xlsx.setEnabled(True)
+        self.main_window()
 
-            self.status_text.setText('Please select a file')
-            pass
 
-        else:
 
-            self.status_text.update()
-            FileReaders.to_excel(filepath[0])
-            self.status_text.setText(
-                str(filepath[0].split('/')[-1] + '_excel.xlsx created!'))
+    def set_progress_bar_max(self):
+        self.progress_bar.setMaximum(100)
 
     # Checks if the toggle by limits mark is checked or not
     def toggler(self, state):
@@ -784,6 +790,29 @@ class CsvParseThread(QThread):
             FileReaders.to_csv(self.filepath)
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_csv_log.csv created!'))
+
+
+class XlsxParseThread(QThread):
+    notify_status_text = pyqtSignal(str)
+
+    def __init__(self, file_path, parent=None):
+
+        QThread.__init__(self, parent)
+        self.filepath = file_path
+
+    # Opens and reads a file to parse the data
+    def run(self):
+
+        if self.filepath[0] == '':
+
+            self.notify_status_text.emit('Please select a file')
+            pass
+
+        else:
+
+            FileReaders.to_excel(self.filepath)
+            self.notify_status_text.emit(
+                str(self.filepath.split('/')[-1] + '_excel.xlsx created!'))
 
 ###################################################
 
