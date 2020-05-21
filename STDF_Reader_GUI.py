@@ -265,6 +265,9 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a file to parse the data to an csv
     def open_parsing_dialog_csv(self):
+        # I can not figure out the process when parse STDF, so...
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(0)
 
         # Move QFileDialog out of QThread, in case of error under win 7
         self.status_text.setText('Parsing to .csv file, please wait...')
@@ -278,9 +281,13 @@ class Application(QMainWindow):  # QWidget):
         self.stdf_upload_button.setEnabled(False)
         self.threaded_csv_parser = CsvParseThread(filepath[0])
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
+        self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_csv_parser.start()
         self.stdf_upload_button.setEnabled(True)
         self.main_window()
+
+    def set_progress_bar_max(self):
+        self.progress_bar.setMaximum(100)
 
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
