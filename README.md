@@ -1,12 +1,14 @@
 # STDF Reader Tool
 
 This project is designed for AP team to process and analyze Teradyne's STDF/STD file format.
-![Semantic description of image](/img/Win_Capture.PNG)
+![GUI](/img/Win_Capture.PNG)
 
 ## How to use
 
 1. Convert STDF/STD file to ASCII CSV file by click button "Parse STD/STDF to .csv log", and select the stdf file, the CSV output is shown as below;
-![Semantic description of image](/img/Win_Capture4.PNG)
+![Data Summary](/img/Win_Capture4.PNG "Data Summary")
+![Bin Summary](/img/Bin_Summary.PNG "Bin Summary")
+![Wafer Map](/img/Wafer_Map.PNG "Wafer Map")
 1. Or, you can generate a XLSX table by click button "Parse STD/STDF to .xlsx table", to exam the structure, like PSR/STR/PTR etc;
 ![Semantic description of image](/img/Xlsx_Capture.PNG)
 3. Upload the CSV file which generated in step 1 by click button "Upload parsed .csv file";
