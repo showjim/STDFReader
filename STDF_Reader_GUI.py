@@ -801,7 +801,7 @@ class XlsxParseThread(QThread):
     # Opens and reads a file to parse the data
     def run(self):
 
-        if self.filepath[0] == '':
+        if self.filepath == '':
 
             self.notify_status_text.emit('Please select a file')
             pass
