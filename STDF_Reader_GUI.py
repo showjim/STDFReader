@@ -1751,17 +1751,47 @@ class MyTestResultProfiler:
             print("No test result samples found :(")
 
     def generate_bin_summary(self):
-
-        self.sbin_counts = self.all_test_result_pd.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
+        all_bin_summary_list = []
+        lot_id_list = self.all_test_result_pd['LOT_ID'].unique()
+        for lot_id in lot_id_list:
+            wafer_id_list = self.all_test_result_pd['WAFER_ID'].unique()
+            for wafer_id in wafer_id_list:
+                self.single_wafer_df = self.all_test_result_pd[self.all_test_result_pd['LOT_ID'].isin([lot_id]) &
+                                                               self.all_test_result_pd['WAFER_ID'].isin([wafer_id])]
+                die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
+                sbin_counts = self.single_wafer_df.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
                                                                aggfunc='count', margins=True, fill_value=0).copy()
-        self.bin_summary_pd = self.sbin_counts.rename(index=self.sbin_description).copy()
-        self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
+                bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
+                bin_summary_pd.index.name = die_id
+                all_bin_summary_list.append(bin_summary_pd)
+        # self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
+        f = open(self.filename + '_bin_summary.csv', 'w')
+        for temp_df in all_bin_summary_list:
+            temp_df.to_csv(f, line_terminator='\n')
+            f.write('\n')
+        f.close()
 
     def generate_wafer_map(self):
         # Get wafer map
-        wafer_map_df = self.all_test_result_pd.pivot_table(values='SOFT_BIN', index='Y_COORD',
-                                                           columns='X_COORD', aggfunc=lambda x: int(tuple(x)[-1]))
-        wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
+        all_wafer_map_list = []
+        lot_id_list = self.all_test_result_pd['LOT_ID'].unique()
+        for lot_id in lot_id_list:
+            wafer_id_list = self.all_test_result_pd['WAFER_ID'].unique()
+            for wafer_id in wafer_id_list:
+                self.single_wafer_df = self.all_test_result_pd[self.all_test_result_pd['LOT_ID'].isin([lot_id]) &
+                                                               self.all_test_result_pd['WAFER_ID'].isin([wafer_id])]
+                die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
+                wafer_map_df = self.single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD',columns='X_COORD',
+                                                                aggfunc=lambda x: int(tuple(x)[-1]))
+                wafer_map_df.index.name = die_id
+                all_wafer_map_list.append(wafer_map_df)
+        # wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
+        # pd.concat(all_wafer_map_list).to_csv(self.filename + '_wafer_map.csv')
+        f = open(self.filename + '_wafer_map.csv', 'w')
+        for temp_df in all_wafer_map_list:
+            temp_df.to_csv(f, line_terminator='\n')
+            f.write('\n')
+        f.close()
 
 
 # Get STR, PSR data from STDF V4-2007.1
