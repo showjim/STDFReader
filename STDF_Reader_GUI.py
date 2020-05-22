@@ -59,7 +59,7 @@ import xlsxwriter
 
 # from numba import jit
 
-Version = 'Beta 0.3.3'
+Version = 'Beta 0.3.4'
 
 
 ###################################################
@@ -472,7 +472,7 @@ class Application(QMainWindow):  # QWidget):
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers[1: len(self.list_of_test_numbers)], merge_sites)
 
-            self.progress_bar.setValue(10)
+            self.progress_bar.setValue(90)
 
             if merge_sites == True:
                 csv_summary_name = str(
@@ -568,7 +568,7 @@ class Application(QMainWindow):  # QWidget):
                     summary_results.append(Backend.site_array(
                         site_test_data, minimum, maximum, j, units))
 
-            self.progress_bar.setValue(60 + i / len(test_list) * 20)
+            self.progress_bar.setValue(20 + i / len(test_list) * 60)
         endt = time.time()
         print('Site Data Analysis Time: ', endt - startt)
         test_names = []
@@ -1710,6 +1710,7 @@ class MyTestResultProfiler:
     def after_complete(self, dataSource):
         start_t = time.time()
         self.generate_bin_summary()
+        self.generate_wafer_map()
         self.generate_data_summary()
         end_t = time.time()
         print('CSV生成时间：', end_t - start_t)
@@ -1752,10 +1753,15 @@ class MyTestResultProfiler:
     def generate_bin_summary(self):
 
         self.sbin_counts = self.all_test_result_pd.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
-                                                               aggfunc='count', margins=True).copy()
+                                                               aggfunc='count', margins=True, fill_value=0).copy()
         self.bin_summary_pd = self.sbin_counts.rename(index=self.sbin_description).copy()
         self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
-        pass
+
+    def generate_wafer_map(self):
+        # Get wafer map
+        wafer_map_df = self.all_test_result_pd.pivot_table(values='SOFT_BIN', index='Y_COORD',
+                                                           columns='X_COORD', aggfunc=lambda x: int(tuple(x)[-1]))
+        wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
 
 
 # Get STR, PSR data from STDF V4-2007.1
