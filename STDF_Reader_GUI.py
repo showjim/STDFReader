@@ -59,7 +59,7 @@ import xlsxwriter
 
 # from numba import jit
 
-Version = 'Beta 0.3.4'
+Version = 'Beta 0.3.5'
 
 
 ###################################################
@@ -705,8 +705,8 @@ class PdfWriterThread(QThread):
                 #                                errors='coerce').dropna().values.tolist()
                 site_test_data_list.append(site_test_data)
             pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites, self.selected_tests,
-                self.limits_toggled))
+                site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites,
+                self.selected_tests, self.limits_toggled))
 
             pdfTemp.close()
 
