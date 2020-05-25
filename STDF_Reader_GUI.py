@@ -662,12 +662,12 @@ class PdfWriterThread(QThread):
             for i in range(1, len(self.list_of_test_numbers)):
                 site_test_data_list = []
                 for j in self.sdr_parse:
-                    site_test_data = site_test_data_dic[str(j)].iloc[:, i - 1 + 12].values.tolist()
-
+                    site_test_data = site_test_data_dic[str(j)].iloc[:, i - 1 + 12].to_numpy()
+                    tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                     ## Ignore fail value
                     # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
                     #                                errors='coerce').dropna().values.tolist()
-                    site_test_data_list.append(site_test_data)
+                    site_test_data_list.append(tmp_site_test_data_list)
                 all_data_array = site_test_data_list
                 pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
@@ -698,12 +698,12 @@ class PdfWriterThread(QThread):
             site_test_data_list = []
             column_name = ' - '.join(self.selected_tests)
             for j in self.sdr_parse:
-                site_test_data = site_test_data_dic[str(j)][column_name].values.tolist()
-
+                site_test_data = site_test_data_dic[str(j)][column_name].to_numpy()
+                tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                 ## Ignore fail value
                 # site_test_data = pd.to_numeric(site_test_data_dic[str(j)][column_name],
                 #                                errors='coerce').dropna().values.tolist()
-                site_test_data_list.append(site_test_data)
+                site_test_data_list.append(tmp_site_test_data_list)
             pdfTemp.savefig(Backend.plot_everything_from_one_test(
                 site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites,
                 self.selected_tests, self.limits_toggled))
