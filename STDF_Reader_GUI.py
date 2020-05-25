@@ -1573,6 +1573,7 @@ class MyTestResultProfiler:
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
         self.DIE_ID = []
+        self.lastrectype = None
 
     def after_begin(self, dataSource):
         self.reset_flag = False
@@ -1591,6 +1592,7 @@ class MyTestResultProfiler:
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
         self.DIE_ID = []
+        self.lastrectype = None
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -1603,7 +1605,7 @@ class MyTestResultProfiler:
             self.DIE_ID = []
         # Then, yummy parametric results
         if rectype == V4.pir:
-            if self.reset_flag:
+            if self.reset_flag or self.lastrectype != rectype:
                 self.reset_flag = False
                 self.site_count = 0
                 self.site_array = []
@@ -1699,13 +1701,12 @@ class MyTestResultProfiler:
                 tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
                 # tmp_pd.transpose()
                 self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False)
-        pass
-
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
             self.sbin_description[sbin_num] = str(sbin_num) + ' - ' + str(sbin_nam)
-            pass
+
+        self.lastrectype = rectype
 
     def after_complete(self, dataSource):
         start_t = time.time()
