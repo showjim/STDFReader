@@ -476,10 +476,10 @@ class Application(QMainWindow):  # QWidget):
 
             if merge_sites == True:
                 csv_summary_name = str(
-                    self.file_path[:-11].split('/')[-1] + "_merge_summary.csv")
+                    self.file_path[:-11] + "_merge_summary.csv")
             else:
                 csv_summary_name = str(
-                    self.file_path[:-11].split('/')[-1] + "_split_summary.csv")
+                    self.file_path[:-11] + "_split_summary.csv")
 
             # In case someone has the file open
             try:
