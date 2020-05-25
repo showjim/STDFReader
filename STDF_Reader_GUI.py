@@ -531,7 +531,7 @@ class Application(QMainWindow):  # QWidget):
         sdr_parse = self.sdr_parse
         startt = time.time()
 
-        # Extract test data per for later usage, to improve time performance
+        # Extract test data per site for later usage, to improve time performance
         if not merge_sites:
             site_test_data_dic = {}
             for j in sdr_parse:
@@ -542,7 +542,7 @@ class Application(QMainWindow):  # QWidget):
             all_data_array = df_csv.iloc[:, i + 12].to_numpy()
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
-            # all_data_array = all_data_array[~np.isnan(all_data_array)]
+            all_data_array = all_data_array[~np.isnan(all_data_array)]
 
             ## Get rid of (F) and conver to float on series
             # all_data_array = df_csv.iloc[:, i + 12].str.replace(r'\(F\)', '').astype(float).to_numpy()
@@ -562,7 +562,7 @@ class Application(QMainWindow):  # QWidget):
                     site_test_data = site_test_data_df.iloc[:, i + 12].to_numpy()
 
                     ## Get rid of (F) and conver to float on series
-                    site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
+                    # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
                     summary_results.append(Backend.site_array(
@@ -1605,6 +1605,7 @@ class MyTestResultProfiler:
             self.DIE_ID = []
         # Then, yummy parametric results
         if rectype == V4.pir:
+            # Found BPS and EPS in sample stdf, add 'lastrectype' to overcome it
             if self.reset_flag or self.lastrectype != rectype:
                 self.reset_flag = False
                 self.site_count = 0
