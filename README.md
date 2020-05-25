@@ -5,7 +5,7 @@ This project is designed for AP team to process and analyze Teradyne's STDF/STD 
 
 ## How to use
 
-1. Convert STDF/STD file to ASCII CSV file by click button "Parse STD/STDF to .csv log", and select the stdf file, the CSV output is shown as below;
+1. Convert STDF/STD file to ASCII CSV file by click button "Parse STD/STDF to .csv log", and select the stdf file, the CSV **Data Summary/Bin Summary/Wafer Map** output is shown as below;
 ![Data Summary](/img/Win_Capture4.PNG "Data Summary")
 ![Bin Summary](/img/Bin_Summary.PNG "Bin Summary")
 ![Wafer Map](/img/Wafer_Map.PNG "Wafer Map")
