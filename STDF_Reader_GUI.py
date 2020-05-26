@@ -1763,8 +1763,8 @@ class MyTestResultProfiler:
                 die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
                 retest_die_df = self.single_wafer_df[self.single_wafer_df['RC'].isin(['Retest'])]
                 retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
-                mask = (self.single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & 
-                       (self.single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & 
+                mask = (self.single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & \
+                       (self.single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & \
                        (self.single_wafer_df['RC'].isin(['First']))
                 self.single_wafer_df=self.single_wafer_df[~mask.any(0)]
                 sbin_counts = self.single_wafer_df.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
@@ -1792,6 +1792,8 @@ class MyTestResultProfiler:
                 wafer_map_df = self.single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD',columns='X_COORD',
                                                                 aggfunc=lambda x: int(tuple(x)[-1]))
                 wafer_map_df.index.name = die_id
+                # Sort Y from low to high
+                wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
                 all_wafer_map_list.append(wafer_map_df)
         # wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
         # pd.concat(all_wafer_map_list).to_csv(self.filename + '_wafer_map.csv')
