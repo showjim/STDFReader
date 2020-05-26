@@ -1761,6 +1761,12 @@ class MyTestResultProfiler:
                 self.single_wafer_df = self.all_test_result_pd[self.all_test_result_pd['LOT_ID'].isin([lot_id]) &
                                                                self.all_test_result_pd['WAFER_ID'].isin([wafer_id])]
                 die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
+                retest_die_df = self.single_wafer_df[self.single_wafer_df['RC'].isin(['Retest'])]
+                retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
+                mask = (self.single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & 
+                       (self.single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & 
+                       (self.single_wafer_df['RC'].isin(['First']))
+                self.single_wafer_df=self.single_wafer_df[~mask.any(0)]
                 sbin_counts = self.single_wafer_df.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
                                                                aggfunc='count', margins=True, fill_value=0).copy()
                 bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
