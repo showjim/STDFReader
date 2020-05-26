@@ -308,8 +308,6 @@ class Application(QMainWindow):  # QWidget):
         self.stdf_upload_button_xlsx.setEnabled(True)
         self.main_window()
 
-
-
     def set_progress_bar_max(self):
         self.progress_bar.setMaximum(100)
 
@@ -811,6 +809,7 @@ class XlsxParseThread(QThread):
             FileReaders.to_excel(self.filepath)
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_excel.xlsx created!'))
+
 
 ###################################################
 
@@ -1488,7 +1487,7 @@ class FileReaders(ABC):
         # I guess I'm making a parsing object here, but again I didn't write this part
         p = Parser(inp=f, reopen_fn=reopen_fn)
 
-        fname = filename # + "_csv_log.csv"
+        fname = filename  # + "_csv_log.csv"
         startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
         # Writing to a text file instead of vomiting it to the console
@@ -1677,13 +1676,14 @@ class MyTestResultProfiler:
                     s_bin = fields[V4.prr.SOFT_BIN]
                     test_time = fields[V4.prr.TEST_T]
                     # To judge the device is retested or not
-                    die_id = self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
+                    die_id = self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(
+                        die_y)
                     if (part_flg & 0x1) ^ (part_flg & 0x2) == 1 or (die_id in self.DIE_ID):
                         rc = 'Retest'
                     else:
                         rc = 'First'
                     self.DIE_ID.append(die_id)
-                    
+
                     self.test_result_dict['JOB_NAM'].append(self.job_nam)
                     self.test_result_dict['LOT_ID'].append(self.lot_id)
                     self.test_result_dict['WAFER_ID'].append(self.wafer_id)
@@ -1766,7 +1766,7 @@ class MyTestResultProfiler:
                 mask = (self.single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & \
                        (self.single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & \
                        (self.single_wafer_df['RC'].isin(['First']))
-                self.single_wafer_df=self.single_wafer_df[~mask.any(0)]
+                self.single_wafer_df = self.single_wafer_df[~mask.any(axis=0)]
                 sbin_counts = self.single_wafer_df.pivot_table('PART_ID', index='SOFT_BIN', columns='SITE_NUM',
                                                                aggfunc='count', margins=True, fill_value=0).copy()
                 bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
@@ -1789,7 +1789,7 @@ class MyTestResultProfiler:
                 self.single_wafer_df = self.all_test_result_pd[self.all_test_result_pd['LOT_ID'].isin([lot_id]) &
                                                                self.all_test_result_pd['WAFER_ID'].isin([wafer_id])]
                 die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
-                wafer_map_df = self.single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD',columns='X_COORD',
+                wafer_map_df = self.single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD', columns='X_COORD',
                                                                 aggfunc=lambda x: int(tuple(x)[-1]))
                 wafer_map_df.index.name = die_id
                 # Sort Y from low to high
