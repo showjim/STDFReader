@@ -618,10 +618,6 @@ class ComboCheckBox(QComboBox):
             self.qCheckBox[index].setChecked(True)  # 选中组件
         return QComboBox.showPopup(self)
 
-    def printResults(self):
-        list = self.Selectlist()
-        print(list)
-
     def addQCheckBox(self, i):
         self.qCheckBox.append(QCheckBox())
         qItem = QListWidgetItem(self.qListWidget)
@@ -629,36 +625,38 @@ class ComboCheckBox(QComboBox):
         self.qListWidget.setItemWidget(qItem, self.qCheckBox[i])
 
     def Selectlist(self):
-        Outputlist = []
-        for i in range(1, self.row_num):
-            if self.qCheckBox[i].isChecked() == True:
-                Outputlist.append(self.qCheckBox[i].text())
+        Outputlist = [ch.text() for ch in self.qCheckBox[1:] if ch.isChecked()]
+        # for i in range(1, self.row_num):
+        #     if self.qCheckBox[i].isChecked():
+        #         Outputlist.append(self.qCheckBox[i].text())
         self.Selectedrow_num = len(Outputlist)
         return Outputlist
 
     def showMessage(self):
-        Outputlist = self.Selectlist()
         self.qLineEdit.setReadOnly(False)
         self.qLineEdit.clear()
-        show = ';'.join(Outputlist)
+        Outputlist = self.Selectlist()
 
         if self.Selectedrow_num == 0:
-            self.qCheckBox[0].setCheckState(0)
+            self.qCheckBox[0].setCheckState(0)  # Clear, nothing is selected
+            show = ''
         elif self.Selectedrow_num == self.row_num - 1:
-            self.qCheckBox[0].setCheckState(2)
+            self.qCheckBox[0].setCheckState(2)  # All are selected
+            show = 'ALL DATA'
         else:
-            self.qCheckBox[0].setCheckState(1)
+            self.qCheckBox[0].setCheckState(1)  # Part is/are selected
+            show = ';'.join(Outputlist)
         self.qLineEdit.setText(show)
         self.qLineEdit.setReadOnly(True)
 
-    def All(self, zhuangtai):
-        if zhuangtai == 2:
+    def All(self, check_state):
+        if check_state == 2:
             for i in range(1, self.row_num):
                 self.qCheckBox[i].setChecked(True)
-        elif zhuangtai == 1:
+        elif check_state == 1:
             if self.Selectedrow_num == 0:
                 self.qCheckBox[0].setCheckState(2)
-        elif zhuangtai == 0:
+        elif check_state == 0:
             self.clear()
 
     def clear(self):
