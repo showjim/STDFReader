@@ -145,7 +145,6 @@ class Application(QMainWindow):  # QWidget):
         self.select_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
         self.select_test_menu.setToolTip(
             'Select the tests to produce the PDF results for')
-        # self.select_test_menu.textActivated[str].connect(self.selection_change)
 
         # Button to generate the test results for the desired tests from the selected menu
         self.generate_pdf_button = QPushButton(
@@ -429,17 +428,6 @@ class Application(QMainWindow):  # QWidget):
 
                 self.status_text.setText('Please select a file')
 
-    def hard_way_to_reorder(self, tname_list, sdr_parse, df_csv):
-        # The hard way
-        all_test_data_list = []
-        for j in range(len(tname_list)):
-            all_test_list = []
-            for i in sdr_parse:
-                tmp_df = df_csv[df_csv.iloc[:, 4] == i]
-                all_test_list.append(tmp_df.iloc[:, j + 12].values.tolist())
-            all_test_data_list.append(all_test_list)
-        return all_test_data_list
-
     def list_duplicates_of(self, seq, item, start_index):  # start_index is to reduce the complex
         start_at = -1
         locs = []
@@ -488,29 +476,6 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
-
-    # Chooses the tests to be run for the graphical processing
-    def selection_change(self, i):
-
-        if i == 'ALL DATA':
-            self.selected_tests = [['', 'ALL DATA']]
-
-            # self.all_test = self.df_csv
-            pass
-
-        else:
-            self.selected_tests = i  # .split(' - ')  # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
-            pass
-            # all_ptr_test = []
-            # for i in range(0, len(self.selected_tests)):
-            #     all_ptr_test.append(Backend.ptr_extractor(
-            #         self.number_of_sites, self.list_of_test_numbers_string, self.df_csv, self.selected_tests[i]))
-
-            # Gathers each set of data from all runs for each site in all selected tests
-            # self.all_test = all_ptr_test  # []
-            # for i in range(len(all_ptr_test)):
-            #     self.all_test.append(Backend.single_test_data(
-            #         self.number_of_sites, all_ptr_test[i]))
 
     # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites):
@@ -1410,8 +1375,7 @@ class Backend(ABC):
         # np.clip(site_data, binboi[0], binboi[-1])
 
     # Creates an array of arrays that has the raw data for each test site in one particular test
-    # Given the integer number of sites under test and the Array result from ptr_extractor for a certain test num + name,
-    #   expect a 2D array with each row being the reran test results for each of the sites in a particular test
+    # expect a 2D array with each row being the reran test results for each of the sites in a particular test
     @staticmethod
     def single_test_data(num_of_sites, extracted_ptr):
 
@@ -1432,23 +1396,6 @@ class Backend(ABC):
             single_test.append(single_site)
 
         return single_test
-
-    # Integer (Number_of_sites), Parsed List of Strings (ptr_data specifically), tuple ([test_number, test_name])
-    #   Returns -> array with just the relevant test data parsed along '|'
-    # It grabs the data for a certain test in the PTR data and turns that specific test into an array of arrays
-    @staticmethod
-    def ptr_extractor(num_of_sites, tname_list, data, test_number):
-
-        # Finds where in the data to start looking for the test in question
-        # for i in range(0, len(data)):
-        #     if (test_number[0] in data[i]) and (test_number[1] in data[i]):  # 10 second in debug, win
-        #         ptr_array_test.append(data[i].split("|"))
-
-        test_index = tname_list.index(test_number[0] + ' - ' + test_number[1])
-        if test_index >= 1:
-            ptr_array_test = data[:, test_index + 12]
-        # Returns the array weow!
-        return ptr_array_test
 
     # For the four following functions, site_data is a list of raw floating point data, minimum is the lower limit and
     # maximum is the upper limit
