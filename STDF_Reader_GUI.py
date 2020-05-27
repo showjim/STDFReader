@@ -492,6 +492,7 @@ class Application(QMainWindow):  # QWidget):
 
         # Extract test data per site for later usage, to improve time performance
         if not merge_sites:
+            parameters[0] = 'Site'
             site_test_data_dic = {}
             for j in sdr_parse:
                 site_test_data_dic[str(j)] = df_csv[df_csv.SITE_NUM == j]
