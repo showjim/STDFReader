@@ -59,7 +59,7 @@ import xlsxwriter
 
 # from numba import jit
 
-Version = 'Beta 0.3.6'
+Version = 'Beta 0.3.7'
 
 
 ###################################################
@@ -142,10 +142,10 @@ class Application(QMainWindow):  # QWidget):
             lambda: self.make_csv(False))
 
         # Selects a test result for the desired
-        self.select_test_menu = QComboBox()
+        self.select_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
         self.select_test_menu.setToolTip(
             'Select the tests to produce the PDF results for')
-        self.select_test_menu.activated[str].connect(self.selection_change)
+        # self.select_test_menu.textActivated[str].connect(self.selection_change)
 
         # Button to generate the test results for the desired tests from the selected menu
         self.generate_pdf_button = QPushButton(
@@ -337,7 +337,7 @@ class Application(QMainWindow):  # QWidget):
                 # self.txt_upload_button.setEnabled(False)
 
                 self.progress_bar.setValue(0)
-                self.list_of_test_numbers = [['', 'ALL DATA']]
+                self.list_of_test_numbers = []
                 list_of_duplicate_test_numbers = []
                 startt = time.time()
 
@@ -361,16 +361,13 @@ class Application(QMainWindow):  # QWidget):
                     # Change the multi-level columns to single level columns
                     self.single_columns = self.single_columns + self.list_of_test_numbers_string
                     self.df_csv.columns = self.single_columns
-                    self.list_of_test_numbers_string = ['ALL DATA'] + self.list_of_test_numbers_string  # [12:]
 
                     # Data cleaning, get rid of '(F)'
                     self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
                     self.df_csv.iloc[:, 12:] = self.df_csv.iloc[:, 12:].astype('float')
 
                     # Extract the test name and test number list
-                    # self.list_of_test_numbers = [('','ALL DATA')]
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
-                    self.list_of_test_numbers = [['', 'ALL DATA']] + self.list_of_test_numbers
 
                     # Get site array
                     self.sdr_parse = self.df_csv.iloc[:, 4].unique()
@@ -406,10 +403,10 @@ class Application(QMainWindow):  # QWidget):
 
                 self.file_selected = True
 
-                self.select_test_menu.addItems(
+                self.select_test_menu.loadItems(
                     self.list_of_test_numbers_string)
 
-                self.selected_tests = [['', 'ALL DATA']]
+                self.selected_tests = []
 
                 # log parsed document, if duplicate test number exist, show warning !
                 if len(list_of_duplicate_test_numbers) > 0:
@@ -502,8 +499,7 @@ class Application(QMainWindow):  # QWidget):
             pass
 
         else:
-            self.selected_tests = i.split(
-                ' - ')  # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
+            self.selected_tests = i  # .split(' - ')  # Backend.find_tests_of_number(i.split(' - ')[0], self.list_of_test_numbers[1:])
             pass
             # all_ptr_test = []
             # for i in range(0, len(self.selected_tests)):
@@ -599,7 +595,7 @@ class Application(QMainWindow):  # QWidget):
             self.generate_pdf_button.setEnabled(False)
             self.select_test_menu.setEnabled(False)
             self.limit_toggle.setEnabled(False)
-
+            self.selected_tests = self.select_test_menu.Selectlist()
             self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.df_csv,
                                                  ptr_data=self.test_info_list,
                                                  number_of_sites=self.number_of_sites,
@@ -625,6 +621,93 @@ class Application(QMainWindow):  # QWidget):
 
     def on_update_text(self, txt):
         self.status_text.setText(txt)
+
+
+class ComboCheckBox(QComboBox):
+    def loadItems(self, items):
+        self.items = items
+        self.items.insert(0, 'ALL DATA')
+        self.row_num = len(self.items)
+        self.Selectedrow_num = 0
+        self.qCheckBox = []
+        self.qLineEdit = QLineEdit()
+        self.qLineEdit.setReadOnly(True)
+        self.qListWidget = QListWidget()
+        self.addQCheckBox(0)
+        self.qCheckBox[0].stateChanged.connect(self.All)
+        for i in range(0, self.row_num):
+            self.addQCheckBox(i)
+            self.qCheckBox[i].stateChanged.connect(self.showMessage)
+        self.setModel(self.qListWidget.model())
+        self.setView(self.qListWidget)
+        self.setLineEdit(self.qLineEdit)
+        # self.qLineEdit.textChanged.connect(self.printResults)
+
+    def showPopup(self):
+        #  重写showPopup方法，避免下拉框数据多而导致显示不全的问题
+        select_list = self.Selectlist()  # 当前选择数据
+        self.loadItems(items=self.items[1:])  # 重新添加组件
+        for select in select_list:
+            index = self.items[:].index(select)
+            self.qCheckBox[index].setChecked(True)  # 选中组件
+        return QComboBox.showPopup(self)
+
+    def printResults(self):
+        list = self.Selectlist()
+        print(list)
+
+    def addQCheckBox(self, i):
+        self.qCheckBox.append(QCheckBox())
+        qItem = QListWidgetItem(self.qListWidget)
+        self.qCheckBox[i].setText(self.items[i])
+        self.qListWidget.setItemWidget(qItem, self.qCheckBox[i])
+
+    def Selectlist(self):
+        Outputlist = []
+        for i in range(1, self.row_num):
+            if self.qCheckBox[i].isChecked() == True:
+                Outputlist.append(self.qCheckBox[i].text())
+        self.Selectedrow_num = len(Outputlist)
+        return Outputlist
+
+    def showMessage(self):
+        Outputlist = self.Selectlist()
+        self.qLineEdit.setReadOnly(False)
+        self.qLineEdit.clear()
+        show = ';'.join(Outputlist)
+
+        if self.Selectedrow_num == 0:
+            self.qCheckBox[0].setCheckState(0)
+        elif self.Selectedrow_num == self.row_num - 1:
+            self.qCheckBox[0].setCheckState(2)
+        else:
+            self.qCheckBox[0].setCheckState(1)
+        self.qLineEdit.setText(show)
+        self.qLineEdit.setReadOnly(True)
+
+    def All(self, zhuangtai):
+        if zhuangtai == 2:
+            for i in range(1, self.row_num):
+                self.qCheckBox[i].setChecked(True)
+        elif zhuangtai == 1:
+            if self.Selectedrow_num == 0:
+                self.qCheckBox[0].setCheckState(2)
+        elif zhuangtai == 0:
+            self.clear()
+
+    def clear(self):
+        for i in range(self.row_num):
+            self.qCheckBox[i].setChecked(False)
+
+    def currentText(self):
+        text = QComboBox.currentText(self).split(';')
+        if text.__len__() == 1:
+            if not text[0]:
+                return []
+            else:
+                return "('{}')".format("','".join(text))
+        else:
+            return "('{}')".format("','".join(text))
 
 
 # Attempt to utilize multithreading so the program doesn't feel like it's crashing every time I do literally anything
@@ -655,12 +738,13 @@ class PdfWriterThread(QThread):
         for j in self.sdr_parse:
             site_test_data_dic[str(j)] = self.df_csv[self.df_csv.SITE_NUM == j]
 
-        if self.selected_tests == [['', 'ALL DATA']]:
+        # if self.selected_tests == [['', 'ALL DATA']]:
+        if len(self.selected_tests) > 0:
 
-            for i in range(1, len(self.list_of_test_numbers)):
+            for i in range(len(self.selected_tests)):
                 site_test_data_list = []
                 for j in self.sdr_parse:
-                    site_test_data = site_test_data_dic[str(j)].iloc[:, i - 1 + 12].to_numpy()
+                    site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
                     tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                     ## Ignore fail value
                     # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
@@ -672,8 +756,7 @@ class PdfWriterThread(QThread):
                 plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
                     all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
-                    self.list_of_test_numbers[i],
-                    self.limits_toggled))
+                    self.selected_tests[i].split(' - '), self.limits_toggled))
 
                 pdfTemp.close()
 
@@ -681,42 +764,18 @@ class PdfWriterThread(QThread):
                     str(self.file_path + "_results_temp"), "rb"))
 
                 self.notify_status_text.emit(str(str(
-                    i) + "/" + str(len(self.list_of_test_numbers[1:])) + " test results completed"))
+                    i) + "/" + str(len(self.selected_tests)) + " test results completed"))
 
                 self.notify_progress_bar.emit(
-                    int((i + 1) / len(self.list_of_test_numbers[1:]) * 90))
+                    int((i + 1) / len(self.selected_tests) * 90))
 
                 plt.close()
 
         else:
-
-            # for i in range(0, len(self.selected_tests)):
-            pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
-            plt.figure(figsize=(11, 8.5))
-            site_test_data_list = []
-            column_name = ' - '.join(self.selected_tests)
-            for j in self.sdr_parse:
-                site_test_data = site_test_data_dic[str(j)][column_name].to_numpy()
-                tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
-                ## Ignore fail value
-                # site_test_data = pd.to_numeric(site_test_data_dic[str(j)][column_name],
-                #                                errors='coerce').dropna().values.tolist()
-                site_test_data_list.append(tmp_site_test_data_list)
-            pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                site_test_data_list, self.sdr_parse, self.test_info_list, self.number_of_sites,
-                self.selected_tests, self.limits_toggled))
-
-            pdfTemp.close()
-
-            pp.append(PdfFileReader(
-                str(self.file_path + "_results_temp"), "rb"))
-
             self.notify_status_text.emit(
-                str("Parsed csv test results completed"))
+                str("There is no test instance selected!"))
+            self.notify_progress_bar.emit(0)
 
-            self.notify_progress_bar.emit(90)
-
-            plt.close()
         endt = time.time()
         print('PDF Data Analysis Time: ', endt - startt)
         os.remove(str(self.file_path + "_results_temp"))
