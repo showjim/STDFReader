@@ -775,6 +775,7 @@ class PdfWriterThread(QThread):
             self.notify_status_text.emit(
                 str("There is no test instance selected!"))
             self.notify_progress_bar.emit(0)
+            return
 
         endt = time.time()
         print('PDF Data Analysis Time: ', endt - startt)
