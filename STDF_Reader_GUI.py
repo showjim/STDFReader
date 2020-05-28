@@ -56,6 +56,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 import time
 import xlsxwriter
+import logging
 
 # from numba import jit
 
@@ -1868,8 +1869,11 @@ class My_STDF_V4_2007_1_Profiler:
 
 # Execute me
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    nice = Application()
-
-    sys.exit(app.exec_())
+    # initialize the log settings
+    logging.basicConfig(filename='app.log', level=logging.ERROR)
+    try:
+        app = QApplication(sys.argv)
+        nice = Application()
+        sys.exit(app.exec_())
+    except Exception as e:
+        logging.exception(str(e))
