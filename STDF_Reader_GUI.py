@@ -571,16 +571,21 @@ class Application(QMainWindow):  # QWidget):
 
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)
-
+            self.threaded_task.finished.connect(self.restore_menu)
             self.threaded_task.start()
 
-            self.generate_pdf_button.setEnabled(True)
-            self.select_test_menu.setEnabled(True)
-            self.limit_toggle.setEnabled(True)
+            # self.generate_pdf_button.setEnabled(False)
+            # self.select_test_menu.setEnabled(False)
+            # self.limit_toggle.setEnabled(False)
             self.main_window()
         else:
 
             self.status_text.setText('Please select a file')
+
+    def restore_menu(self):
+        self.generate_pdf_button.setEnabled(True)
+        self.select_test_menu.setEnabled(True)
+        self.limit_toggle.setEnabled(True)
 
     def on_progress(self, i):
         self.progress_bar.setValue(i)
