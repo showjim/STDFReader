@@ -1633,44 +1633,47 @@ class MyTestResultProfiler:
                                                          str(fields[V4.ptr.HI_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.LO_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.UNITS])
+            # Be careful here, Hi/Low limit only stored in first PTR
+            # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
+            #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
+            #                 str(fields[V4.ptr.UNITS])
+            current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
+            full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
+            if not (full_tname_tnumber in self.test_result_dict):
+                self.test_result_dict[full_tname_tnumber] = [None] * self.site_count
+            else:
+                pass
+                # if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
+                #     # print('Duplicate test number found for test: ', tname_tnumber)
+                #     return
+
             for i in range(self.site_count):
                 if fields[V4.ptr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-                    # Be careful here, Hi/Low limit only stored in first PTR
-                    # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
-                    #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
-                    #                 str(fields[V4.ptr.UNITS])
-                    current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
-                    full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
-                    if not (full_tname_tnumber in self.test_result_dict):
-                        self.test_result_dict[full_tname_tnumber] = []
-                    else:
-                        if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
-                            # print('Duplicate test number found for test: ', tname_tnumber)
-                            return
                     if fields[V4.ptr.TEST_FLG] == 0:
                         ptr_result = str(fields[V4.ptr.RESULT])
                     else:
                         ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
-                    self.test_result_dict[full_tname_tnumber].append(ptr_result)
+                    self.test_result_dict[full_tname_tnumber][i] = ptr_result
 
         # This is the functional test results
         if rectype == V4.ftr:
+            tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' + \
+                            fields[V4.ftr.VECT_NAM]
+            if not (tname_tnumber in self.test_result_dict):
+                self.test_result_dict[tname_tnumber] = [None] * self.site_count
+            else:
+                pass
+                # if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
+                #     # print('Duplicate test number found for test: ', tname_tnumber)
+                #     return
             for i in range(self.site_count):
                 if fields[V4.ftr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-
-                    tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' + \
-                                    fields[V4.ftr.VECT_NAM]
-                    if not (tname_tnumber in self.test_result_dict):
-                        self.test_result_dict[tname_tnumber] = []
-                    else:
-                        if len(self.test_result_dict[tname_tnumber]) >= self.site_count:
-                            # print('Duplicate test number found for test: ', tname_tnumber)
-                            return
                     if fields[V4.ftr.TEST_FLG] == 0:
                         ftr_result = '-1'
                     else:
                         ftr_result = '0(F)'
-                    self.test_result_dict[tname_tnumber].append(ftr_result)
+                    self.test_result_dict[tname_tnumber][i] = ftr_result
+
         if rectype == V4.eps:
             self.reset_flag = True
         if rectype == V4.prr:  # and fields[V4.prr.SITE_NUM]:
