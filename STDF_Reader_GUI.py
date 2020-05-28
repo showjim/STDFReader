@@ -601,7 +601,7 @@ class ComboCheckBox(QComboBox):
         self.qListWidget = QListWidget()
         self.addQCheckBox(0)
         self.qCheckBox[0].stateChanged.connect(self.All)
-        for i in range(0, self.row_num):
+        for i in range(1, self.row_num):
             self.addQCheckBox(i)
             self.qCheckBox[i].stateChanged.connect(self.showMessage)
         self.setModel(self.qListWidget.model())
@@ -611,11 +611,11 @@ class ComboCheckBox(QComboBox):
 
     def showPopup(self):
         #  重写showPopup方法，避免下拉框数据多而导致显示不全的问题
-        select_list = self.Selectlist()  # 当前选择数据
-        self.loadItems(items=self.items[1:])  # 重新添加组件
-        for select in select_list:
-            index = self.items[:].index(select)
-            self.qCheckBox[index].setChecked(True)  # 选中组件
+        # select_list = self.Selectlist()  # 当前选择数据
+        # self.loadItems(items=self.items[1:])  # 重新添加组件
+        # for select in select_list:
+        #     index = self.items[:].index(select)
+        #     self.qCheckBox[index].setChecked(True)  # 选中组件
         return QComboBox.showPopup(self)
 
     def addQCheckBox(self, i):
@@ -650,28 +650,25 @@ class ComboCheckBox(QComboBox):
         self.qLineEdit.setReadOnly(True)
 
     def All(self, check_state):
+        # disconnect 'showMessage' to improve time performance
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.disconnect()
         if check_state == 2:
             for i in range(1, self.row_num):
                 self.qCheckBox[i].setChecked(True)
+            self.showMessage()
         elif check_state == 1:
             if self.Selectedrow_num == 0:
                 self.qCheckBox[0].setCheckState(2)
         elif check_state == 0:
             self.clear()
+            self.showMessage()
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.connect(self.showMessage)
 
     def clear(self):
         for i in range(self.row_num):
             self.qCheckBox[i].setChecked(False)
-
-    def currentText(self):
-        text = QComboBox.currentText(self).split(';')
-        if text.__len__() == 1:
-            if not text[0]:
-                return []
-            else:
-                return "('{}')".format("','".join(text))
-        else:
-            return "('{}')".format("','".join(text))
 
 
 # Attempt to utilize multithreading so the program doesn't feel like it's crashing every time I do literally anything
