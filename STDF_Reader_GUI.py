@@ -1872,15 +1872,18 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         return
 
     logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-    exit(0)
-
-sys.excepthook = handle_exception
+    sys.exit(0)
 
 # Execute me
 if __name__ == '__main__':
     # initialize the log settings
-    logging.basicConfig(filename='app.log', level=logging.ERROR,
+    if getattr(sys, 'frozen', False):
+        pathname = os.path.dirname(sys.executable)
+    else:
+        pathname = os.path.dirname(__file__)
+    logging.basicConfig(filename=pathname+'\\app.log', level=logging.ERROR,
                         format='%(asctime)s - %(levelname)s - %(message)s')
+    sys.excepthook = handle_exception
     app = QApplication(sys.argv)
     nice = Application()
     sys.exit(app.exec_())
