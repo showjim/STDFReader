@@ -60,7 +60,7 @@ import logging
 
 # from numba import jit
 
-Version = 'Beta 0.3.9'
+Version = 'Beta 0.3.9.2'
 
 
 ###################################################
@@ -82,7 +82,7 @@ class Application(QMainWindow):  # QWidget):
         # Have to read the imported .txt file but I'm not totally sure how
         self.data = None
         self.number_of_sites = None
-        self.list_of_test_numbers = [['', 'ALL DATA']]
+        self.list_of_test_numbers = []
         self.list_of_test_numbers_string = []
         self.tnumber_list = []
         self.tname_list = []
@@ -454,7 +454,7 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(0)
 
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers[1: len(self.list_of_test_numbers)], merge_sites)
+                                           self.list_of_test_numbers, merge_sites)
 
             self.progress_bar.setValue(90)
 
