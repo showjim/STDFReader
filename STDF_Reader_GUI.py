@@ -1866,13 +1866,17 @@ class My_STDF_V4_2007_1_Profiler:
         else:
             print("No test time samples found :(")
 
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
 
-    logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-    sys.exit(0)
+class MyExceptHook(ABC):
+    @staticmethod
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        sys.exit(0)
+
 
 # Execute me
 if __name__ == '__main__':
@@ -1881,9 +1885,9 @@ if __name__ == '__main__':
         pathname = os.path.dirname(sys.executable)
     else:
         pathname = os.path.dirname(__file__)
-    logging.basicConfig(filename=pathname+'\\app.log', level=logging.ERROR,
+    logging.basicConfig(filename=pathname + '\\app.log', level=logging.ERROR,
                         format='%(asctime)s - %(levelname)s - %(message)s')
-    sys.excepthook = handle_exception
+    sys.excepthook = MyExceptHook.handle_exception
     app = QApplication(sys.argv)
     nice = Application()
     sys.exit(app.exec_())
