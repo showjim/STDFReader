@@ -275,13 +275,13 @@ class Application(QMainWindow):  # QWidget):
         # Move QFileDialog out of QThread, in case of error under win 7
         self.status_text.setText('Parsing to .csv file, please wait...')
         filterboi = 'STDF (*.stdf *.std)'
-        filepath = QFileDialog.getOpenFileName(
+        filepath = QFileDialog.getOpenFileNames(
             caption='Open STDF File', filter=filterboi)
 
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
         self.progress_bar.setMaximum(0)
-        self.threaded_csv_parser = CsvParseThread(filepath[0])
+        self.threaded_csv_parser = CsvParseThread(filepath)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_csv_parser.start()
@@ -352,10 +352,10 @@ class Application(QMainWindow):  # QWidget):
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
-                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:12]  # Get the part info
-                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[12:]
-                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[12:]
-                    self.test_info_list = tmp_pd.values.tolist()[12:]
+                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
+                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
+                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
+                    self.test_info_list = tmp_pd.values.tolist()[16:]
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
                                                         zip(self.tname_list, self.tnumber_list)]
                     # Change the multi-level columns to single level columns
@@ -364,7 +364,7 @@ class Application(QMainWindow):  # QWidget):
 
                     # Data cleaning, get rid of '(F)'
                     self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
-                    self.df_csv.iloc[:, 12:] = self.df_csv.iloc[:, 12:].astype('float')
+                    self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
 
                     # Extract the test name and test number list
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -500,7 +500,7 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = df_csv.iloc[:, i + 12].to_numpy()
+            all_data_array = df_csv.iloc[:, i + 16].to_numpy()
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
@@ -520,7 +520,7 @@ class Application(QMainWindow):  # QWidget):
             else:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = site_test_data_df.iloc[:, i + 12].to_numpy()
+                    site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy()
 
                     ## Get rid of (F) and conver to float on series
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
@@ -809,8 +809,11 @@ class CsvParseThread(QThread):
             pass
 
         else:
-
-            FileReaders.to_csv(self.filepath)
+            if len(self.filepath[0]) == 1:
+                output_file_name = self.filepath[0][0]
+            else:
+                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'
+            FileReaders.to_csv(self.filepath[0], output_file_name)
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_csv_log.csv created!'))
 
@@ -1487,24 +1490,24 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_csv(filename):
+    def to_csv(file_names, output_file_name):
+        for filename in file_names:
+            # Open std file/s
+            f = open(filename, 'rb')
+            reopen_fn = None
 
-        # Open that bad boi up
-        f = open(filename, 'rb')
-        reopen_fn = None
+            # I guess I'm making a parsing object here, but again I didn't write this part
+            p = Parser(inp=f, reopen_fn=reopen_fn)
 
-        # I guess I'm making a parsing object here, but again I didn't write this part
-        p = Parser(inp=f, reopen_fn=reopen_fn)
+            fname = filename  # + "_csv_log.csv"
+            startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
-        fname = filename  # + "_csv_log.csv"
-        startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+            # Writing to a text file instead of vomiting it to the console
+            p.addSink(MyTestResultProfiler(filename=fname, outputname=output_file_name))
+            p.parse()
 
-        # Writing to a text file instead of vomiting it to the console
-        p.addSink(MyTestResultProfiler(filename=fname))
-        p.parse()
-
-        endt = time.time()
-        print('STDF处理时间：', endt - startt)
+            endt = time.time()
+            print('STDF处理时间：', endt - startt)
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
@@ -1565,7 +1568,8 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self, filename):
+    def __init__(self, filename, outputname):
+        self.outputname = outputname
         self.filename = filename
         self.reset_flag = False
         self.total = 0
@@ -1574,6 +1578,10 @@ class MyTestResultProfiler:
         self.site_array = []
         self.test_result_dict = {}
 
+        self.file_nam = self.filename.split('/')[-1]
+        self.tester_nam = ''
+        self.start_t = ''
+        self.pgm_nam = ''
         self.lot_id = ''
         self.wafer_id = ''
         self.job_nam = ''
@@ -1589,13 +1597,20 @@ class MyTestResultProfiler:
         self.count = 0
         self.site_count = 0
         self.site_array = []
-        self.test_result_dict = {'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [], 'X_COORD': [],
-                                 'Y_COORD': [], 'PART_ID': [], 'RC': [], 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
+        self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
+                                 'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
+                                 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'RC': [],
+                                 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
 
         self.all_test_result_pd = pd.DataFrame()
 
+        self.file_nam = self.filename.split('/')[-1]
+        self.tester_nam = ''
+        self.start_t = ''
+        self.pgm_nam = ''
         self.lot_id = ''
         self.wafer_id = ''
+        self.job_nam = ''
 
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
@@ -1606,6 +1621,8 @@ class MyTestResultProfiler:
         rectype, fields = data
         # First, get lot/wafer ID etc.
         if rectype == V4.mir:
+            self.tester_nam = str(fields[V4.mir.NODE_NAM])
+            self.start_t = str(fields[V4.mir.START_T])
             self.job_nam = str(fields[V4.mir.JOB_NAM])
             self.lot_id = str(fields[V4.mir.LOT_ID])
         if rectype == V4.wir:
@@ -1619,13 +1636,16 @@ class MyTestResultProfiler:
                 self.site_count = 0
                 self.site_array = []
                 # self.all_test_result_pd = self.all_test_result_pd.append(pd.DataFrame(self.test_result_dict))
-                self.test_result_dict = {'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [], 'X_COORD': [],
-                                         'Y_COORD': [], 'PART_ID': [], 'RC': [], 'HARD_BIN': [], 'SOFT_BIN': [],
-                                         'TEST_T': []}
+                self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
+                                         'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
+                                         'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'RC': [],
+                                         'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
 
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
+        if rectype == V4.bps:
+            self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
             if not (tname_tnumber in self.tname_tnumber_dict):
@@ -1688,13 +1708,17 @@ class MyTestResultProfiler:
                     s_bin = fields[V4.prr.SOFT_BIN]
                     test_time = fields[V4.prr.TEST_T]
                     # To judge the device is retested or not
-                    die_id = self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(
-                        die_y)
+                    die_id = self.pgm_nam + '-' + self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
                     if (part_flg & 0x1) ^ (part_flg & 0x2) == 1 or (die_id in self.DIE_ID):
                         rc = 'Retest'
                     else:
                         rc = 'First'
                     self.DIE_ID.append(die_id)
+
+                    self.test_result_dict['FILE_NAM'].append(self.file_nam)
+                    self.test_result_dict['TESTER_NAM'].append(self.tester_nam)
+                    self.test_result_dict['START_T'].append(self.start_t)
+                    self.test_result_dict['PGM_NAM'].append(self.pgm_nam)
 
                     self.test_result_dict['JOB_NAM'].append(self.job_nam)
                     self.test_result_dict['LOT_ID'].append(self.lot_id)
@@ -1760,7 +1784,7 @@ class MyTestResultProfiler:
             # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
             # frame.Mu
             # new_frame = pd.DataFrame(frame.iloc[:,:], columns=mcol)
-            frame.to_csv(self.filename + "_csv_log.csv")
+            frame.to_csv(self.outputname + "_csv_log.csv")
         else:
             print("No test result samples found :(")
 
