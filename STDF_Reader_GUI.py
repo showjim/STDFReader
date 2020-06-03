@@ -812,10 +812,12 @@ class CsvParseThread(QThread):
             if len(self.filepath[0]) == 1:
                 output_file_name = self.filepath[0][0]
             else:
-                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'
+                t = time.localtime()
+                current_time = str(time.strftime("%Y%m%d%H%M%S", t))
+                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary_' + current_time
             FileReaders.to_csv(self.filepath[0], output_file_name)
             self.notify_status_text.emit(
-                str(self.filepath.split('/')[-1] + '_csv_log.csv created!'))
+                str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
 
 
 class XlsxParseThread(QThread):
@@ -1491,6 +1493,7 @@ class FileReaders(ABC):
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
     def to_csv(file_names, output_file_name):
+        data_summary_all = pd.DataFrame()
         for filename in file_names:
             # Open std file/s
             f = open(filename, 'rb')
@@ -1503,11 +1506,14 @@ class FileReaders(ABC):
             startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
             # Writing to a text file instead of vomiting it to the console
-            p.addSink(MyTestResultProfiler(filename=fname, outputname=output_file_name))
+            data_summary = MyTestResultProfiler(filename=fname)
+            p.addSink(data_summary)
             p.parse()
 
             endt = time.time()
             print('STDF处理时间：', endt - startt)
+            data_summary_all = data_summary_all.append(data_summary.frame, sort=False)
+        data_summary_all.to_csv(output_file_name + "_csv_log.csv")
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
@@ -1568,8 +1574,7 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self, filename, outputname):
-        self.outputname = outputname
+    def __init__(self, filename):
         self.filename = filename
         self.reset_flag = False
         self.total = 0
@@ -1591,6 +1596,9 @@ class MyTestResultProfiler:
         self.DIE_ID = []
         self.lastrectype = None
 
+        self.all_test_result_pd = pd.DataFrame()
+        self.frame = pd.DataFrame()
+
     def after_begin(self, dataSource):
         self.reset_flag = False
         self.total = 0
@@ -1603,6 +1611,7 @@ class MyTestResultProfiler:
                                  'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
 
         self.all_test_result_pd = pd.DataFrame()
+        self.frame = pd.DataFrame()
 
         self.file_nam = self.filename.split('/')[-1]
         self.tester_nam = ''
@@ -1756,7 +1765,7 @@ class MyTestResultProfiler:
     def generate_data_summary(self):
         if not self.all_test_result_pd.empty:
 
-            frame = self.all_test_result_pd
+            self.frame = self.all_test_result_pd
             # Edit multi-level header
             # frame.set_index(['JOB_NAM', 'LOT_ID', 'WAFER_ID', 'SITE_NUM', 'X_COORD',
             #                              'Y_COORD', 'PART_ID', 'HARD_BIN', 'SOFT_BIN', 'TEST_T'])
@@ -1766,7 +1775,7 @@ class MyTestResultProfiler:
             hilimit_list = []
             lolimit_list = []
             unit_vect_nam_list = []
-            tmplist = frame.columns.values.tolist()
+            tmplist = self.frame.columns.values.tolist()
             for i in range(len(tmplist)):
                 if len(str(tmplist[i]).split('|')) == 1:
                     tname_list.append('')
@@ -1780,11 +1789,14 @@ class MyTestResultProfiler:
                     hilimit_list.append(str(tmplist[i]).split('|')[2])
                     lolimit_list.append(str(tmplist[i]).split('|')[3])
                     unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
-            frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
+            self.frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
             # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
             # frame.Mu
             # new_frame = pd.DataFrame(frame.iloc[:,:], columns=mcol)
-            frame.to_csv(self.outputname + "_csv_log.csv")
+            # frame.to_csv(self.outputname + "_csv_log.csv")
+            # f = open(self.outputname + '_csv_log.csv', 'a')
+            # self.frame.to_csv(f)
+            # f.close()
         else:
             print("No test result samples found :(")
 
