@@ -130,17 +130,17 @@ class Application(QMainWindow):  # QWidget):
         self.generate_summary_button = QPushButton(
             'Generate summary of all results (Sites Merge)')
         self.generate_summary_button.setToolTip(
-            'Generate a results .csv summary for the uploaded parsed .txt')
+            'Generate a result .csv summary for the uploaded parsed .csv')
         self.generate_summary_button.clicked.connect(
-            lambda: self.make_csv(True))
+            lambda: self.make_data_analysis_csv(True))
 
         # Generates a summary of the loaded text
         self.generate_summary_button_split = QPushButton(
             'Generate summary of all results (Sites Split)')
         self.generate_summary_button_split.setToolTip(
-            'Generate a results .csv summary for the uploaded parsed .txt')
+            'Generate a result .csv summary for the uploaded parsed .csv')
         self.generate_summary_button_split.clicked.connect(
-            lambda: self.make_csv(False))
+            lambda: self.make_data_analysis_csv(False))
 
         # Selects a test result for the desired
         self.select_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
@@ -158,6 +158,21 @@ class Application(QMainWindow):  # QWidget):
         self.limit_toggle.setChecked(True)
         self.limit_toggle.stateChanged.connect(self.toggler)
         self.limits_toggled = True
+
+        # Generates a correlation table of the loaded data
+        self.generate_correlation_button = QPushButton(
+            'Generate colleration of 2 stdf files')
+        self.generate_correlation_button.setToolTip(
+            'Generate a result .csv correlation report for the uploaded parsed .csv')
+        self.generate_correlation_button.clicked.connect(
+            lambda: self.make_correlation_table(False))
+
+        # Generates a wafer map comparison
+        self.generate_wafer_cmp_button = QPushButton(
+            'Generate wafer map comparison stdf files')
+        self.generate_wafer_cmp_button.setToolTip(
+            'Generate a wafer map comparison .csv for correlation')
+        self.generate_wafer_cmp_button.clicked.connect(self.make_wafer_map_cmp)
 
         self.progress_bar = QProgressBar()
 
@@ -197,6 +212,8 @@ class Application(QMainWindow):  # QWidget):
         self.generate_summary_button.setEnabled(False)
         self.generate_summary_button_split.setEnabled(False)
         self.limit_toggle.setEnabled(False)
+        self.generate_correlation_button.setEnabled(False)
+        self.generate_wafer_cmp_button.setEnabled(False)
 
         self.main_window()
 
@@ -209,6 +226,13 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.generate_pdf_button, 2, 0)
         layout.addWidget(self.limit_toggle, 2, 1)
         self.data_analysis_tab.setLayout(layout)
+
+    # Tab for data correlation
+    def tab_data_correlation(self):
+        layout = QGridLayout()
+        layout.addWidget(self.generate_correlation_button, 0, 0)
+        layout.addWidget(self.generate_wafer_cmp_button, 0, 1)
+        self.correlation_tab.setLayout(layout)
 
     # Main interface method
     def main_window(self):
@@ -230,6 +254,7 @@ class Application(QMainWindow):  # QWidget):
         self.data_analysis_tab = QWidget()
         self.correlation_tab = QWidget()
         self.tab_data_analysis()
+        self.tab_data_correlation()
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         layout.addWidget(tabs, 3, 0, 1, 2)
@@ -465,7 +490,7 @@ class Application(QMainWindow):  # QWidget):
         return locs
 
     # Handler for the summary button to generate a csv table results file for a summary of the data
-    def make_csv(self, merge_sites):
+    def make_data_analysis_csv(self, merge_sites):
 
         # Won't perform action unless there's actually a file
         if self.file_selected:
@@ -496,6 +521,12 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
+
+    def make_correlation_table(self, merge_sites):
+        pass
+
+    def make_wafer_map_cmp(self):
+        pass
 
     # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites):
