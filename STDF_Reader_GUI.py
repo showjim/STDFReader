@@ -159,13 +159,28 @@ class Application(QMainWindow):  # QWidget):
         self.limit_toggle.stateChanged.connect(self.toggler)
         self.limits_toggled = True
 
-        # Generates a correlation table of the loaded data
+        # Generates a correlation report for all sites of the loaded data
         self.generate_correlation_button = QPushButton(
-            'Generate colleration of 2 stdf files')
+            'Generate colleration of 2 stdf files(site merge)')
         self.generate_correlation_button.setToolTip(
-            'Generate a result .csv correlation report for the uploaded parsed .csv')
+            'Generate an all site merge correlation report')
         self.generate_correlation_button.clicked.connect(
+            lambda: self.make_correlation_table(True))
+
+        # Generates a correlation report for each site of the loaded data
+        self.generate_correlation_button_split = QPushButton(
+            'Generate colleration of 2 stdf files(site split)')
+        self.generate_correlation_button_split.setToolTip(
+            'Generate an site split correlation report')
+        self.generate_correlation_button_split.clicked.connect(
             lambda: self.make_correlation_table(False))
+
+        # Generates a correlation report for site2site compare
+        self.generate_correlation_button_s2s = QPushButton(
+            'Generate colleration of Site2Site')
+        self.generate_correlation_button_s2s.setToolTip(
+            'Generate an Site2Site correlation report')
+        self.generate_correlation_button_s2s.clicked.connect(self.make_s2s_correlation_table)
 
         # Generates a wafer map comparison
         self.generate_wafer_cmp_button = QPushButton(
@@ -213,6 +228,8 @@ class Application(QMainWindow):  # QWidget):
         self.generate_summary_button_split.setEnabled(False)
         self.limit_toggle.setEnabled(False)
         self.generate_correlation_button.setEnabled(False)
+        self.generate_correlation_button_split.setEnabled(False)
+        self.generate_correlation_button_s2s.setEnabled(False)
         self.generate_wafer_cmp_button.setEnabled(False)
 
         self.main_window()
@@ -231,7 +248,8 @@ class Application(QMainWindow):  # QWidget):
     def tab_data_correlation(self):
         layout = QGridLayout()
         layout.addWidget(self.generate_correlation_button, 0, 0)
-        layout.addWidget(self.generate_wafer_cmp_button, 0, 1)
+        layout.addWidget(self.generate_correlation_button_split, 0, 1)
+        layout.addWidget(self.generate_correlation_button_s2s, 1, 0)
         self.correlation_tab.setLayout(layout)
 
     # Main interface method
@@ -466,7 +484,10 @@ class Application(QMainWindow):  # QWidget):
                 self.generate_summary_button.setEnabled(True)
                 self.generate_summary_button_split.setEnabled(True)
                 self.limit_toggle.setEnabled(True)
-
+                self.generate_correlation_button.setEnabled(True)
+                self.generate_correlation_button_split.setEnabled(True)
+                self.generate_correlation_button_s2s.setEnabled(True)
+                self.generate_wafer_cmp_button.setEnabled(True)
                 self.main_window()
 
             else:
@@ -523,7 +544,71 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.setText('Please select a file')
 
     def make_correlation_table(self, merge_sites):
-        pass
+        file_list = self.df_csv['FILE_NAM'].unique()
+        if self.file_selected or len(file_list) > 1:
+            table_list = []
+            for file_name in file_list:
+                tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
+                table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
+                                                         self.list_of_test_numbers, merge_sites))
+            mean_delta = table_list[0].Mean.astype(float) - table_list[1].Mean.astype(float)
+            hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
+            lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
+            mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
+
+            if merge_sites == True:
+                correlation_df = pd.concat([table_list[0].LowLimit, table_list[0].HiLimit, table_list[0].Mean,
+                                            table_list[1].Mean, mean_delta, mean_delta_over_limit], axis=1)
+                correlation_df.columns = ['LowLimit', 'HiLimit', 'Mean(base)', 'Mean(cmp)', 'Mean Diff(base - cmp)',
+                                          'Mean Diff Over Limit']
+                csv_summary_name = str(self.file_path + "_correlation_table_site_merge.csv")
+            else:
+                correlation_df = pd.concat([table_list[0].Site, table_list[0].LowLimit, table_list[0].HiLimit,
+                                            table_list[0].Mean, table_list[1].Mean, mean_delta,
+                                            mean_delta_over_limit], axis=1)
+                correlation_df.columns = ['Site', 'LowLimit', 'HiLimit', 'Mean(base)', 'Mean(cmp)',
+                                          'Mean Diff(base - cmp)',
+                                          'Mean Diff Over Limit']
+                csv_summary_name = str(self.file_path + "_correlation_table_site_split.csv")
+
+            # In case someone has the file open
+            try:
+                correlation_df.to_csv(path_or_buf=csv_summary_name)
+                self.status_text.setText(
+                    str(csv_summary_name + " written successfully!"))
+                self.progress_bar.setValue(100)
+            except PermissionError:
+                self.status_text.setText(
+                    str("Please close " + csv_summary_name + "_correlation.csv"))
+                self.progress_bar.setValue(0)
+        else:
+            self.status_text.setText('Please select a file')
+
+    def make_s2s_correlation_table(self):
+        if self.file_selected:
+            table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
+                                           self.list_of_test_numbers, False)
+            site_list = table.Site.unique()
+            correlation_df = pd.concat([table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
+            columns = ['LowLimit', 'HiLimit']
+            for site in site_list:
+                correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean], axis=1)
+                columns = columns + ['Mean(site' + site + ')']
+            correlation_df.columns = columns
+            csv_summary_name = str(self.file_path + "_correlation_table_s2s.csv")
+
+            # In case someone has the file open
+            try:
+                correlation_df.to_csv(path_or_buf=csv_summary_name)
+                self.status_text.setText(
+                    str(csv_summary_name + " written successfully!"))
+                self.progress_bar.setValue(100)
+            except PermissionError:
+                self.status_text.setText(
+                    str("Please close " + csv_summary_name + "_correlation.csv"))
+                self.progress_bar.setValue(0)
+        else:
+            self.status_text.setText('Please select a file')
 
     def make_wafer_map_cmp(self):
         pass
@@ -864,7 +949,7 @@ class CsvParseThread(QThread):
             else:
                 t = time.localtime()
                 current_time = str(time.strftime("%Y%m%d%H%M%S", t))
-                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary' # + current_time
+                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'  # + current_time
             FileReaders.to_csv(self.filepath[0], output_file_name)
             self.notify_status_text.emit(
                 str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
@@ -1567,7 +1652,7 @@ class FileReaders(ABC):
             endt = time.time()
             print('STDF处理时间：', endt - startt)
             # data_summary_all = data_summary_all.append(data_summary.frame)
-            #data_summary_all = pd.concat([data_summary_all,data_summary.frame],sort=False,join='outer')
+            # data_summary_all = pd.concat([data_summary_all,data_summary.frame],sort=False,join='outer')
             if data_summary_all.empty:
                 data_summary_all = data_summary.frame
             else:
@@ -1776,7 +1861,8 @@ class MyTestResultProfiler:
                     s_bin = fields[V4.prr.SOFT_BIN]
                     test_time = fields[V4.prr.TEST_T]
                     # To judge the device is retested or not
-                    die_id = self.pgm_nam + '-' + self.job_nam + '-' + self.lot_id + '-' + str(self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
+                    die_id = self.pgm_nam + '-' + self.job_nam + '-' + self.lot_id + '-' + str(
+                        self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
                     if (part_flg & 0x1) ^ (part_flg & 0x2) == 1 or (die_id in self.DIE_ID):
                         rc = 'Retest'
                     else:
