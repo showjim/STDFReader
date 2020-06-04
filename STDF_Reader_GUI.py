@@ -589,23 +589,27 @@ class Application(QMainWindow):  # QWidget):
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers, False)
             site_list = table.Site.unique()
-            correlation_df = pd.concat([table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
-            columns = ['LowLimit', 'HiLimit']
-            for site in site_list:
-                correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean], axis=1)
-                columns = columns + ['Mean(site' + site + ')']
-            correlation_df.columns = columns
-            csv_summary_name = str(self.file_path + "_correlation_table_s2s.csv")
+            if len(site_list) > 1:
+                correlation_df = pd.concat([table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
+                columns = ['LowLimit', 'HiLimit']
+                for site in site_list:
+                    correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean], axis=1)
+                    columns = columns + ['Mean(site' + site + ')']
+                correlation_df.columns = columns
+                csv_summary_name = str(self.file_path + "_correlation_table_s2s.csv")
 
-            # In case someone has the file open
-            try:
-                correlation_df.to_csv(path_or_buf=csv_summary_name)
-                self.status_text.setText(
-                    str(csv_summary_name + " written successfully!"))
-                self.progress_bar.setValue(100)
-            except PermissionError:
-                self.status_text.setText(
-                    str("Please close " + csv_summary_name + "_correlation.csv"))
+                # In case someone has the file open
+                try:
+                    correlation_df.to_csv(path_or_buf=csv_summary_name)
+                    self.status_text.setText(
+                        str(csv_summary_name + " written successfully!"))
+                    self.progress_bar.setValue(100)
+                except PermissionError:
+                    self.status_text.setText(
+                        str("Please close " + csv_summary_name + "_correlation.csv"))
+                    self.progress_bar.setValue(0)
+            else:
+                self.status_text.setText('Only 1 site data found in csv file !!!')
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
