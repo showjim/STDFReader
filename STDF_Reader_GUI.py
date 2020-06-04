@@ -1779,7 +1779,8 @@ class MyTestResultProfiler:
         # First, get lot/wafer ID etc.
         if rectype == V4.mir:
             self.tester_nam = str(fields[V4.mir.NODE_NAM])
-            self.start_t = str(fields[V4.mir.START_T])
+            start_t = time.localtime(int(fields[V4.mir.START_T]))
+            self.start_t = str(time.strftime("%Y/%m/%d-%H:%M:%S", start_t))
             self.job_nam = str(fields[V4.mir.JOB_NAM])
             self.lot_id = str(fields[V4.mir.LOT_ID])
         if rectype == V4.wir:
