@@ -191,7 +191,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 300)
+        self.WINDOW_SIZE = (700, 280)
         self.file_path = None
         self.text_file_location = self.file_path
 
