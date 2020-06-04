@@ -814,7 +814,7 @@ class CsvParseThread(QThread):
             else:
                 t = time.localtime()
                 current_time = str(time.strftime("%Y%m%d%H%M%S", t))
-                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary_' + current_time
+                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary' # + current_time
             FileReaders.to_csv(self.filepath[0], output_file_name)
             self.notify_status_text.emit(
                 str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
@@ -1512,7 +1512,12 @@ class FileReaders(ABC):
 
             endt = time.time()
             print('STDF处理时间：', endt - startt)
-            data_summary_all = data_summary_all.append(data_summary.frame, sort=False)
+            # data_summary_all = data_summary_all.append(data_summary.frame)
+            #data_summary_all = pd.concat([data_summary_all,data_summary.frame],sort=False,join='outer')
+            if data_summary_all.empty:
+                data_summary_all = data_summary.frame
+            else:
+                data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
         data_summary_all.to_csv(output_file_name + "_csv_log.csv")
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
@@ -1746,7 +1751,7 @@ class MyTestResultProfiler:
                 # tmp_pd = pd.DataFrame(self.test_result_dict)
                 tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
                 # tmp_pd.transpose()
-                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False)
+                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, ignore_index=True)
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
