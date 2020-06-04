@@ -60,7 +60,7 @@ import logging
 
 # from numba import jit
 
-Version = 'Beta 0.3.9.2'
+Version = 'Beta 0.4.0'
 
 
 ###################################################
@@ -161,7 +161,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 230)
+        self.WINDOW_SIZE = (700, 300)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -200,6 +200,16 @@ class Application(QMainWindow):  # QWidget):
 
         self.main_window()
 
+    # Tab for data analysis
+    def tab_data_analysis(self):
+        layout = QGridLayout()
+        layout.addWidget(self.generate_summary_button, 0, 0)
+        layout.addWidget(self.generate_summary_button_split, 0, 1)
+        layout.addWidget(self.select_test_menu, 1, 0, 1, 2)
+        layout.addWidget(self.generate_pdf_button, 2, 0)
+        layout.addWidget(self.limit_toggle, 2, 1)
+        self.data_analysis_tab.setLayout(layout)
+
     # Main interface method
     def main_window(self):
         # self.setGeometry(300, 300, 300, 200)
@@ -215,11 +225,20 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.stdf_upload_button_xlsx, 1, 0)
         layout.addWidget(self.stdf_upload_button, 1, 1)
         layout.addWidget(self.txt_upload_button, 2, 0, 1, 2)
-        layout.addWidget(self.generate_summary_button, 3, 0)  # , 1, 2)
-        layout.addWidget(self.generate_summary_button_split, 3, 1)
-        layout.addWidget(self.select_test_menu, 4, 0, 1, 2)
-        layout.addWidget(self.generate_pdf_button, 5, 0)
-        layout.addWidget(self.limit_toggle, 5, 1)
+
+        tabs = QTabWidget(self)
+        self.data_analysis_tab = QWidget()
+        self.correlation_tab = QWidget()
+        self.tab_data_analysis()
+        tabs.addTab(self.data_analysis_tab, 'Data Analysis')
+        tabs.addTab(self.correlation_tab, 'Data Correlation')
+        layout.addWidget(tabs, 3, 0, 1, 2)
+
+        # layout.addWidget(self.generate_summary_button, 3, 0)  # , 1, 2)
+        # layout.addWidget(self.generate_summary_button_split, 3, 1)
+        # layout.addWidget(self.select_test_menu, 4, 0, 1, 2)
+        # layout.addWidget(self.generate_pdf_button, 5, 0)
+        # layout.addWidget(self.limit_toggle, 5, 1)
         layout.addWidget(self.progress_bar, 6, 0, 1, 2)
 
         # 创建一个 QWidget ，并将其布局设置为 layout_grid ：
@@ -370,7 +389,7 @@ class Application(QMainWindow):  # QWidget):
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
 
                     # Get site array
-                    self.sdr_parse = self.df_csv.iloc[:, 4].unique()
+                    self.sdr_parse = self.df_csv['SITE_NUM'].unique()
                     self.number_of_sites = len(self.sdr_parse)
 
                     # Check the duplicate test number
@@ -481,7 +500,7 @@ class Application(QMainWindow):  # QWidget):
     # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites):
 
-        parameters = ['Units', 'Runs', 'Fails', 'Min', 'Mean',
+        parameters = ['Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit', 'Min', 'Mean',
                       'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         summary_results = []
@@ -1140,6 +1159,8 @@ class Backend(ABC):
     @staticmethod
     def site_array(site_data, minimum, maximum, site_number, units):
 
+        high_limit = str(maximum)
+        low_limit = str(minimum)
         if minimum == 'n/a' and maximum == 'n/a':
             minimum = 0
             maximum = 0
@@ -1216,6 +1237,8 @@ class Backend(ABC):
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
         # try:
+        site_results.append(low_limit)
+        site_results.append(high_limit)
         site_results.append(
             str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
         # except TypeError:
