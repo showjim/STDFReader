@@ -1255,7 +1255,7 @@ class Backend(ABC):
     # Returns the table of the results of all the tests to visualize the data
     @staticmethod
     def table_of_results(test_data, sdr_parse, minimum, maximum, units):
-        parameters = ['Site', 'Runs', 'Fails', 'Min', 'Mean',
+        parameters = ['Site', 'Runs', 'Fails', 'LowLimit', 'HiLimit', 'Min', 'Mean',
                       'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         # Clarification
@@ -1279,8 +1279,8 @@ class Backend(ABC):
     @staticmethod
     def site_array(site_data, minimum, maximum, site_number, units):
 
-        high_limit = str(maximum)
-        low_limit = str(minimum)
+        high_limit = maximum
+        low_limit = minimum
         if minimum == 'n/a' and maximum == 'n/a':
             minimum = 0
             maximum = 0
@@ -1357,8 +1357,8 @@ class Backend(ABC):
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
         # try:
-        site_results.append(low_limit)
-        site_results.append(high_limit)
+        site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
+        site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
         site_results.append(
             str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
         # except TypeError:
