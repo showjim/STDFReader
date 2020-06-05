@@ -1356,8 +1356,14 @@ class Backend(ABC):
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
         # try:
-        site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
-        site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
+        if low_limit == 'n/a' or low_limit == None or low_limit == float('inf') or low_limit == float('-inf'):
+            site_results.append(str(low_limit))
+        else:
+            site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
+        if high_limit == 'n/a' or high_limit == None or high_limit == float('inf') or high_limit == float('-inf'):
+            site_results.append(str(high_limit))
+        else:
+            site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
         site_results.append(
             str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
         # except TypeError:
