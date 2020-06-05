@@ -866,8 +866,7 @@ class PdfWriterThread(QThread):
 
                 pdfTemp.close()
 
-                pp.append(PdfFileReader(
-                    str(self.file_path + "_results_temp"), "rb"))
+                pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
 
                 self.notify_status_text.emit(str(str(
                     i) + "/" + str(len(self.selected_tests)) + " test results completed"))
@@ -1463,7 +1462,7 @@ class Backend(ABC):
                 plt.xlim(xmax=1.05)
 
             elif minimum == 'n/a':
-                expand = max(abs(maximum))
+                expand = abs(maximum)
                 plt.axvline(x=maximum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
