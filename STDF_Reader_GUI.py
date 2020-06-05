@@ -90,6 +90,7 @@ class Application(QMainWindow):  # QWidget):
         self.test_info_list = []
         self.df_csv = pd.DataFrame()
         self.sdr_parse = []
+        self.list_of_duplicate_test_numbers = []
 
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
@@ -389,7 +390,7 @@ class Application(QMainWindow):  # QWidget):
 
                 self.progress_bar.setValue(0)
                 self.list_of_test_numbers = []
-                list_of_duplicate_test_numbers = []
+                self.list_of_duplicate_test_numbers = []
                 startt = time.time()
 
                 if self.file_path.endswith(".txt"):
@@ -403,10 +404,10 @@ class Application(QMainWindow):  # QWidget):
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
-                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
-                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
-                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
-                    self.test_info_list = tmp_pd.values.tolist()[16:]
+                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:17]  # Get the part info
+                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[17:]
+                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[17:]
+                    self.test_info_list = tmp_pd.values.tolist()[17:]
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
                                                         zip(self.tname_list, self.tnumber_list)]
                     # Change the multi-level columns to single level columns
@@ -415,7 +416,7 @@ class Application(QMainWindow):  # QWidget):
 
                     # Data cleaning, get rid of '(F)'
                     self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
-                    self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                    self.df_csv.iloc[:, 17:] = self.df_csv.iloc[:, 17:].astype('float')
 
                     # Extract the test name and test number list
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -431,20 +432,8 @@ class Application(QMainWindow):  # QWidget):
                         for i in range(len(test_number_list)):
                             dup_list = self.list_duplicates_of(test_number_list[i:], test_number_list[i], i)
                             if len(dup_list) > 1:
-                                list_of_duplicate_test_numbers.append(
+                                self.list_of_duplicate_test_numbers.append(
                                     [test_number_list[dup_list[0]], test_name_list[i], test_name_list[dup_list[1]]])
-                    # Log duplicate test number item from list, if exist
-                    if len(list_of_duplicate_test_numbers) > 0:
-                        log_csv = pd.DataFrame(list_of_duplicate_test_numbers,
-                                               columns=['Test Number', 'Test Name', 'Test Name'])
-                        try:
-                            log_csv.to_csv(path_or_buf=str(
-                                self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
-                        except PermissionError:
-                            self.status_text.setText(
-                                str(
-                                    "Duplicate test number found! Please close " + "duplicate_test_number.csv file to "
-                                                                                   "generate a new one"))
 
                 endt = time.time()
                 print('读取时间：', endt - startt)
@@ -460,7 +449,7 @@ class Application(QMainWindow):  # QWidget):
                 self.selected_tests = []
 
                 # log parsed document, if duplicate test number exist, show warning !
-                if len(list_of_duplicate_test_numbers) > 0:
+                if len(self.list_of_duplicate_test_numbers) > 0:
                     self.status_text.setText(
                         'Parsed .csv uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
                 else:
@@ -498,7 +487,7 @@ class Application(QMainWindow):  # QWidget):
                     break
         return locs
 
-    # Handler for the summary button to generate a csv table results file for a summary of the data
+    # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_csv(self):
 
         # Won't perform action unless there's actually a file
@@ -525,6 +514,19 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
+
+    def make_duplicate_num_report(self):
+        # Log duplicate test number item from list, if exist
+        if len(self.list_of_duplicate_test_numbers) > 0:
+            log_csv = pd.DataFrame(self.list_of_duplicate_test_numbers,
+                                   columns=['Test Number', 'Test Name', 'Test Name'])
+            try:
+                log_csv.to_csv(path_or_buf=str(
+                    self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
+            except PermissionError:
+                self.status_text.setText(
+                    str(
+                        "Please close duplicate_test_number.csv file to generate a new one !!!"))
 
     def make_correlation_table(self, merge_sites):
         file_list = self.df_csv['FILE_NAM'].unique()
@@ -626,7 +628,7 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = df_csv.iloc[:, i + 16].to_numpy()
+            all_data_array = df_csv.iloc[:, i + 17].to_numpy()
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
@@ -646,7 +648,7 @@ class Application(QMainWindow):  # QWidget):
             if (not merge_sites) or output_them_both:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy()
+                    site_test_data = site_test_data_df.iloc[:, i + 17].to_numpy()
 
                     ## Get rid of (F) and conver to float on series
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
@@ -1749,7 +1751,7 @@ class MyTestResultProfiler:
         self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
                                  'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
                                  'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'RC': [],
-                                 'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
+                                 'HARD_BIN': [], 'SOFT_BIN': [], 'BIN_DESC': [], 'TEST_T': []}
 
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
@@ -1790,7 +1792,7 @@ class MyTestResultProfiler:
                 self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
                                          'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
                                          'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'RC': [],
-                                         'HARD_BIN': [], 'SOFT_BIN': [], 'TEST_T': []}
+                                         'HARD_BIN': [], 'SOFT_BIN': [], 'BIN_DESC': [], 'TEST_T': []}
 
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
@@ -1893,7 +1895,7 @@ class MyTestResultProfiler:
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
-            self.sbin_description[sbin_num] = str(sbin_num) + ' - ' + str(sbin_nam)
+            self.sbin_description[sbin_num] = str(sbin_nam) # str(sbin_num) + ' - ' + str(sbin_nam)
 
         self.lastrectype = rectype
 
@@ -1909,6 +1911,7 @@ class MyTestResultProfiler:
         if not self.all_test_result_pd.empty:
 
             self.frame = self.all_test_result_pd
+            self.frame.BIN_DESC = self.frame.SOFT_BIN.replace(self.sbin_description)
             # Edit multi-level header
             # frame.set_index(['JOB_NAM', 'LOT_ID', 'WAFER_ID', 'SITE_NUM', 'X_COORD',
             #                              'Y_COORD', 'PART_ID', 'HARD_BIN', 'SOFT_BIN', 'TEST_T'])
