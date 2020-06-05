@@ -128,19 +128,10 @@ class Application(QMainWindow):  # QWidget):
 
         # Generates a summary of the loaded text
         self.generate_summary_button = QPushButton(
-            'Generate summary of all results (Sites Merge)')
+            'Generate data summary of all results')
         self.generate_summary_button.setToolTip(
-            'Generate a result .csv summary for the uploaded parsed .csv')
-        self.generate_summary_button.clicked.connect(
-            lambda: self.make_data_analysis_csv(True))
-
-        # Generates a summary of the loaded text
-        self.generate_summary_button_split = QPushButton(
-            'Generate summary of all results (Sites Split)')
-        self.generate_summary_button_split.setToolTip(
-            'Generate a result .csv summary for the uploaded parsed .csv')
-        self.generate_summary_button_split.clicked.connect(
-            lambda: self.make_data_analysis_csv(False))
+            'Generate a .csv data summary for the uploaded parsed .csv')
+        self.generate_summary_button.clicked.connect(self.make_data_summary_csv)
 
         # Selects a test result for the desired
         self.select_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
@@ -225,7 +216,6 @@ class Application(QMainWindow):  # QWidget):
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
         self.generate_summary_button.setEnabled(False)
-        self.generate_summary_button_split.setEnabled(False)
         self.limit_toggle.setEnabled(False)
         self.generate_correlation_button.setEnabled(False)
         self.generate_correlation_button_split.setEnabled(False)
@@ -237,8 +227,7 @@ class Application(QMainWindow):  # QWidget):
     # Tab for data analysis
     def tab_data_analysis(self):
         layout = QGridLayout()
-        layout.addWidget(self.generate_summary_button, 0, 0)
-        layout.addWidget(self.generate_summary_button_split, 0, 1)
+        layout.addWidget(self.generate_summary_button, 0, 0, 1, 2)
         layout.addWidget(self.select_test_menu, 1, 0, 1, 2)
         layout.addWidget(self.generate_pdf_button, 2, 0)
         layout.addWidget(self.limit_toggle, 2, 1)
@@ -482,7 +471,6 @@ class Application(QMainWindow):  # QWidget):
                 self.generate_pdf_button.setEnabled(True)
                 self.select_test_menu.setEnabled(True)
                 self.generate_summary_button.setEnabled(True)
-                self.generate_summary_button_split.setEnabled(True)
                 self.limit_toggle.setEnabled(True)
                 self.generate_correlation_button.setEnabled(True)
                 self.generate_correlation_button_split.setEnabled(True)
@@ -511,7 +499,7 @@ class Application(QMainWindow):  # QWidget):
         return locs
 
     # Handler for the summary button to generate a csv table results file for a summary of the data
-    def make_data_analysis_csv(self, merge_sites):
+    def make_data_summary_csv(self):
 
         # Won't perform action unless there's actually a file
         if self.file_selected:
@@ -519,16 +507,11 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(0)
 
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers, merge_sites)
+                                           self.list_of_test_numbers, True, True)
 
             self.progress_bar.setValue(90)
 
-            if merge_sites == True:
-                csv_summary_name = str(
-                    self.file_path[:-11] + "_merge_summary.csv")
-            else:
-                csv_summary_name = str(
-                    self.file_path[:-11] + "_split_summary.csv")
+            csv_summary_name = str(self.file_path[:-11] + "_data_summary.csv")
 
             # In case someone has the file open
             try:
@@ -538,7 +521,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(100)
             except PermissionError:
                 self.status_text.setText(
-                    str("Please close " + csv_summary_name + "_summary.csv"))
+                    str("Please close " + csv_summary_name + "_data_summary.csv"))
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
@@ -550,7 +533,7 @@ class Application(QMainWindow):  # QWidget):
             for file_name in file_list:
                 tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
                 table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
-                                                         self.list_of_test_numbers, merge_sites))
+                                                         self.list_of_test_numbers, merge_sites, False))
             mean_delta = table_list[0].Mean.astype(float) - table_list[1].Mean.astype(float)
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
@@ -587,7 +570,7 @@ class Application(QMainWindow):  # QWidget):
     def make_s2s_correlation_table(self):
         if self.file_selected:
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers, False)
+                                           self.list_of_test_numbers, False, False)
             site_list = table.Site.unique()
             if len(site_list) > 1:
                 correlation_df = pd.concat([table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
@@ -617,11 +600,15 @@ class Application(QMainWindow):  # QWidget):
     def make_wafer_map_cmp(self):
         pass
 
-    # Supposedly gets the summary results for all sites in each test (COMPLETELY STOLEN FROM BACKEND LOL)
-    def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites):
+    def get_data_statistics(self, all_test_data, test_info_list, num_of_sites, test_list):
+        self
 
-        parameters = ['Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit', 'Min', 'Mean',
-                      'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
+
+    # Get the summary results for all sites/each site in each test
+    def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
+
+        parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
+                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpk']
 
         summary_results = []
 
@@ -631,8 +618,8 @@ class Application(QMainWindow):  # QWidget):
         startt = time.time()
 
         # Extract test data per site for later usage, to improve time performance
-        if not merge_sites:
-            parameters[0] = 'Site'
+        if (not merge_sites) or output_them_both:
+            # parameters[0] = 'Site'
             site_test_data_dic = {}
             for j in sdr_parse:
                 site_test_data_dic[str(j)] = df_csv[df_csv.SITE_NUM == j]
@@ -653,10 +640,10 @@ class Application(QMainWindow):  # QWidget):
 
             maximum = Backend.get_plot_max(test_info_list, test_list[i], num_of_sites)
 
-            if merge_sites:
+            if merge_sites or output_them_both:
                 summary_results.append(Backend.site_array(
-                    all_data_array, minimum, maximum, units, units))
-            else:
+                    all_data_array, minimum, maximum, 'ALL', units))
+            if (not merge_sites) or output_them_both:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
                     site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy()
@@ -675,11 +662,11 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # add for split multi-site
-            for j in range(0, len(sdr_parse)):
+            if merge_sites or output_them_both:
                 test_names.append(test_list[i][1])
-                # if merge sites data, only plot test name
-                if merge_sites:
-                    break
+            if (not merge_sites) or output_them_both:
+                for j in range(0, len(sdr_parse)):
+                    test_names.append(test_list[i][1])
 
             self.progress_bar.setValue(80 + i / len(test_list) * 10)
 
@@ -1322,10 +1309,10 @@ class Backend(ABC):
 
             cp_result = str(Decimal(Backend.cp(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
-            cpl_result = str(Decimal(Backend.cpl(
-                volt_data, Backend.db2v(minimum))).quantize(Decimal('0.001')))
-            cpu_result = str(Decimal(Backend.cpu(
-                volt_data, Backend.db2v(maximum))).quantize(Decimal('0.001')))
+            # cpl_result = str(Decimal(Backend.cpl(
+            #     volt_data, Backend.db2v(minimum))).quantize(Decimal('0.001')))
+            # cpu_result = str(Decimal(Backend.cpu(
+            #     volt_data, Backend.db2v(maximum))).quantize(Decimal('0.001')))
             cpk_result = str(Decimal(Backend.cpk(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
 
@@ -1352,6 +1339,7 @@ class Backend(ABC):
 
         # Appending all the important results weow!
         site_results.append(str(site_number))
+        site_results.append(units)
         site_results.append(str(len(site_data)))
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
@@ -1377,8 +1365,8 @@ class Backend(ABC):
 
         site_results.append(std_string)
         site_results.append(cp_result)
-        site_results.append(cpl_result)
-        site_results.append(cpu_result)
+        # site_results.append(cpl_result)
+        # site_results.append(cpu_result)
         site_results.append(cpk_result)
 
         return site_results
