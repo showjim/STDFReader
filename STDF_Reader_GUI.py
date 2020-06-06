@@ -159,14 +159,6 @@ class Application(QMainWindow):  # QWidget):
         self.generate_correlation_button.clicked.connect(
             lambda: self.make_correlation_table(True))
 
-        # Generates a correlation report for each site of the loaded data
-        self.generate_correlation_button_split = QPushButton(
-            'Generate colleration of 2 stdf files(site split)')
-        self.generate_correlation_button_split.setToolTip(
-            'Generate an site split correlation report')
-        self.generate_correlation_button_split.clicked.connect(
-            lambda: self.make_correlation_table(False))
-
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
             'Generate colleration of Site2Site')
@@ -219,7 +211,6 @@ class Application(QMainWindow):  # QWidget):
         self.generate_summary_button.setEnabled(False)
         self.limit_toggle.setEnabled(False)
         self.generate_correlation_button.setEnabled(False)
-        self.generate_correlation_button_split.setEnabled(False)
         self.generate_correlation_button_s2s.setEnabled(False)
         self.generate_wafer_cmp_button.setEnabled(False)
 
@@ -238,8 +229,7 @@ class Application(QMainWindow):  # QWidget):
     def tab_data_correlation(self):
         layout = QGridLayout()
         layout.addWidget(self.generate_correlation_button, 0, 0)
-        layout.addWidget(self.generate_correlation_button_split, 0, 1)
-        layout.addWidget(self.generate_correlation_button_s2s, 1, 0)
+        layout.addWidget(self.generate_correlation_button_s2s, 0, 1)
         self.correlation_tab.setLayout(layout)
 
     # Main interface method
@@ -452,7 +442,6 @@ class Application(QMainWindow):  # QWidget):
                 self.generate_summary_button.setEnabled(True)
                 self.limit_toggle.setEnabled(True)
                 self.generate_correlation_button.setEnabled(True)
-                self.generate_correlation_button_split.setEnabled(True)
                 self.generate_correlation_button_s2s.setEnabled(True)
                 self.generate_wafer_cmp_button.setEnabled(True)
                 self.main_window()
@@ -481,19 +470,37 @@ class Application(QMainWindow):  # QWidget):
         analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
         self.status_text.setText(
             str(analysis_report_name + " is generating..."))
+
+        startt = time.time()
         data_summary = self.make_data_summary_report()
+        endt = time.time()
+        print('data summary Time: ', endt - startt)
+
+        startt = time.time()
         duplicate_number_report = self.make_duplicate_num_report()
         self.progress_bar.setValue(82)
+        endt = time.time()
+        print('duplicate number Time: ', endt - startt)
+
+        startt = time.time()
         bin_summary_list = self.make_bin_summary()
         self.progress_bar.setValue(85)
+        endt = time.time()
+        print('bin summary Time: ', endt - startt)
+
+        startt = time.time()
         wafer_map_list = self.make_wafer_map()
         self.progress_bar.setValue(88)
+        endt = time.time()
+        print('wafer map Time: ', endt - startt)
 
+        startt = time.time()
         with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
             data_summary.to_excel(writer, sheet_name='Data Stastics')
             self.progress_bar.setValue(89)
             duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
             self.progress_bar.setValue(90)
+            # Output Bin Summary Sheet
             start_row = 0
             for i in range(len(bin_summary_list)):
                 bin_summary = bin_summary_list[i]
@@ -501,7 +508,7 @@ class Application(QMainWindow):  # QWidget):
                 bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
                 self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
                 start_row = start_row + row_table + 3
-
+            # Output Wafer Map Sheet: total wafer map and maps for each site
             start_row = 0
             for i in range(len(wafer_map_list)):
                 start_column = 0
@@ -514,8 +521,10 @@ class Application(QMainWindow):  # QWidget):
                     self.progress_bar.setValue(95 + int(i / len(bin_summary_list) * 5))
                 start_row = start_row + row_table + 3
             self.progress_bar.setValue(100)
+        endt = time.time()
+        print('XLSX 生成时间: ', endt - startt)
         self.status_text.setText(
-            str(analysis_report_name + " written successfully!"))
+            str(analysis_report_name.split('/')[-1] + " written successfully!"))
 
     # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_report(self):
@@ -650,7 +659,7 @@ class Application(QMainWindow):  # QWidget):
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
             mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
 
-            if merge_sites == True:
+            if merge_sites:
                 correlation_df = pd.concat([table_list[0].LowLimit, table_list[0].HiLimit, table_list[0].Mean,
                                             table_list[1].Mean, mean_delta, mean_delta_over_limit], axis=1)
                 correlation_df.columns = ['LowLimit', 'HiLimit', 'Mean(base)', 'Mean(cmp)', 'Mean Diff(base - cmp)',
@@ -726,7 +735,6 @@ class Application(QMainWindow):  # QWidget):
         df_csv = all_test_data
 
         sdr_parse = self.sdr_parse
-        startt = time.time()
 
         # Extract test data per site for later usage, to improve time performance
         if (not merge_sites) or output_them_both:
@@ -767,8 +775,6 @@ class Application(QMainWindow):  # QWidget):
                         site_test_data, minimum, maximum, j, units))
 
             self.progress_bar.setValue(20 + int(i / len(test_list) * 50))
-        endt = time.time()
-        print('Site Data Analysis Time: ', endt - startt)
         test_names = []
 
         for i in range(0, len(test_list)):
