@@ -132,7 +132,7 @@ class Application(QMainWindow):  # QWidget):
             'Generate data summary of all results')
         self.generate_summary_button.setToolTip(
             'Generate a .csv data summary for the uploaded parsed .csv')
-        self.generate_summary_button.clicked.connect(self.make_data_summary_csv)
+        self.generate_summary_button.clicked.connect(self.generate_analysis_report)
 
         # Selects a test result for the desired
         self.select_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
@@ -477,8 +477,34 @@ class Application(QMainWindow):  # QWidget):
                     break
         return locs
 
-    # Handler for the summary button to generate a csv table results file for all data
-    def make_data_summary_csv(self):
+    def generate_analysis_report(self):
+        data_summary = self.make_data_summary_report()
+        duplicate_number_report = self.make_duplicate_num_report()
+        bin_summary_list = self.make_bin_summary()
+        wafer_map_list = self.make_wafer_map()
+
+        analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
+        with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
+            data_summary.to_excel(writer, sheet_name='Data Stastics')
+            duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
+            start_row = 0
+            for i in range(len(bin_summary_list)):
+                bin_summary = bin_summary_list[i]
+                row_table, column_table = bin_summary.shape
+                bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
+                start_row = start_row + row_table + 3
+
+            start_row = 0
+            for i in range(len(wafer_map_list)):
+                wafer_map = wafer_map_list[i]
+                row_table, column_table = wafer_map.shape
+                wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row)
+                start_row = start_row + row_table + 3
+
+
+
+        # Handler for the summary button to generate a csv table results file for all data
+    def make_data_summary_report(self):
 
         # Won't perform action unless there's actually a file
         if self.file_selected:
@@ -504,8 +530,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
-        self.make_bin_summary()
-        self.make_wafer_map()
+        return table
 
     def make_duplicate_num_report(self):
         # Check the duplicate test number
@@ -518,6 +543,7 @@ class Application(QMainWindow):  # QWidget):
                     self.list_of_duplicate_test_numbers.append(
                         [test_number_list[dup_list[0]], test_name_list[i], test_name_list[dup_list[1]]])
         # Log duplicate test number item from list, if exist
+        log_csv = pd.DataFrame()
         if len(self.list_of_duplicate_test_numbers) > 0:
             log_csv = pd.DataFrame(self.list_of_duplicate_test_numbers,
                                    columns=['Test Number', 'Test Name', 'Test Name'])
@@ -529,6 +555,8 @@ class Application(QMainWindow):  # QWidget):
                     str(
                         "Please close duplicate_test_number.csv file to generate a new one !!!"))
 
+        return log_csv
+
     def make_bin_summary(self):
         all_bin_summary_list = []
         lot_id_list = self.df_csv['LOT_ID'].unique()
@@ -537,7 +565,7 @@ class Application(QMainWindow):  # QWidget):
             for wafer_id in wafer_id_list:
                 single_wafer_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id]) &
                                               self.df_csv['WAFER_ID'].isin([wafer_id])]
-                die_id = single_wafer_df['LOT_ID'].iloc[0] + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
+                die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
                 retest_die_df = single_wafer_df[single_wafer_df['RC'].isin(['Retest'])]
                 retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
                 mask = (single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & \
@@ -555,6 +583,7 @@ class Application(QMainWindow):  # QWidget):
             temp_df.to_csv(f, line_terminator='\n')
             f.write('\n')
         f.close()
+        return all_bin_summary_list
 
     def make_wafer_map(self):
         # Get wafer map
@@ -565,7 +594,7 @@ class Application(QMainWindow):  # QWidget):
             for wafer_id in wafer_id_list:
                 single_wafer_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id]) &
                                               self.df_csv['WAFER_ID'].isin([wafer_id])]
-                die_id = single_wafer_df['LOT_ID'].iloc[0] + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
+                die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
                 wafer_map_df = single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD', columns='X_COORD',
                                                            aggfunc=lambda x: int(tuple(x)[-1]))
                 wafer_map_df.index.name = die_id
@@ -579,6 +608,7 @@ class Application(QMainWindow):  # QWidget):
             temp_df.to_csv(f, line_terminator='\n')
             f.write('\n')
         f.close()
+        return all_wafer_map_list
 
     def make_correlation_table(self, merge_sites):
         file_list = self.df_csv['FILE_NAM'].unique()
@@ -1997,30 +2027,6 @@ class MyTestResultProfiler:
             # f.close()
         else:
             print("No test result samples found :(")
-
-    def generate_wafer_map(self):
-        # Get wafer map
-        all_wafer_map_list = []
-        lot_id_list = self.all_test_result_pd['LOT_ID'].unique()
-        for lot_id in lot_id_list:
-            wafer_id_list = self.all_test_result_pd['WAFER_ID'].unique()
-            for wafer_id in wafer_id_list:
-                self.single_wafer_df = self.all_test_result_pd[self.all_test_result_pd['LOT_ID'].isin([lot_id]) &
-                                                               self.all_test_result_pd['WAFER_ID'].isin([wafer_id])]
-                die_id = self.single_wafer_df['LOT_ID'].iloc[0] + ' - ' + self.single_wafer_df['WAFER_ID'].iloc[0]
-                wafer_map_df = self.single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD', columns='X_COORD',
-                                                                aggfunc=lambda x: int(tuple(x)[-1]))
-                wafer_map_df.index.name = die_id
-                # Sort Y from low to high
-                wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
-                all_wafer_map_list.append(wafer_map_df)
-        # wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
-        # pd.concat(all_wafer_map_list).to_csv(self.filename + '_wafer_map.csv')
-        f = open(self.filename + '_wafer_map.csv', 'w')
-        for temp_df in all_wafer_map_list:
-            temp_df.to_csv(f, line_terminator='\n')
-            f.write('\n')
-        f.close()
 
 
 # Get STR, PSR data from STDF V4-2007.1
