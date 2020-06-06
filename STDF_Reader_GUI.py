@@ -129,9 +129,9 @@ class Application(QMainWindow):  # QWidget):
 
         # Generates a summary of the loaded text
         self.generate_summary_button = QPushButton(
-            'Generate data summary of all results')
+            'Generate data analysis report')
         self.generate_summary_button.setToolTip(
-            'Generate a .csv data summary for the uploaded parsed .csv')
+            'Generate a .xlsx data analysis report for the uploaded parsed .csv')
         self.generate_summary_button.clicked.connect(self.generate_analysis_report)
 
         # Selects a test result for the desired
