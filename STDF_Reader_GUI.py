@@ -60,7 +60,7 @@ import logging
 
 # from numba import jit
 
-Version = 'Beta 0.4.0'
+Version = 'Beta 0.4.1'
 
 
 ###################################################
@@ -478,32 +478,46 @@ class Application(QMainWindow):  # QWidget):
         return locs
 
     def generate_analysis_report(self):
+        analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
+        self.status_text.setText(
+            str(analysis_report_name + " is generating..."))
         data_summary = self.make_data_summary_report()
         duplicate_number_report = self.make_duplicate_num_report()
+        self.progress_bar.setValue(82)
         bin_summary_list = self.make_bin_summary()
+        self.progress_bar.setValue(85)
         wafer_map_list = self.make_wafer_map()
+        self.progress_bar.setValue(88)
 
-        analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
         with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
             data_summary.to_excel(writer, sheet_name='Data Stastics')
+            self.progress_bar.setValue(89)
             duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
+            self.progress_bar.setValue(90)
             start_row = 0
             for i in range(len(bin_summary_list)):
                 bin_summary = bin_summary_list[i]
                 row_table, column_table = bin_summary.shape
                 bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
+                self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
                 start_row = start_row + row_table + 3
 
             start_row = 0
             for i in range(len(wafer_map_list)):
-                wafer_map = wafer_map_list[i]
-                row_table, column_table = wafer_map.shape
-                wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row)
+                start_column = 0
+                for j in range(len(wafer_map_list[i])):
+                    wafer_map = wafer_map_list[i][j]
+                    if i == 0 and j == 0:
+                        row_table, column_table = wafer_map.shape
+                    wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
+                    start_column = start_column + column_table + 3
+                    self.progress_bar.setValue(95 + int(i / len(bin_summary_list) * 5))
                 start_row = start_row + row_table + 3
+            self.progress_bar.setValue(100)
+        self.status_text.setText(
+            str(analysis_report_name + " written successfully!"))
 
-
-
-        # Handler for the summary button to generate a csv table results file for all data
+    # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_report(self):
 
         # Won't perform action unless there's actually a file
@@ -514,20 +528,20 @@ class Application(QMainWindow):  # QWidget):
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers, True, True)
 
-            self.progress_bar.setValue(90)
+            self.progress_bar.setValue(80)
 
-            csv_summary_name = str(self.file_path[:-11] + "_data_summary.csv")
-
-            # In case someone has the file open
-            try:
-                table.to_csv(path_or_buf=csv_summary_name)
-                self.status_text.setText(
-                    str(csv_summary_name + " written successfully!"))
-                self.progress_bar.setValue(100)
-            except PermissionError:
-                self.status_text.setText(
-                    str("Please close " + csv_summary_name + "_data_summary.csv"))
-                self.progress_bar.setValue(0)
+            # csv_summary_name = str(self.file_path[:-11] + "_data_summary.csv")
+            #
+            # # In case someone has the file open
+            # try:
+            #     table.to_csv(path_or_buf=csv_summary_name)
+            #     self.status_text.setText(
+            #         str(csv_summary_name + " written successfully!"))
+            #     self.progress_bar.setValue(100)
+            # except PermissionError:
+            #     self.status_text.setText(
+            #         str("Please close " + csv_summary_name + "_data_summary.csv"))
+            #     self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
         return table
@@ -547,13 +561,13 @@ class Application(QMainWindow):  # QWidget):
         if len(self.list_of_duplicate_test_numbers) > 0:
             log_csv = pd.DataFrame(self.list_of_duplicate_test_numbers,
                                    columns=['Test Number', 'Test Name', 'Test Name'])
-            try:
-                log_csv.to_csv(path_or_buf=str(
-                    self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
-            except PermissionError:
-                self.status_text.setText(
-                    str(
-                        "Please close duplicate_test_number.csv file to generate a new one !!!"))
+            # try:
+            #     log_csv.to_csv(path_or_buf=str(
+            #         self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
+            # except PermissionError:
+            #     self.status_text.setText(
+            #         str(
+            #             "Please close duplicate_test_number.csv file to generate a new one !!!"))
 
         return log_csv
 
@@ -575,23 +589,25 @@ class Application(QMainWindow):  # QWidget):
                 bin_summary_pd = single_wafer_df.pivot_table('PART_ID', index=['SOFT_BIN', 'BIN_DESC'], columns='SITE_NUM',
                                                                aggfunc='count', margins=True, fill_value=0).copy()
                 # bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
-                bin_summary_pd.index.name = die_id
+                bin_summary_pd.index.rename([die_id, 'BIN_DESC'], inplace=True)
                 all_bin_summary_list.append(bin_summary_pd)
         # self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
-        f = open(self.file_path[:-11] + '_bin_summary.csv', 'w')
-        for temp_df in all_bin_summary_list:
-            temp_df.to_csv(f, line_terminator='\n')
-            f.write('\n')
-        f.close()
+        # f = open(self.file_path[:-11] + '_bin_summary.csv', 'w')
+        # for temp_df in all_bin_summary_list:
+        #     temp_df.to_csv(f, line_terminator='\n')
+        #     f.write('\n')
+        # f.close()
         return all_bin_summary_list
 
     def make_wafer_map(self):
         # Get wafer map
         all_wafer_map_list = []
         lot_id_list = self.df_csv['LOT_ID'].unique()
+        site_num_list = self.df_csv['SITE_NUM'].unique()
         for lot_id in lot_id_list:
             wafer_id_list = self.df_csv['WAFER_ID'].unique()
             for wafer_id in wafer_id_list:
+                tmp_wafer_map_list = []
                 single_wafer_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id]) &
                                               self.df_csv['WAFER_ID'].isin([wafer_id])]
                 die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
@@ -600,14 +616,25 @@ class Application(QMainWindow):  # QWidget):
                 wafer_map_df.index.name = die_id
                 # Sort Y from low to high
                 wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
-                all_wafer_map_list.append(wafer_map_df)
+                tmp_wafer_map_list.append(wafer_map_df)
+
+                for site_num in site_num_list:
+                    single_site_df = single_wafer_df[single_wafer_df['SITE_NUM'].isin([site_num])]
+                    site_id = die_id + ' - Site ' + str(site_num)
+                    single_site_wafer_map_df = single_site_df.pivot_table(values='SOFT_BIN',
+                                                                          index='Y_COORD',
+                                                                          columns='X_COORD',
+                                                                          aggfunc=lambda x: int(tuple(x)[-1]))
+                    single_site_wafer_map_df.index.name = site_id
+                    tmp_wafer_map_list.append(single_site_wafer_map_df)
+                all_wafer_map_list.append(tmp_wafer_map_list)
         # wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
         # pd.concat(all_wafer_map_list).to_csv(self.filename + '_wafer_map.csv')
-        f = open(self.file_path[:-11] + '_wafer_map.csv', 'w')
-        for temp_df in all_wafer_map_list:
-            temp_df.to_csv(f, line_terminator='\n')
-            f.write('\n')
-        f.close()
+        # f = open(self.file_path[:-11] + '_wafer_map.csv', 'w')
+        # for temp_df in all_wafer_map_list:
+        #     temp_df.to_csv(f, line_terminator='\n')
+        #     f.write('\n')
+        # f.close()
         return all_wafer_map_list
 
     def make_correlation_table(self, merge_sites):
@@ -739,7 +766,7 @@ class Application(QMainWindow):  # QWidget):
                     summary_results.append(Backend.site_array(
                         site_test_data, minimum, maximum, j, units))
 
-            self.progress_bar.setValue(20 + i / len(test_list) * 60)
+            self.progress_bar.setValue(20 + int(i / len(test_list) * 50))
         endt = time.time()
         print('Site Data Analysis Time: ', endt - startt)
         test_names = []
@@ -752,19 +779,19 @@ class Application(QMainWindow):  # QWidget):
                 for j in range(0, len(sdr_parse)):
                     test_names.append(test_list[i][1])
 
-            self.progress_bar.setValue(80 + i / len(test_list) * 10)
+            self.progress_bar.setValue(70 + int(i / len(test_list) * 10))
 
         table = pd.DataFrame(
             summary_results, columns=parameters, index=test_names)
 
-        self.progress_bar.setValue(95)
+        self.progress_bar.setValue(80)
 
         return table
 
-    # Given a set of data for each test, the full set of ptr data, the number of sites, and the list of names/tests for the
-    #   set of data needed, expect each item in this set of data to be plotted in a new figure
-    # test_info_list should be an array of arrays of arrays with the same length as test_list, which is an array of tuples
-    #   with each tuple representing the test number and name of the test data in that specific trial
+    # Given a set of data for each test, the full set of ptr data, the number of sites, and the list of names/tests
+    # for the set of data needed, expect each item in this set of data to be plotted in a new figure test_info_list
+    # should be an array of arrays of arrays with the same length as test_list, which is an array of tuples with each
+    # tuple representing the test number and name of the test data in that specific trial
     def plot_list_of_tests(self):
 
         if self.file_selected:
@@ -1325,8 +1352,8 @@ class Backend(ABC):
     # Returns the table of the results of all the tests to visualize the data
     @staticmethod
     def table_of_results(test_data, sdr_parse, minimum, maximum, units):
-        parameters = ['Site', 'Runs', 'Fails', 'LowLimit', 'HiLimit', 'Min', 'Mean',
-                      'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
+        parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
+                      'Min', 'Mean','Max', 'Range', 'STD', 'Cp', 'Cpk']
 
         # Clarification
         if 'db' in units.lower():
