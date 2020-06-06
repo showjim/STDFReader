@@ -156,8 +156,7 @@ class Application(QMainWindow):  # QWidget):
             'Generate correlation report of 2 stdf files')
         self.generate_correlation_button.setToolTip(
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
-        self.generate_correlation_button.clicked.connect(
-            lambda: self.make_correlation_table(True))
+        self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
 
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
@@ -496,18 +495,87 @@ class Application(QMainWindow):  # QWidget):
 
         startt = time.time()
         with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            # Light red fill for Bin 2XXX
+            format_2XXX = workbook.add_format({'bg_color': '#FF0000'})
+            # Orange fill for Bin 3XXX
+            format_3XXX = workbook.add_format({'bg_color': '#FF6600'})
+            # Dark red fill for Bin 4XXX
+            format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+            # Light yellow for Bin 6XXX
+            format_6XXX = workbook.add_format({'bg_color': '#FFEB9C'})
+            # Dark yellow for Bin 9XXX
+            format_9XXX = workbook.add_format({'bg_color': '#9C6500'})
+            # Green for Bin 1/1XXX
+            format_1XXX = workbook.add_format({'bg_color': '#008000'})
+            # Dark green for Bin 7XXX
+            format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
+
             data_summary.to_excel(writer, sheet_name='Data Stastics')
             self.progress_bar.setValue(89)
             duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
             self.progress_bar.setValue(90)
+
             # Output Bin Summary Sheet
             start_row = 0
             for i in range(len(bin_summary_list)):
                 bin_summary = bin_summary_list[i]
                 row_table, column_table = bin_summary.shape
                 bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
+
+                worksheet = writer.sheets['Bin Summary']
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 1,
+                                              'maximum': 1999,
+                                              'format': format_1XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 2000,
+                                              'maximum': 2999,
+                                              'format': format_2XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 3000,
+                                              'maximum': 3999,
+                                              'format': format_3XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 4000,
+                                              'maximum': 4999,
+                                              'format': format_4XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 6000,
+                                              'maximum': 6999,
+                                              'format': format_6XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 7000,
+                                              'maximum': 7999,
+                                              'format': format_7XXX})
+                worksheet.conditional_format(start_row + 1, 1,
+                                             start_row + row_table, 1,
+                                             {'type': 'cell',
+                                              'criteria': 'between',
+                                              'minimum': 9000,
+                                              'maximum': 9999,
+                                              'format': format_9XXX})
                 self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
                 start_row = start_row + row_table + 3
+
             # Output Wafer Map Sheet: total wafer map and maps for each site
             start_row = 0
             for i in range(len(wafer_map_list)):
@@ -517,6 +585,58 @@ class Application(QMainWindow):  # QWidget):
                     if i == 0 and j == 0:
                         row_table, column_table = wafer_map.shape
                     wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
+
+                    worksheet = writer.sheets['Wafer Map']
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum':  1,
+                                                  'maximum':  1999,
+                                                  'format':   format_1XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 2000,
+                                                  'maximum': 2999,
+                                                  'format': format_2XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 3000,
+                                                  'maximum': 3999,
+                                                  'format': format_3XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 4000,
+                                                  'maximum': 4999,
+                                                  'format': format_4XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 6000,
+                                                  'maximum': 6999,
+                                                  'format': format_6XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 7000,
+                                                  'maximum': 7999,
+                                                  'format': format_7XXX})
+                    worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                 start_row + row_table, start_column + column_table,
+                                                 {'type': 'cell',
+                                                  'criteria': 'between',
+                                                  'minimum': 9000,
+                                                  'maximum': 9999,
+                                                  'format': format_9XXX})
+
                     start_column = start_column + column_table + 3
                     self.progress_bar.setValue(95 + int(i / len(bin_summary_list) * 5))
                 start_row = start_row + row_table + 3
@@ -646,16 +766,28 @@ class Application(QMainWindow):  # QWidget):
         # f.close()
         return all_wafer_map_list
 
-    def make_correlation_table(self, merge_sites):
+    def generate_correlation_report(self):
+        correlation_report_name = str(self.file_path[:-11] + "_correlation_report.xlsx")
+        self.status_text.setText(
+            str(correlation_report_name + " is generating..."))
+
+        correlation_table = self.make_correlation_table()
+        with pd.ExcelWriter(correlation_report_name, engine='xlsxwriter') as writer:
+            correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
+            worksheet = writer.sheets['2 STDF correlation table']
+            worksheet.conditional_format('E2:E8', {'type': '3_color_scale'})
+
+    def make_correlation_table(self):
         parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
                       'Mean(cmp)', 'Mean Diff(base - cmp)', 'Mean Diff Over Limit']
         file_list = self.df_csv['FILE_NAM'].unique()
-        if self.file_selected or len(file_list) > 1:
+        correlation_df = pd.DataFrame()
+        if self.file_selected and len(file_list) > 1:
             table_list = []
             for file_name in file_list:
                 tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
                 table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
-                                                         self.list_of_test_numbers, merge_sites, True))
+                                                         self.list_of_test_numbers, False, True))
             mean_delta = table_list[0].Mean.astype(float) - table_list[1].Mean.astype(float)
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
@@ -665,20 +797,21 @@ class Application(QMainWindow):  # QWidget):
                                         table_list[0].HiLimit, table_list[0].Mean, table_list[1].Mean, mean_delta,
                                         mean_delta_over_limit], axis=1)
             correlation_df.columns = parameters
-            csv_summary_name = str(self.file_path + "_correlation_table.csv")
-
-            # In case someone has the file open
-            try:
-                correlation_df.to_csv(path_or_buf=csv_summary_name)
-                self.status_text.setText(
-                    str(csv_summary_name + " written successfully!"))
-                self.progress_bar.setValue(100)
-            except PermissionError:
-                self.status_text.setText(
-                    str("Please close " + csv_summary_name))
-                self.progress_bar.setValue(0)
+            # csv_summary_name = str(self.file_path + "_correlation_table.csv")
+            #
+            # # In case someone has the file open
+            # try:
+            #     correlation_df.to_csv(path_or_buf=csv_summary_name)
+            #     self.status_text.setText(
+            #         str(csv_summary_name + " written successfully!"))
+            #     self.progress_bar.setValue(100)
+            # except PermissionError:
+            #     self.status_text.setText(
+            #         str("Please close " + csv_summary_name))
+            #     self.progress_bar.setValue(0)
         else:
-            self.status_text.setText('Please select a file')
+            self.status_text.setText('Please select a csv file with 2 stdf files\' data !!!')
+        return correlation_df
 
     def make_s2s_correlation_table(self):
         if self.file_selected:
@@ -712,10 +845,6 @@ class Application(QMainWindow):  # QWidget):
 
     def make_wafer_map_cmp(self):
         pass
-
-    def get_data_statistics(self, all_test_data, test_info_list, num_of_sites, test_list):
-        self
-
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
@@ -1402,8 +1531,8 @@ class Backend(ABC):
             mean_result = np.mean(site_data)
             std_string = str(np.std(site_data))
             cp_result = 'n/a'
-            cpl_result = 'n/a'
-            cpu_result = 'n/a'
+            # cpl_result = 'n/a'
+            # cpu_result = 'n/a'
             cpk_result = 'n/a'
 
         # The struggles of logarithmic data
