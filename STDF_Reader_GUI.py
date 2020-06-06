@@ -153,15 +153,15 @@ class Application(QMainWindow):  # QWidget):
 
         # Generates a correlation report for all sites of the loaded data
         self.generate_correlation_button = QPushButton(
-            'Generate colleration of 2 stdf files(site merge)')
+            'Generate correlation report of 2 stdf files')
         self.generate_correlation_button.setToolTip(
-            'Generate an all site merge correlation report')
+            'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(
             lambda: self.make_correlation_table(True))
 
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
-            'Generate colleration of Site2Site')
+            'Generate correlation of Site2Site')
         self.generate_correlation_button_s2s.setToolTip(
             'Generate an Site2Site correlation report')
         self.generate_correlation_button_s2s.clicked.connect(self.make_s2s_correlation_table)
@@ -647,32 +647,25 @@ class Application(QMainWindow):  # QWidget):
         return all_wafer_map_list
 
     def make_correlation_table(self, merge_sites):
+        parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
+                      'Mean(cmp)', 'Mean Diff(base - cmp)', 'Mean Diff Over Limit']
         file_list = self.df_csv['FILE_NAM'].unique()
         if self.file_selected or len(file_list) > 1:
             table_list = []
             for file_name in file_list:
                 tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
                 table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
-                                                         self.list_of_test_numbers, merge_sites, False))
+                                                         self.list_of_test_numbers, merge_sites, True))
             mean_delta = table_list[0].Mean.astype(float) - table_list[1].Mean.astype(float)
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
             mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
 
-            if merge_sites:
-                correlation_df = pd.concat([table_list[0].LowLimit, table_list[0].HiLimit, table_list[0].Mean,
-                                            table_list[1].Mean, mean_delta, mean_delta_over_limit], axis=1)
-                correlation_df.columns = ['LowLimit', 'HiLimit', 'Mean(base)', 'Mean(cmp)', 'Mean Diff(base - cmp)',
-                                          'Mean Diff Over Limit']
-                csv_summary_name = str(self.file_path + "_correlation_table_site_merge.csv")
-            else:
-                correlation_df = pd.concat([table_list[0].Site, table_list[0].LowLimit, table_list[0].HiLimit,
-                                            table_list[0].Mean, table_list[1].Mean, mean_delta,
-                                            mean_delta_over_limit], axis=1)
-                correlation_df.columns = ['Site', 'LowLimit', 'HiLimit', 'Mean(base)', 'Mean(cmp)',
-                                          'Mean Diff(base - cmp)',
-                                          'Mean Diff Over Limit']
-                csv_summary_name = str(self.file_path + "_correlation_table_site_split.csv")
+            correlation_df = pd.concat([table_list[0].Site, table_list[0].Units, table_list[0].LowLimit,
+                                        table_list[0].HiLimit, table_list[0].Mean, table_list[1].Mean, mean_delta,
+                                        mean_delta_over_limit], axis=1)
+            correlation_df.columns = parameters
+            csv_summary_name = str(self.file_path + "_correlation_table.csv")
 
             # In case someone has the file open
             try:
@@ -682,7 +675,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(100)
             except PermissionError:
                 self.status_text.setText(
-                    str("Please close " + csv_summary_name + "_correlation.csv"))
+                    str("Please close " + csv_summary_name))
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
