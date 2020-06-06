@@ -512,6 +512,14 @@ class Application(QMainWindow):  # QWidget):
             format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
 
             data_summary.to_excel(writer, sheet_name='Data Stastics')
+            row_table, column_table = data_summary.shape
+            worksheet = writer.sheets['Data Stastics']
+            worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
+                                         {'type': 'cell', 'criteria': '<',
+                                          'value': 3.3, 'format': format_4XXX})
+            worksheet.conditional_format(1, column_table, row_table, column_table,
+                                         {'type': 'cell', 'criteria': '<',
+                                          'value': 1.33, 'format': format_4XXX})
             self.progress_bar.setValue(89)
             duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
             self.progress_bar.setValue(90)
@@ -524,50 +532,50 @@ class Application(QMainWindow):  # QWidget):
                 bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
 
                 worksheet = writer.sheets['Bin Summary']
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 1,
                                               'maximum': 1999,
                                               'format': format_1XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 2000,
                                               'maximum': 2999,
                                               'format': format_2XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 3000,
                                               'maximum': 3999,
                                               'format': format_3XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 4000,
                                               'maximum': 4999,
                                               'format': format_4XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 6000,
                                               'maximum': 6999,
                                               'format': format_6XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 7000,
                                               'maximum': 7999,
                                               'format': format_7XXX})
-                worksheet.conditional_format(start_row + 1, 1,
-                                             start_row + row_table, 1,
+                worksheet.conditional_format(start_row + 1, 0,
+                                             start_row + row_table, 0,
                                              {'type': 'cell',
                                               'criteria': 'between',
                                               'minimum': 9000,
@@ -1546,13 +1554,13 @@ class Backend(ABC):
                 volt_data) * 100  # *100 for converting to %
             std_string = str('%.3E' % (Decimal(standard_deviation)))
 
-            cp_result = str(Decimal(Backend.cp(volt_data, Backend.db2v(
+            cp_result = float(Decimal(Backend.cp(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
             # cpl_result = str(Decimal(Backend.cpl(
             #     volt_data, Backend.db2v(minimum))).quantize(Decimal('0.001')))
             # cpu_result = str(Decimal(Backend.cpu(
             #     volt_data, Backend.db2v(maximum))).quantize(Decimal('0.001')))
-            cpk_result = str(Decimal(Backend.cpk(volt_data, Backend.db2v(
+            cpk_result = float(Decimal(Backend.cpk(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
 
         # Yummy linear data instead
@@ -1561,13 +1569,13 @@ class Backend(ABC):
             # try:
             std_string = str(
                 Decimal(np.std(site_data)).quantize(Decimal('0.001')))
-            cp_result = str(
+            cp_result = float(
                 Decimal(Backend.cp(site_data, minimum, maximum)).quantize(Decimal('0.001')))
-            cpl_result = str(
-                Decimal(Backend.cpu(site_data, minimum)).quantize(Decimal('0.001')))
-            cpu_result = str(
-                Decimal(Backend.cpl(site_data, maximum)).quantize(Decimal('0.001')))
-            cpk_result = str(
+            # cpl_result = str(
+            #     Decimal(Backend.cpu(site_data, minimum)).quantize(Decimal('0.001')))
+            # cpu_result = str(
+            #     Decimal(Backend.cpl(site_data, maximum)).quantize(Decimal('0.001')))
+            cpk_result = float(
                 Decimal(Backend.cpk(site_data, minimum, maximum)).quantize(Decimal('0.001')))
             # except decimal.InvalidOperation:
             #     print(type(minimum))
