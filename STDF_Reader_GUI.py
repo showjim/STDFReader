@@ -782,10 +782,25 @@ class Application(QMainWindow):  # QWidget):
             str(correlation_report_name + " is generating..."))
 
         correlation_table = self.make_correlation_table()
+        wafer_map_cmp = self.make_wafer_map_cmp()
         with pd.ExcelWriter(correlation_report_name, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            # Light red fill for Bin 4XXX
+            format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+
             correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
+            row_table, column_table = correlation_table.shape
             worksheet = writer.sheets['2 STDF correlation table']
-            worksheet.conditional_format('E2:E8', {'type': '3_color_scale'})
+            worksheet.conditional_format(1, column_table, row_table, column_table,
+                                         {'type': 'cell', 'criteria': '>=',
+                                          'value': 0.05, 'format': format_4XXX})
+
+            wafer_map_cmp.to_excel(writer, sheet_name='2 STDF wafer map compare')
+            row_table, column_table = wafer_map_cmp.shape
+            worksheet = writer.sheets['2 STDF wafer map compare']
+            worksheet.conditional_format(1, 1, row_table, column_table,
+                                         {'type': 'text', 'criteria': 'containing',
+                                          'value': '-->', 'format': format_4XXX})
 
     def make_correlation_table(self):
         parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
@@ -876,7 +891,22 @@ class Application(QMainWindow):  # QWidget):
 
             all_wafer_map_list.append(tmp_wafer_map_list)
 
-        return all_wafer_map_list
+        # Compare the First two wafer map in all_wafer_map_list
+        base_df = all_wafer_map_list[0][0].fillna(value='')
+        cmp_df = all_wafer_map_list[1][0].fillna(value='')
+        df1_r, df1_c = base_df.shape
+        df2_r, df2_c = cmp_df.shape
+
+        if (df1_r != df2_r) or (df1_c != df2_c):
+            result_df = pd.DataFrame({'name':['Dimension Mismatch of First 2 Wafer Map !!!']})
+            # raise Exception('Dimension Mismatch!')
+        else:
+            result_df = base_df.copy()
+            for i in range(df1_c):
+                result_df.iloc[:, i] = np.where(base_df.iloc[:, i] == cmp_df.iloc[:, i],
+                                                base_df.iloc[:, i], base_df.iloc[:, i].astype(str) + '-->' +
+                                                cmp_df.iloc[:, i].astype(str))
+        return result_df
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
