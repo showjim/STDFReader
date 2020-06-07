@@ -406,6 +406,10 @@ class Application(QMainWindow):  # QWidget):
                     # Data cleaning, get rid of '(F)'
                     self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
                     self.df_csv.iloc[:, 17:] = self.df_csv.iloc[:, 17:].astype('float')
+                    self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
+                    self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
+                    self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
+                    self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
 
                     # Extract the test name and test number list
                     self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -494,165 +498,172 @@ class Application(QMainWindow):  # QWidget):
         print('wafer map Time: ', endt - startt)
 
         startt = time.time()
-        with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
-            workbook = writer.book
-            # Light red fill for Bin 2XXX
-            format_2XXX = workbook.add_format({'bg_color': '#FF0000'})
-            # Orange fill for Bin 3XXX
-            format_3XXX = workbook.add_format({'bg_color': '#FF6600'})
-            # Dark red fill for Bin 4XXX
-            format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
-            # Light yellow for Bin 6XXX
-            format_6XXX = workbook.add_format({'bg_color': '#FFEB9C'})
-            # Dark yellow for Bin 9XXX
-            format_9XXX = workbook.add_format({'bg_color': '#9C6500'})
-            # Green for Bin 1/1XXX
-            format_1XXX = workbook.add_format({'bg_color': '#008000'})
-            # Dark green for Bin 7XXX
-            format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
 
-            data_summary.to_excel(writer, sheet_name='Data Stastics')
-            row_table, column_table = data_summary.shape
-            worksheet = writer.sheets['Data Stastics']
-            worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
-                                         {'type': 'cell', 'criteria': '<',
-                                          'value': 3.3, 'format': format_4XXX})
-            worksheet.conditional_format(1, column_table, row_table, column_table,
-                                         {'type': 'cell', 'criteria': '<',
-                                          'value': 1.33, 'format': format_4XXX})
-            self.progress_bar.setValue(89)
-            duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
-            self.progress_bar.setValue(90)
+        # In case someone has the file open
+        try:
+            with pd.ExcelWriter(analysis_report_name, engine='xlsxwriter') as writer:
+                workbook = writer.book
+                # Light red fill for Bin 2XXX
+                format_2XXX = workbook.add_format({'bg_color': '#FF0000'})
+                # Orange fill for Bin 3XXX
+                format_3XXX = workbook.add_format({'bg_color': '#FF6600'})
+                # Dark red fill for Bin 4XXX
+                format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+                # Light yellow for Bin 6XXX
+                format_6XXX = workbook.add_format({'bg_color': '#FFEB9C'})
+                # Dark yellow for Bin 9XXX
+                format_9XXX = workbook.add_format({'bg_color': '#9C6500'})
+                # Green for Bin 1/1XXX
+                format_1XXX = workbook.add_format({'bg_color': '#008000'})
+                # Dark green for Bin 7XXX
+                format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
 
-            # Output Bin Summary Sheet
-            start_row = 0
-            for i in range(len(bin_summary_list)):
-                bin_summary = bin_summary_list[i]
-                row_table, column_table = bin_summary.shape
-                bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
+                data_summary.to_excel(writer, sheet_name='Data Stastics')
+                row_table, column_table = data_summary.shape
+                worksheet = writer.sheets['Data Stastics']
+                worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
+                                             {'type': 'cell', 'criteria': '<',
+                                              'value': 3.3, 'format': format_4XXX})
+                worksheet.conditional_format(1, column_table, row_table, column_table,
+                                             {'type': 'cell', 'criteria': '<',
+                                              'value': 1.33, 'format': format_4XXX})
+                self.progress_bar.setValue(89)
+                duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
+                self.progress_bar.setValue(90)
 
-                worksheet = writer.sheets['Bin Summary']
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 1,
-                                              'maximum': 1999,
-                                              'format': format_1XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 2000,
-                                              'maximum': 2999,
-                                              'format': format_2XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 3000,
-                                              'maximum': 3999,
-                                              'format': format_3XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 4000,
-                                              'maximum': 4999,
-                                              'format': format_4XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 6000,
-                                              'maximum': 6999,
-                                              'format': format_6XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 7000,
-                                              'maximum': 7999,
-                                              'format': format_7XXX})
-                worksheet.conditional_format(start_row + 1, 0,
-                                             start_row + row_table, 0,
-                                             {'type': 'cell',
-                                              'criteria': 'between',
-                                              'minimum': 9000,
-                                              'maximum': 9999,
-                                              'format': format_9XXX})
-                self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
-                start_row = start_row + row_table + 3
+                # Output Bin Summary Sheet
+                start_row = 0
+                for i in range(len(bin_summary_list)):
+                    bin_summary = bin_summary_list[i]
+                    row_table, column_table = bin_summary.shape
+                    bin_summary.to_excel(writer, sheet_name='Bin Summary', startrow=start_row)
 
-            # Output Wafer Map Sheet: total wafer map and maps for each site
-            start_row = 0
-            for i in range(len(wafer_map_list)):
-                start_column = 0
-                for j in range(len(wafer_map_list[i])):
-                    wafer_map = wafer_map_list[i][j]
-                    if i == 0 and j == 0:
-                        row_table, column_table = wafer_map.shape
-                    wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
-
-                    worksheet = writer.sheets['Wafer Map']
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet = writer.sheets['Bin Summary']
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
-                                                  'minimum':  1,
-                                                  'maximum':  1999,
-                                                  'format':   format_1XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                                                  'minimum': 1,
+                                                  'maximum': 1999,
+                                                  'format': format_1XXX})
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 2000,
                                                   'maximum': 2999,
                                                   'format': format_2XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 3000,
                                                   'maximum': 3999,
                                                   'format': format_3XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 4000,
                                                   'maximum': 4999,
                                                   'format': format_4XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 6000,
                                                   'maximum': 6999,
                                                   'format': format_6XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 7000,
                                                   'maximum': 7999,
                                                   'format': format_7XXX})
-                    worksheet.conditional_format(start_row + 1, start_column + 1,
-                                                 start_row + row_table, start_column + column_table,
+                    worksheet.conditional_format(start_row + 1, 0,
+                                                 start_row + row_table, 0,
                                                  {'type': 'cell',
                                                   'criteria': 'between',
                                                   'minimum': 9000,
                                                   'maximum': 9999,
                                                   'format': format_9XXX})
+                    self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
+                    start_row = start_row + row_table + 3
 
-                    start_column = start_column + column_table + 3
-                    self.progress_bar.setValue(95 + int(i / len(bin_summary_list) * 5))
-                start_row = start_row + row_table + 3
-            self.progress_bar.setValue(100)
-        endt = time.time()
-        print('XLSX 生成时间: ', endt - startt)
-        self.status_text.setText(
-            str(analysis_report_name.split('/')[-1] + " written successfully!"))
+                # Output Wafer Map Sheet: total wafer map and maps for each site
+                start_row = 0
+                for i in range(len(wafer_map_list)):
+                    start_column = 0
+                    for j in range(len(wafer_map_list[i])):
+                        wafer_map = wafer_map_list[i][j]
+                        if i == 0 and j == 0:
+                            row_table, column_table = wafer_map.shape
+                        wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
+
+                        worksheet = writer.sheets['Wafer Map']
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum':  1,
+                                                      'maximum':  1999,
+                                                      'format':   format_1XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 2000,
+                                                      'maximum': 2999,
+                                                      'format': format_2XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 3000,
+                                                      'maximum': 3999,
+                                                      'format': format_3XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 4000,
+                                                      'maximum': 4999,
+                                                      'format': format_4XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 6000,
+                                                      'maximum': 6999,
+                                                      'format': format_6XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 7000,
+                                                      'maximum': 7999,
+                                                      'format': format_7XXX})
+                        worksheet.conditional_format(start_row + 1, start_column + 1,
+                                                     start_row + row_table, start_column + column_table,
+                                                     {'type': 'cell',
+                                                      'criteria': 'between',
+                                                      'minimum': 9000,
+                                                      'maximum': 9999,
+                                                      'format': format_9XXX})
+
+                        start_column = start_column + column_table + 3
+                        self.progress_bar.setValue(95 + int(i / len(bin_summary_list) * 5))
+                    start_row = start_row + row_table + 3
+                self.progress_bar.setValue(100)
+                endt = time.time()
+                print('XLSX 生成时间: ', endt - startt)
+                self.status_text.setText(
+                    str(analysis_report_name.split('/')[-1] + " written successfully!"))
+        except xlsxwriter.exceptions.FileCreateError: # PermissionError:
+            self.status_text.setText(
+                str("Please close " + analysis_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
 
     # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_report(self):
@@ -779,28 +790,45 @@ class Application(QMainWindow):  # QWidget):
     def generate_correlation_report(self):
         correlation_report_name = str(self.file_path[:-11] + "_correlation_report.xlsx")
         self.status_text.setText(
-            str(correlation_report_name + " is generating..."))
+            str(correlation_report_name.split('/')[-1] + " is generating..."))
 
         correlation_table = self.make_correlation_table()
-        wafer_map_cmp = self.make_wafer_map_cmp()
-        with pd.ExcelWriter(correlation_report_name, engine='xlsxwriter') as writer:
-            workbook = writer.book
-            # Light red fill for Bin 4XXX
-            format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+        wafer_map_cmp_list = self.make_wafer_map_cmp()
+        self.progress_bar.setValue(95)
 
-            correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
-            row_table, column_table = correlation_table.shape
-            worksheet = writer.sheets['2 STDF correlation table']
-            worksheet.conditional_format(1, column_table, row_table, column_table,
-                                         {'type': 'cell', 'criteria': '>=',
-                                          'value': 0.05, 'format': format_4XXX})
+        # In case someone has the file open
+        try:
+            with pd.ExcelWriter(correlation_report_name, engine='xlsxwriter') as writer:
+                workbook = writer.book
+                # Light red fill for Bin 4XXX
+                format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
 
-            wafer_map_cmp.to_excel(writer, sheet_name='2 STDF wafer map compare')
-            row_table, column_table = wafer_map_cmp.shape
-            worksheet = writer.sheets['2 STDF wafer map compare']
-            worksheet.conditional_format(1, 1, row_table, column_table,
-                                         {'type': 'text', 'criteria': 'containing',
-                                          'value': '-->', 'format': format_4XXX})
+                # Write correlation table
+                correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
+                row_table, column_table = correlation_table.shape
+                worksheet = writer.sheets['2 STDF correlation table']
+                worksheet.conditional_format(1, column_table, row_table, column_table,
+                                             {'type': 'cell', 'criteria': '>=',
+                                              'value': 0.05, 'format': format_4XXX})
+                self.progress_bar.setValue(97)
+
+                # Write wafer map compare
+                wafer_map_cmp = wafer_map_cmp_list[0]
+                bin_swap_table = wafer_map_cmp_list[1]
+                wafer_map_cmp.to_excel(writer, sheet_name='2 STDF wafer map compare', startrow=0)
+                row_table, column_table = wafer_map_cmp.shape
+                bin_swap_table.to_excel(writer, sheet_name='2 STDF wafer map compare', startrow=row_table+2)
+                worksheet = writer.sheets['2 STDF wafer map compare']
+                worksheet.conditional_format(1, 1, row_table, column_table,
+                                             {'type': 'text', 'criteria': 'containing',
+                                              'value': '-->', 'format': format_4XXX})
+            self.progress_bar.setValue(100)
+            self.status_text.setText(
+                str(correlation_report_name.split('/')[-1] + " written successfully!"))
+        except xlsxwriter.exceptions.FileCreateError: # PermissionError:
+            self.status_text.setText(
+                str("Please close " + correlation_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
 
     def make_correlation_table(self):
         parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
@@ -872,6 +900,7 @@ class Application(QMainWindow):  # QWidget):
         # Get wafer map
         all_wafer_map_list = []
         file_list = self.df_csv['FILE_NAM'].unique()
+        i = 0
         for file in file_list:
             single_file_df = self.df_csv[self.df_csv['FILE_NAM'].isin([file])]
             lot_id_list = single_file_df['LOT_ID'].unique()
@@ -888,6 +917,7 @@ class Application(QMainWindow):  # QWidget):
                     # Sort Y from low to high
                     wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
                     tmp_wafer_map_list.append(wafer_map_df)
+                    self.progress_bar.setValue(80 + int(i/(len(file_list)+len(lot_id_list)+len(wafer_id_list))*10))
 
             all_wafer_map_list.append(tmp_wafer_map_list)
 
@@ -898,15 +928,32 @@ class Application(QMainWindow):  # QWidget):
         df2_r, df2_c = cmp_df.shape
 
         if (df1_r != df2_r) or (df1_c != df2_c):
-            result_df = pd.DataFrame({'name':['Dimension Mismatch of First 2 Wafer Map !!!']})
+            result_df = pd.DataFrame({'name': ['Dimension Mismatch of First 2 Wafer Map !!!']})
+            axis_df = pd.DataFrame({'name': ['这也没有 !!!']})
             # raise Exception('Dimension Mismatch!')
         else:
             result_df = base_df.copy()
+            row_names = result_df.index.values
+            col_names = result_df.columns.values
+            axis_dic = {'Axis': [], 'Base Bin Number': [], 'CMP Bin Number': []}
             for i in range(df1_c):
                 result_df.iloc[:, i] = np.where(base_df.iloc[:, i] == cmp_df.iloc[:, i],
                                                 base_df.iloc[:, i], base_df.iloc[:, i].astype(str) + '-->' +
                                                 cmp_df.iloc[:, i].astype(str))
-        return result_df
+                row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
+                col_name = col_names[i]
+                for j in row_name:
+                    axis_list = [col_name, j]
+                    base_bin_num = base_df.loc[j, col_name]
+                    cmp_bin_num = cmp_df.loc[j, col_name]
+                    self.progress_bar.setValue(
+                        90 + int(i / (df1_c + len(row_name)) * 5))
+                axis_dic['Axis'].append(axis_list)
+                axis_dic['Base Bin Number'].append(base_bin_num)
+                axis_dic['CMP Bin Number'].append(cmp_bin_num)
+            axis_df = pd.DataFrame.from_dict(axis_dic, orient='index').T
+        cmp_result_list = [result_df, axis_df]
+        return cmp_result_list
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
