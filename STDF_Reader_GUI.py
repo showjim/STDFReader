@@ -763,6 +763,8 @@ class Application(QMainWindow):  # QWidget):
                                                                           columns='X_COORD',
                                                                           aggfunc=lambda x: int(tuple(x)[-1]))
                     single_site_wafer_map_df.index.name = site_id
+                    # Sort Y from low to high
+                    single_site_wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
                     tmp_wafer_map_list.append(single_site_wafer_map_df)
                 all_wafer_map_list.append(tmp_wafer_map_list)
         # wafer_map_df.to_csv(self.filename + '_wafer_map.csv')
