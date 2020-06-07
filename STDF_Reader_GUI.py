@@ -740,13 +740,12 @@ class Application(QMainWindow):  # QWidget):
         # Get wafer map
         all_wafer_map_list = []
         lot_id_list = self.df_csv['LOT_ID'].unique()
-        site_num_list = self.df_csv['SITE_NUM'].unique()
         for lot_id in lot_id_list:
-            wafer_id_list = self.df_csv['WAFER_ID'].unique()
+            single_lot_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id])]
+            wafer_id_list = single_lot_df['WAFER_ID'].unique()
             for wafer_id in wafer_id_list:
                 tmp_wafer_map_list = []
-                single_wafer_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id]) &
-                                              self.df_csv['WAFER_ID'].isin([wafer_id])]
+                single_wafer_df = single_lot_df[single_lot_df['WAFER_ID'].isin([wafer_id])]
                 die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
                 wafer_map_df = single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD', columns='X_COORD',
                                                            aggfunc=lambda x: int(tuple(x)[-1]))
@@ -755,6 +754,7 @@ class Application(QMainWindow):  # QWidget):
                 wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
                 tmp_wafer_map_list.append(wafer_map_df)
 
+                site_num_list = single_wafer_df['SITE_NUM'].unique()
                 for site_num in site_num_list:
                     single_site_df = single_wafer_df[single_wafer_df['SITE_NUM'].isin([site_num])]
                     site_id = die_id + ' - Site ' + str(site_num)
@@ -854,7 +854,29 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.setText('Please select a file')
 
     def make_wafer_map_cmp(self):
-        pass
+        # Get wafer map
+        all_wafer_map_list = []
+        file_list = self.df_csv['FILE_NAM'].unique()
+        for file in file_list:
+            single_file_df = self.df_csv[self.df_csv['FILE_NAM'].isin([file])]
+            lot_id_list = single_file_df['LOT_ID'].unique()
+            for lot_id in lot_id_list:
+                single_lot_df = single_file_df[single_file_df['LOT_ID'].isin([lot_id])]
+                wafer_id_list = single_lot_df['WAFER_ID'].unique()
+                for wafer_id in wafer_id_list:
+                    tmp_wafer_map_list = []
+                    single_wafer_df = single_lot_df[single_lot_df['WAFER_ID'].isin([wafer_id])]
+                    die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
+                    wafer_map_df = single_wafer_df.pivot_table(values='SOFT_BIN', index='Y_COORD', columns='X_COORD',
+                                                               aggfunc=lambda x: int(tuple(x)[-1]))
+                    wafer_map_df.index.name = die_id
+                    # Sort Y from low to high
+                    wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
+                    tmp_wafer_map_list.append(wafer_map_df)
+
+            all_wafer_map_list.append(tmp_wafer_map_list)
+
+        return all_wafer_map_list
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
