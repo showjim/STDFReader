@@ -527,6 +527,7 @@ class Application(QMainWindow):  # QWidget):
                 worksheet.conditional_format(1, column_table, row_table, column_table,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
+                worksheet.autofilter(0, 0, row_table, column_table)
                 self.progress_bar.setValue(89)
                 duplicate_number_report.to_excel(writer, sheet_name='Duplicate Test Number')
                 self.progress_bar.setValue(90)
@@ -792,7 +793,7 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText(
             str(correlation_report_name.split('/')[-1] + " is generating..."))
 
-        correlation_table = self.make_correlation_table()
+        correlation_table, file_list = self.make_correlation_table()
         wafer_map_cmp_list = self.make_wafer_map_cmp()
         self.progress_bar.setValue(95)
 
@@ -810,6 +811,9 @@ class Application(QMainWindow):  # QWidget):
                 worksheet.conditional_format(1, column_table, row_table, column_table,
                                              {'type': 'cell', 'criteria': '>=',
                                               'value': 0.05, 'format': format_4XXX})
+                worksheet.write_string(row_table + 2, 0, 'Base: ' + file_list[0])
+                worksheet.write_string(row_table + 3, 0, 'CMP: ' + file_list[1])
+                worksheet.autofilter(0, 0, row_table, column_table)
                 self.progress_bar.setValue(97)
 
                 # Write wafer map compare
@@ -864,7 +868,8 @@ class Application(QMainWindow):  # QWidget):
             #     self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a csv file with 2 stdf files\' data !!!')
-        return correlation_df
+            self.progress_bar.setValue(0)
+        return correlation_df, file_list
 
     def make_s2s_correlation_table(self):
         if self.file_selected:
