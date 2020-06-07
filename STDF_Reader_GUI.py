@@ -23,8 +23,6 @@
 # IMPORTING LIBRARIES #
 #######################
 
-import sys
-import os
 # import fix_qt_import_error
 # from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QToolTip, QPushButton
 from PyQt5.QtWidgets import *
@@ -41,9 +39,9 @@ import xlsxwriter
 import logging
 
 # from numba import jit
-from Backend_Module import Backend
-from FileRead_Module import FileReaders
-from Thread_Module import PdfWriterThread, CsvParseThread, XlsxParseThread, TextParseThread
+from src.Backend_Module import Backend
+from src.FileRead_Module import FileReaders
+from src.Thread_Module import PdfWriterThread, CsvParseThread, XlsxParseThread
 
 Version = 'Beta 0.4.1'
 

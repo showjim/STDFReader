@@ -2,13 +2,12 @@
 import pandas as pd
 from abc import ABC
 import time
-import xlsxwriter
 
 from pystdf.IO import Parser
 from pystdf.Writers import *
 from pystdf.Importer import STDF2DataFrame
 
-from MySink_Module import MyTestResultProfiler
+from src.MySink_Module import MyTestResultProfiler
 
 
 ############################
