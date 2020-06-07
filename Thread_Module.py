@@ -2,6 +2,7 @@
 # why not use "import matplotlib.pyplot as plt" simply?
 # Below import statements can avoid "RuntimeError: main thread is not in main loop" in threading
 import os
+import time
 import numpy as np
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -12,7 +13,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from PyPDF2 import PdfFileMerger, PdfFileReader
-import time
 from Backend_Module import Backend
 from FileRead_Module import FileReaders
 

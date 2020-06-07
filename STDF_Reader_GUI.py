@@ -42,7 +42,8 @@ import logging
 
 # from numba import jit
 from Backend_Module import Backend
-from Thread_Module import *
+from FileRead_Module import FileReaders
+from Thread_Module import PdfWriterThread, CsvParseThread, XlsxParseThread, TextParseThread
 
 Version = 'Beta 0.4.1'
 
@@ -573,7 +574,7 @@ class Application(QMainWindow):  # QWidget):
                                                   'minimum': 9000,
                                                   'maximum': 9999,
                                                   'format': format_9XXX})
-                    self.progress_bar.setValue(90 + int(i/len(bin_summary_list)*5))
+                    self.progress_bar.setValue(90 + int(i / len(bin_summary_list) * 5))
                     start_row = start_row + row_table + 3
 
                 # Output Wafer Map Sheet: total wafer map and maps for each site
@@ -591,9 +592,9 @@ class Application(QMainWindow):  # QWidget):
                                                      start_row + row_table, start_column + column_table,
                                                      {'type': 'cell',
                                                       'criteria': 'between',
-                                                      'minimum':  1,
-                                                      'maximum':  1999,
-                                                      'format':   format_1XXX})
+                                                      'minimum': 1,
+                                                      'maximum': 1999,
+                                                      'format': format_1XXX})
                         worksheet.conditional_format(start_row + 1, start_column + 1,
                                                      start_row + row_table, start_column + column_table,
                                                      {'type': 'cell',
@@ -645,7 +646,7 @@ class Application(QMainWindow):  # QWidget):
                 print('XLSX 生成时间: ', endt - startt)
                 self.status_text.setText(
                     str(analysis_report_name.split('/')[-1] + " written successfully!"))
-        except xlsxwriter.exceptions.FileCreateError: # PermissionError:
+        except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
             self.status_text.setText(
                 str("Please close " + analysis_report_name.split('/')[-1]))
             self.progress_bar.setValue(0)
@@ -719,8 +720,9 @@ class Application(QMainWindow):  # QWidget):
                        (single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & \
                        (single_wafer_df['RC'].isin(['First']).to_numpy())
                 single_wafer_df = single_wafer_df[~mask.any(axis=0)]
-                bin_summary_pd = single_wafer_df.pivot_table('PART_ID', index=['SOFT_BIN', 'BIN_DESC'], columns='SITE_NUM',
-                                                               aggfunc='count', margins=True, fill_value=0).copy()
+                bin_summary_pd = single_wafer_df.pivot_table('PART_ID', index=['SOFT_BIN', 'BIN_DESC'],
+                                                             columns='SITE_NUM',
+                                                             aggfunc='count', margins=True, fill_value=0).copy()
                 # bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
                 bin_summary_pd.index.rename([die_id, 'BIN_DESC'], inplace=True)
                 all_bin_summary_list.append(bin_summary_pd)
@@ -805,7 +807,7 @@ class Application(QMainWindow):  # QWidget):
                 bin_swap_table = wafer_map_cmp_list[1]
                 wafer_map_cmp.to_excel(writer, sheet_name='2 STDF wafer map compare', startrow=0)
                 row_table, column_table = wafer_map_cmp.shape
-                bin_swap_table.to_excel(writer, sheet_name='2 STDF wafer map compare', startrow=row_table+2)
+                bin_swap_table.to_excel(writer, sheet_name='2 STDF wafer map compare', startrow=row_table + 2)
                 worksheet = writer.sheets['2 STDF wafer map compare']
                 worksheet.conditional_format(1, 1, row_table, column_table,
                                              {'type': 'text', 'criteria': 'containing',
@@ -813,7 +815,7 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(100)
             self.status_text.setText(
                 str(correlation_report_name.split('/')[-1] + " written successfully!"))
-        except xlsxwriter.exceptions.FileCreateError: # PermissionError:
+        except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
             self.status_text.setText(
                 str("Please close " + correlation_report_name.split('/')[-1]))
             self.progress_bar.setValue(0)
@@ -861,7 +863,8 @@ class Application(QMainWindow):  # QWidget):
                                            self.list_of_test_numbers, False, False)
             site_list = table.Site.unique()
             if len(site_list) > 1:
-                correlation_df = pd.concat([table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
+                correlation_df = pd.concat(
+                    [table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
                 columns = ['LowLimit', 'HiLimit']
                 for site in site_list:
                     correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean], axis=1)
@@ -906,7 +909,8 @@ class Application(QMainWindow):  # QWidget):
                     # Sort Y from low to high
                     wafer_map_df.sort_index(axis=0, ascending=False, inplace=True)
                     tmp_wafer_map_list.append(wafer_map_df)
-                    self.progress_bar.setValue(80 + int(i/(len(file_list)+len(lot_id_list)+len(wafer_id_list))*10))
+                    self.progress_bar.setValue(
+                        80 + int(i / (len(file_list) + len(lot_id_list) + len(wafer_id_list)) * 10))
 
             all_wafer_map_list.append(tmp_wafer_map_list)
 
