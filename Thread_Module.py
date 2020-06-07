@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -14,6 +15,7 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 import time
 from Backend_Module import Backend
 from FileRead_Module import FileReaders
+
 
 # Attempt to utilize multithreading so the program doesn't feel like it's crashing every time I do literally anything
 class PdfWriterThread(QThread):
@@ -178,6 +180,5 @@ class XlsxParseThread(QThread):
             FileReaders.to_excel(self.filepath)
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_excel.xlsx created!'))
-
 
 ###################################################

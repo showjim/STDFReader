@@ -6,10 +6,13 @@
 from abc import ABC
 import numpy as np
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 from decimal import Decimal
+
+
 # IMPORTANT DOCUMENTATION I NEED TO FILL OUT TO MAKE SURE PEOPLE KNOW WHAT THE HELL IS GOING ON
 
 # ~~~~~~~~~~ Data definition explanations (in functions) ~~~~~~~~~~ #
@@ -276,7 +279,7 @@ class Backend(ABC):
     @staticmethod
     def table_of_results(test_data, sdr_parse, minimum, maximum, units):
         parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
-                      'Min', 'Mean','Max', 'Range', 'STD', 'Cp', 'Cpk']
+                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpk']
 
         # Clarification
         if 'db' in units.lower():
@@ -620,6 +623,5 @@ class Backend(ABC):
             m = np.mean(site_data)
             cpu_value = float(maximum - m) / (3 * sigma)
             return cpu_value
-
 
 ###################################################
