@@ -43,7 +43,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.3'
+Version = 'Beta 0.4.4'
 
 
 ###################################################
@@ -929,24 +929,29 @@ class Application(QMainWindow):  # QWidget):
         self.progress_bar.setValue(95)
         # In case someone has the file open
         try:
-            with pd.ExcelWriter(s2s_correlation_report_name, engine='xlsxwriter') as writer:
-                workbook = writer.book
-                # Light red fill for Bin 4XXX
-                format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+            if s2s_correlation_report_df.empty:
+                self.status_text.setText(
+                    str('Only 1 Site Data Found in .csv file !!!'))
+                self.progress_bar.setValue(0)
+            else:
+                with pd.ExcelWriter(s2s_correlation_report_name, engine='xlsxwriter') as writer:
+                    workbook = writer.book
+                    # Light red fill for Bin 4XXX
+                    format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
 
-                # Write correlation table
-                s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
-                row_table, column_table = s2s_correlation_report_df.shape
-                worksheet = writer.sheets['Site2Site correlation table']
-                worksheet.conditional_format(1, column_table, row_table, column_table,
-                                             {'type': 'cell', 'criteria': '>=',
-                                              'value': 0.05, 'format': format_4XXX})
-                for i in range(1, row_table):
-                    worksheet.conditional_format(i, 3, i, column_table - 2, {'type': '3_color_scale'})
-                worksheet.autofilter(0, 0, row_table, column_table)
-                self.progress_bar.setValue(100)
-            self.status_text.setText(
-                str(s2s_correlation_report_name.split('/')[-1] + " written successfully!"))
+                    # Write correlation table
+                    s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
+                    row_table, column_table = s2s_correlation_report_df.shape
+                    worksheet = writer.sheets['Site2Site correlation table']
+                    worksheet.conditional_format(1, column_table, row_table, column_table,
+                                                 {'type': 'cell', 'criteria': '>=',
+                                                  'value': 0.05, 'format': format_4XXX})
+                    for i in range(1, row_table):
+                        worksheet.conditional_format(i, 3, i, column_table - 2, {'type': '3_color_scale'})
+                    worksheet.autofilter(0, 0, row_table, column_table)
+                    self.progress_bar.setValue(100)
+                self.status_text.setText(
+                    str(s2s_correlation_report_name.split('/')[-1] + " written successfully!"))
         except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
             self.status_text.setText(
                 str("Please close " + s2s_correlation_report_name.split('/')[-1]))
@@ -954,6 +959,7 @@ class Application(QMainWindow):  # QWidget):
         pass
 
     def make_s2s_correlation_table(self):
+        correlation_df = pd.DataFrame()
         if self.file_selected:
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers, False, False)
@@ -1000,6 +1006,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
+        return correlation_df
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
