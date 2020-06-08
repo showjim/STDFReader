@@ -43,7 +43,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.2'
+Version = 'Beta 0.4.3'
 
 
 ###################################################
@@ -146,7 +146,7 @@ class Application(QMainWindow):  # QWidget):
             'Generate correlation of Site2Site')
         self.generate_correlation_button_s2s.setToolTip(
             'Generate an Site2Site correlation report')
-        self.generate_correlation_button_s2s.clicked.connect(self.make_s2s_correlation_table)
+        self.generate_correlation_button_s2s.clicked.connect(self.generate_s2s_correlation_report)
 
         # Generates a wafer map comparison
         self.generate_wafer_cmp_button = QPushButton(
@@ -855,37 +855,6 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(0)
         return correlation_df, file_list
 
-    def make_s2s_correlation_table(self):
-        if self.file_selected:
-            table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers, False, False)
-            site_list = table.Site.unique()
-            if len(site_list) > 1:
-                correlation_df = pd.concat(
-                    [table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
-                columns = ['LowLimit', 'HiLimit']
-                for site in site_list:
-                    correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean], axis=1)
-                    columns = columns + ['Mean(site' + site + ')']
-                correlation_df.columns = columns
-                csv_summary_name = str(self.file_path + "_correlation_table_s2s.csv")
-
-                # In case someone has the file open
-                try:
-                    correlation_df.to_csv(path_or_buf=csv_summary_name)
-                    self.status_text.setText(
-                        str(csv_summary_name + " written successfully!"))
-                    self.progress_bar.setValue(100)
-                except PermissionError:
-                    self.status_text.setText(
-                        str("Please close " + csv_summary_name + "_correlation.csv"))
-                    self.progress_bar.setValue(0)
-            else:
-                self.status_text.setText('Only 1 site data found in csv file !!!')
-                self.progress_bar.setValue(0)
-        else:
-            self.status_text.setText('Please select a file')
-
     def make_wafer_map_cmp(self):
         # Get wafer map
         all_wafer_map_list = []
@@ -933,18 +902,104 @@ class Application(QMainWindow):  # QWidget):
                                                 cmp_df.iloc[:, i].astype(str))
                 row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
                 col_name = col_names[i]
-                for j in row_name:
-                    axis_list = [col_name, j]
-                    base_bin_num = base_df.loc[j, col_name]
-                    cmp_bin_num = cmp_df.loc[j, col_name]
-                    self.progress_bar.setValue(
-                        90 + int(i / (df1_c + len(row_name)) * 5))
+                if len(row_name) == 0:
+                    axis_list = ''
+                    base_bin_num = ''
+                    cmp_bin_num = ''
+                    self.progress_bar.setValue(95)
+                else:
+                    for j in row_name:
+                        axis_list = [col_name, j]
+                        base_bin_num = base_df.loc[j, col_name]
+                        cmp_bin_num = cmp_df.loc[j, col_name]
+                        self.progress_bar.setValue(
+                            90 + int(i / (df1_c + len(row_name)) * 5))
                 axis_dic['Axis'].append(axis_list)
                 axis_dic['Base Bin Number'].append(base_bin_num)
                 axis_dic['CMP Bin Number'].append(cmp_bin_num)
             axis_df = pd.DataFrame.from_dict(axis_dic, orient='index').T
         cmp_result_list = [result_df, axis_df]
         return cmp_result_list
+
+    def generate_s2s_correlation_report(self):
+        s2s_correlation_report_name = str(self.file_path + "_s2s_correlation_table.xlsx")
+        self.status_text.setText(
+            str(s2s_correlation_report_name.split('/')[-1] + " is generating..."))
+        s2s_correlation_report_df = self.make_s2s_correlation_table()
+        self.progress_bar.setValue(95)
+        # In case someone has the file open
+        try:
+            with pd.ExcelWriter(s2s_correlation_report_name, engine='xlsxwriter') as writer:
+                workbook = writer.book
+                # Light red fill for Bin 4XXX
+                format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+
+                # Write correlation table
+                s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
+                row_table, column_table = s2s_correlation_report_df.shape
+                worksheet = writer.sheets['Site2Site correlation table']
+                worksheet.conditional_format(1, column_table, row_table, column_table,
+                                             {'type': 'cell', 'criteria': '>=',
+                                              'value': 0.05, 'format': format_4XXX})
+                for i in range(1, row_table):
+                    worksheet.conditional_format(i, 3, i, column_table - 2, {'type': '3_color_scale'})
+                worksheet.autofilter(0, 0, row_table, column_table)
+                self.progress_bar.setValue(100)
+            self.status_text.setText(
+                str(s2s_correlation_report_name.split('/')[-1] + " written successfully!"))
+        except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
+            self.status_text.setText(
+                str("Please close " + s2s_correlation_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
+        pass
+
+    def make_s2s_correlation_table(self):
+        if self.file_selected:
+            table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
+                                           self.list_of_test_numbers, False, False)
+            site_list = table.Site.unique()
+            if len(site_list) > 1:
+                # Initial table with Hi/Low Limit
+                correlation_df = pd.concat(
+                    [table[table.Site == site_list[0]].LowLimit, table[table.Site == site_list[0]].HiLimit], axis=1)
+                columns = ['LowLimit', 'HiLimit']
+
+                # Add mean value from each site
+                for site in site_list:
+                    correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean.astype('float')], axis=1)
+                    columns = columns + ['Mean(site' + site + ')']
+
+                # Add mean delta column
+                mean_delta = correlation_df.iloc[:, 2:].max(axis=1) - correlation_df.iloc[:, 2:].min(axis=1)
+                correlation_df = pd.concat([correlation_df, mean_delta], axis=1)
+                columns = columns + ['Mean Delta(Max - Min)']
+
+                # Add mean delta over limit column
+                hiLimit_df = correlation_df.HiLimit.replace('n/a', 0).astype(float)
+                lowlimit_df = correlation_df.LowLimit.replace('n/a', 0).astype(float)
+                mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
+                correlation_df = pd.concat([correlation_df, mean_delta_over_limit], axis=1)
+                columns = columns + ['Mean Delta OVer Limit']
+
+                correlation_df.columns = columns
+                # csv_summary_name = str(self.file_path + "_correlation_table_s2s.csv")
+
+                return correlation_df
+                # # In case someone has the file open
+                # try:
+                #     correlation_df.to_csv(path_or_buf=csv_summary_name)
+                #     self.status_text.setText(
+                #         str(csv_summary_name + " written successfully!"))
+                #     self.progress_bar.setValue(100)
+                # except PermissionError:
+                #     self.status_text.setText(
+                #         str("Please close " + csv_summary_name + "_correlation.csv"))
+                #     self.progress_bar.setValue(0)
+            else:
+                self.status_text.setText('Only 1 site data found in csv file !!!')
+                self.progress_bar.setValue(0)
+        else:
+            self.status_text.setText('Please select a file')
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
