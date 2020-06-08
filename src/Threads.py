@@ -142,7 +142,7 @@ class CsvParseThread(QThread):
     # Opens and reads a file to parse the data
     def run(self):
 
-        if self.filepath == '':
+        if len(self.filepath[0]) == 0:
 
             self.notify_status_text.emit('Please select a file')
             pass

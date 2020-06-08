@@ -43,7 +43,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.1'
+Version = 'Beta 0.4.2'
 
 
 ###################################################
@@ -581,8 +581,8 @@ class Application(QMainWindow):  # QWidget):
                     start_column = 0
                     for j in range(len(wafer_map_list[i])):
                         wafer_map = wafer_map_list[i][j]
-                        if i == 0 and j == 0:
-                            row_table, column_table = wafer_map.shape
+                        # if i == 0 and j == 0:
+                        row_table, column_table = wafer_map.shape
                         wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
 
                         worksheet = writer.sheets['Wafer Map']
@@ -689,7 +689,7 @@ class Application(QMainWindow):  # QWidget):
                     self.list_of_duplicate_test_numbers.append(
                         [test_number_list[dup_list[0]], test_name_list[i], test_name_list[dup_list[1]]])
         # Log duplicate test number item from list, if exist
-        log_csv = pd.DataFrame()
+        log_csv = pd.DataFrame({'name': ['不错哟 !!!']})
         if len(self.list_of_duplicate_test_numbers) > 0:
             log_csv = pd.DataFrame(self.list_of_duplicate_test_numbers,
                                    columns=['Test Number', 'Test Name', 'Test Name'])
