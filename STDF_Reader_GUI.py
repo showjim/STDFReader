@@ -39,9 +39,9 @@ import xlsxwriter
 import logging
 
 # from numba import jit
-from src.Backend_Module import Backend
-from src.FileRead_Module import FileReaders
-from src.Thread_Module import PdfWriterThread, CsvParseThread, XlsxParseThread
+from src.Backend import Backend
+from src.FileRead import FileReaders
+from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
 Version = 'Beta 0.4.1'
 
