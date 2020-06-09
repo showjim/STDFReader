@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 ###################################################
 # STDF Reader GUI                                 #
-# Version: Beta 0.3                               #
+# Version: Beta 0.4                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A project forked from Thomas Kaunzinger         #
@@ -43,7 +43,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.4'
+Version = 'Beta 0.4.5'
 
 
 ###################################################
@@ -901,22 +901,26 @@ class Application(QMainWindow):  # QWidget):
                                                 base_df.iloc[:, i], base_df.iloc[:, i].astype(str) + '-->' +
                                                 cmp_df.iloc[:, i].astype(str))
                 row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
-                col_name = col_names[i]
+                col_name = int(col_names[i])
                 if len(row_name) == 0:
                     axis_list = ''
                     base_bin_num = ''
                     cmp_bin_num = ''
-                    self.progress_bar.setValue(95)
+                    # axis_dic['Axis'].append(axis_list)
+                    # axis_dic['Base Bin Number'].append(base_bin_num)
+                    # axis_dic['CMP Bin Number'].append(cmp_bin_num)
+                    # self.progress_bar.setValue(95)
                 else:
                     for j in row_name:
-                        axis_list = [col_name, j]
+                        axis_list = [col_name, int(j)]
                         base_bin_num = base_df.loc[j, col_name]
                         cmp_bin_num = cmp_df.loc[j, col_name]
+                        
+                        axis_dic['Axis'].append(axis_list)
+                        axis_dic['Base Bin Number'].append(base_bin_num)
+                        axis_dic['CMP Bin Number'].append(cmp_bin_num)
                         self.progress_bar.setValue(
                             90 + int(i / (df1_c + len(row_name)) * 5))
-                axis_dic['Axis'].append(axis_list)
-                axis_dic['Base Bin Number'].append(base_bin_num)
-                axis_dic['CMP Bin Number'].append(cmp_bin_num)
             axis_df = pd.DataFrame.from_dict(axis_dic, orient='index').T
         cmp_result_list = [result_df, axis_df]
         return cmp_result_list
