@@ -501,7 +501,7 @@ class Application(QMainWindow):  # QWidget):
                 # Dark green for Bin 7XXX
                 format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
 
-                data_summary.to_excel(writer, sheet_name='Data Stastics')
+                data_summary.to_excel(writer, sheet_name='Data Statistics')
                 row_table, column_table = data_summary.shape
                 worksheet = writer.sheets['Data Stastics']
                 worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
