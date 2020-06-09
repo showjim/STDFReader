@@ -10,9 +10,9 @@ This project is designed for AP team to process and analyze Teradyne's STDF/STD 
 1. Or, you can generate a XLSX table by click button "Parse STD/STDF to .xlsx table", to exam the structure, like PSR/STR/PTR etc;
 ![Semantic description of image](/img/Xlsx_Capture.PNG)
 3. Upload the CSV file which generated in step 1 by click button "Upload parsed .csv file";
-4. More buttons on the UI you can try to analyse STDF data, but only accept loop data for now;
+4. More buttons on the UI you can try to analyse STDF data, both loop/production data are accepted;
 ![Semantic description of image](/img/Win_Capture3.PNG)
-5. You can generate XLSX version report of mean/cp/cpk by click "Generate data anlysis report", **Data Stastics/Duplicate Test Number/Bin Summary/Wafer Map** are included;
+5. You can generate XLSX version report of mean/cp/cpk by click "Generate data analysis report", **Data Statistics/Duplicate Test Number/Bin Summary/Wafer Map** are included;
 ![Semantic description of image](/img/Win_Capture2.PNG)
 ![Bin Summary](/img/Bin_Summary.PNG "Bin Summary")
 ![Wafer Map](/img/Wafer_Map.PNG "Wafer Map")
