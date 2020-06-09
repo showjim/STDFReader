@@ -1,1 +1,0 @@
-pyinstaller --onefile -w --icon=.\img\icon.ico STDF_Reader_GUI.py
