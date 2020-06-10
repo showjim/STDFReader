@@ -935,6 +935,7 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText(
             str(s2s_correlation_report_name.split('/')[-1] + " is generating..."))
         s2s_correlation_report_df = self.make_s2s_correlation_table()
+        self.make_s2s_correlation_heatmap(s2s_correlation_report_df)
         self.progress_bar.setValue(95)
         # In case someone has the file open
         try:
@@ -1018,30 +1019,32 @@ class Application(QMainWindow):  # QWidget):
         return correlation_df
 
     def make_s2s_correlation_heatmap(self, correlation_df):
-        # df = correlation_df.iloc[:, 3:-2]
-        # corr_data = df.corr()
-        #
-        # fig = plt.figure()  # 分辨率
-        # ax = fig.add_subplot(111)
-        # ax.set_yticks(range(len(corr_data.columns)))
-        # ax.set_yticklabels(corr_data.columns)
-        # ax.set_xticks(range(len(corr_data.columns)))
-        # ax.set_xticklabels(corr_data.columns, rotation='vertical')
-        #
-        # im = ax.imshow(corr_data,  # 相关性矩阵数据集
-        #                cmap='RdYlGn')  # annot默认为False，当annot为True时，在heatmap中每个方格写入数据
-        # plt.colorbar(im)
-        # # annotate heatmap
-        # texts = []
-        # valfmt = matplotlib.ticker.StrMethodFormatter("{x:.2f}")
-        # for i in range(corr_data.shape[0]):
-        #     for j in range(corr_data.shape[1]):
-        #         # kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
-        #         text = im.axes.text(j, i, valfmt(corr_data.iloc[i, j]), va='center', ha='center')
-        #         texts.append(text)
-        #
-        # plt.title('Correlogram of Each Site')
-        # plt.show()
+        matplotlib.use('qt5Agg')
+        df = correlation_df.iloc[:, 3:-2]
+        corr_data = df.corr()
+
+        fig = plt.figure()  # 分辨率
+        ax = fig.add_subplot(111)
+        ax.set_yticks(range(len(corr_data.columns)))
+        ax.set_yticklabels(corr_data.columns)
+        ax.set_xticks(range(len(corr_data.columns)))
+        ax.set_xticklabels(corr_data.columns, rotation='vertical')
+
+        im = ax.imshow(corr_data,  # 相关性矩阵数据集
+                       cmap='RdYlGn')  # annot默认为False，当annot为True时，在heatmap中每个方格写入数据
+        plt.colorbar(im)
+        # annotate heatmap
+        texts = []
+        valfmt = matplotlib.ticker.StrMethodFormatter("{x:.2f}")
+        for i in range(corr_data.shape[0]):
+            for j in range(corr_data.shape[1]):
+                # kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
+                text = im.axes.text(j, i, valfmt(corr_data.iloc[i, j]), va='center', ha='center')
+                texts.append(text)
+
+        plt.title('Correlogram of Each Site')
+        plt.show()
+        matplotlib.use('Agg')
         pass
 
     # Get the summary results for all sites/each site in each test
