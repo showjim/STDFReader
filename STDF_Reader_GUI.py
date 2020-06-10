@@ -41,7 +41,7 @@ import logging
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns
+# from seaborn import heatmap as heatmap
 
 # from numba import jit
 from src.Backend import Backend
@@ -508,7 +508,7 @@ class Application(QMainWindow):  # QWidget):
 
                 data_summary.to_excel(writer, sheet_name='Data Statistics')
                 row_table, column_table = data_summary.shape
-                worksheet = writer.sheets['Data Stastics']
+                worksheet = writer.sheets['Data Statistics']
                 worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 3.3, 'format': format_4XXX})
@@ -1018,17 +1018,17 @@ class Application(QMainWindow):  # QWidget):
         return correlation_df
 
     def make_s2s_correlation_heatmap(self, correlation_df):
-        df = correlation_df.iloc[:, 3:-2]
-        corr_data = df.corr()
-        plt.figure(figsize=(12, 10),  # 画布尺寸
-                   dpi=80)  # 分辨率
-        sns.heatmap(corr_data,  # 相关性矩阵数据集
-                    xticklabels=corr_data.columns,  # 横轴标签
-                    yticklabels=corr_data.columns,  # 纵轴标签
-                    cmap='RdYlGn',  # 色谱(调色板)
-                    annot=True)  # annot默认为False，当annot为True时，在heatmap中每个方格写入数据
-        plt.title('Correlogram of Each Site')
-        plt.show()
+        # df = correlation_df.iloc[:, 3:-2]
+        # corr_data = df.corr()
+        # plt.figure(figsize=(12, 10),  # 画布尺寸
+        #            dpi=80)  # 分辨率
+        # heatmap(corr_data,  # 相关性矩阵数据集
+        #             xticklabels=corr_data.columns,  # 横轴标签
+        #             yticklabels=corr_data.columns,  # 纵轴标签
+        #             cmap='RdYlGn',  # 色谱(调色板)
+        #             annot=True)  # annot默认为False，当annot为True时，在heatmap中每个方格写入数据
+        # plt.title('Correlogram of Each Site')
+        # plt.show()
         pass
 
     # Get the summary results for all sites/each site in each test
