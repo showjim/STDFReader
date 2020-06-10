@@ -38,6 +38,11 @@ import time
 import xlsxwriter
 import logging
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 # from numba import jit
 from src.Backend import Backend
 from src.FileRead import FileReaders
@@ -1011,6 +1016,20 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.status_text.setText('Please select a file')
         return correlation_df
+
+    def make_s2s_correlation_heatmap(self, correlation_df):
+        df = correlation_df.iloc[:, 3:-2]
+        corr_data = df.corr()
+        plt.figure(figsize=(12, 10),  # 画布尺寸
+                   dpi=80)  # 分辨率
+        sns.heatmap(corr_data,  # 相关性矩阵数据集
+                    xticklabels=corr_data.columns,  # 横轴标签
+                    yticklabels=corr_data.columns,  # 纵轴标签
+                    cmap='RdYlGn',  # 色谱(调色板)
+                    annot=True)  # annot默认为False，当annot为True时，在heatmap中每个方格写入数据
+        plt.title('Correlogram of Each Site')
+        plt.show()
+        pass
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
