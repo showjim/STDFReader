@@ -72,6 +72,29 @@ class FileReaders(ABC):
                 data_summary_all = data_summary.frame
             else:
                 data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
+                # data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False, join='outer', ignore_index=True)
+        # Set multiple level columns for csv table
+        tname_list = []
+        tnumber_list = []
+        hilimit_list = []
+        lolimit_list = []
+        unit_vect_nam_list = []
+        tmplist = data_summary_all.columns.values.tolist()
+        for i in range(len(tmplist)):
+            if len(str(tmplist[i]).split('|')) == 1:
+                tname_list.append('')
+                tnumber_list.append(str(tmplist[i]).split('|')[0])
+                hilimit_list.append('')
+                lolimit_list.append('')
+                unit_vect_nam_list.append('')
+            else:
+                tname_list.append(str(tmplist[i]).split('|')[1])
+                tnumber_list.append(str(tmplist[i]).split('|')[0])
+                hilimit_list.append(str(tmplist[i]).split('|')[2])
+                lolimit_list.append(str(tmplist[i]).split('|')[3])
+                unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
+        data_summary_all.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
+
         data_summary_all.to_csv(output_file_name + "_csv_log.csv")
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
@@ -331,26 +354,26 @@ class MyTestResultProfiler:
             # frame.set_index(['JOB_NAM', 'LOT_ID', 'WAFER_ID', 'SITE_NUM', 'X_COORD',
             #                              'Y_COORD', 'PART_ID', 'HARD_BIN', 'SOFT_BIN', 'TEST_T'])
 
-            tname_list = []
-            tnumber_list = []
-            hilimit_list = []
-            lolimit_list = []
-            unit_vect_nam_list = []
-            tmplist = self.frame.columns.values.tolist()
-            for i in range(len(tmplist)):
-                if len(str(tmplist[i]).split('|')) == 1:
-                    tname_list.append('')
-                    tnumber_list.append(str(tmplist[i]).split('|')[0])
-                    hilimit_list.append('')
-                    lolimit_list.append('')
-                    unit_vect_nam_list.append('')
-                else:
-                    tname_list.append(str(tmplist[i]).split('|')[1])
-                    tnumber_list.append(str(tmplist[i]).split('|')[0])
-                    hilimit_list.append(str(tmplist[i]).split('|')[2])
-                    lolimit_list.append(str(tmplist[i]).split('|')[3])
-                    unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
-            self.frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
+            # tname_list = []
+            # tnumber_list = []
+            # hilimit_list = []
+            # lolimit_list = []
+            # unit_vect_nam_list = []
+            # tmplist = self.frame.columns.values.tolist()
+            # for i in range(len(tmplist)):
+            #     if len(str(tmplist[i]).split('|')) == 1:
+            #         tname_list.append('')
+            #         tnumber_list.append(str(tmplist[i]).split('|')[0])
+            #         hilimit_list.append('')
+            #         lolimit_list.append('')
+            #         unit_vect_nam_list.append('')
+            #     else:
+            #         tname_list.append(str(tmplist[i]).split('|')[1])
+            #         tnumber_list.append(str(tmplist[i]).split('|')[0])
+            #         hilimit_list.append(str(tmplist[i]).split('|')[2])
+            #         lolimit_list.append(str(tmplist[i]).split('|')[3])
+            #         unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
+            # self.frame.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
             # mcol = pd.MultiIndex.from_arrays([tname_list, tnumber_list])
             # frame.Mu
             # new_frame = pd.DataFrame(frame.iloc[:,:], columns=mcol)
