@@ -37,6 +37,7 @@ import pandas as pd
 import time
 import xlsxwriter
 import logging
+import re
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -47,7 +48,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.7'
+Version = 'Beta 0.4.8'
 
 
 ###################################################
@@ -416,6 +417,7 @@ class Application(QMainWindow):  # QWidget):
 
                 endt = time.time()
                 print('读取时间：', endt - startt)
+                logging.info('Debug message: ' + '读取时间：' + str(endt - startt))
                 # sdr_parse = self.sdr_data[0].split("|")
 
                 self.progress_bar.setValue(35)
@@ -475,24 +477,28 @@ class Application(QMainWindow):  # QWidget):
         data_summary = self.make_data_summary_report()
         endt = time.time()
         print('data summary Time: ', endt - startt)
+        logging.info('Debug message: ' + 'data summary Time: ' + str(endt - startt))
 
         startt = time.time()
         duplicate_number_report = self.make_duplicate_num_report()
         self.progress_bar.setValue(82)
         endt = time.time()
         print('duplicate number Time: ', endt - startt)
+        logging.info('Debug message: ' + 'duplicate number Time: ' + str(endt - startt))
 
         startt = time.time()
         bin_summary_list = self.make_bin_summary()
         self.progress_bar.setValue(85)
         endt = time.time()
         print('bin summary Time: ', endt - startt)
+        logging.info('Debug message: ' + 'bin summary Time: ' + str(endt - startt))
 
         startt = time.time()
         wafer_map_list = self.make_wafer_map()
         self.progress_bar.setValue(88)
         endt = time.time()
         print('wafer map Time: ', endt - startt)
+        logging.info('Debug message: ' + 'wafer map Time: ' + str(endt - startt))
 
         startt = time.time()
 
@@ -656,6 +662,7 @@ class Application(QMainWindow):  # QWidget):
                 self.progress_bar.setValue(100)
                 endt = time.time()
                 print('XLSX 生成时间: ', endt - startt)
+                logging.info('Debug message: ' + 'XLSX 生成时间: ' + str(endt - startt))
                 self.status_text.setText(
                     str(analysis_report_name.split('/')[-1] + " written successfully!"))
         except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
@@ -1178,15 +1185,23 @@ class Application(QMainWindow):  # QWidget):
 
 
 class ComboCheckBox(QComboBox):
+    popupAboutToBeShown = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent=None)
+        self.qListWidget = QListWidget()
+        self.qLineEdit = QLineEdit()
+        self.qCheckBox = []
+        self.Selectedrow_num = 0
+        self.items = []
+        self.row_num = 0
+
     def loadItems(self, items):
         self.items = ['ALL DATA'] + items
         # self.items.insert(0, 'ALL DATA')
         self.row_num = len(self.items)
-        self.Selectedrow_num = 0
-        self.qCheckBox = []
-        self.qLineEdit = QLineEdit()
-        self.qLineEdit.setReadOnly(True)
-        self.qListWidget = QListWidget()
+
+        # self.qLineEdit.setReadOnly(True)
         self.addQCheckBox(0)
         self.qCheckBox[0].stateChanged.connect(self.All)
         for i in range(1, self.row_num):
@@ -1196,18 +1211,21 @@ class ComboCheckBox(QComboBox):
         self.setView(self.qListWidget)
         self.setLineEdit(self.qLineEdit)
         # self.qLineEdit.textChanged.connect(self.printResults)
+        self.popupAboutToBeShown.connect(self.regex_select)
+        # QComboBox.activated.connect(self.regex_select)
 
     def showPopup(self):
+        self.popupAboutToBeShown.emit()
         # 重写showPopup方法，避免下拉框数据多而导致显示不全的问题
-        select_list = self.Selectlist()  # 当前选择数据
-        self.loadItems(items=self.items[1:])  # 重新添加组件
-        for i in range(1, self.row_num):
-            self.qCheckBox[i].stateChanged.disconnect()
-        for select in select_list:
-            index = self.items[:].index(select)
-            self.qCheckBox[index].setChecked(True)  # 选中组件
-        for i in range(1, self.row_num):
-            self.qCheckBox[i].stateChanged.connect(self.showMessage)
+        # select_list = self.Selectlist()  # 当前选择数据
+        # self.loadItems(items=self.items[1:])  # 重新添加组件
+        # for i in range(1, self.row_num):
+        #     self.qCheckBox[i].stateChanged.disconnect()
+        # for select in select_list:
+        #     index = self.items[:].index(select)
+        #     self.qCheckBox[index].setChecked(True)  # 选中组件
+        # for i in range(1, self.row_num):
+        #     self.qCheckBox[i].stateChanged.connect(self.showMessage)
         return QComboBox.showPopup(self)
 
     def addQCheckBox(self, i):
@@ -1239,7 +1257,7 @@ class ComboCheckBox(QComboBox):
             self.qCheckBox[0].setCheckState(1)  # Part is/are selected
             show = ';'.join(Outputlist)
         self.qLineEdit.setText(show)
-        self.qLineEdit.setReadOnly(True)
+        # self.qLineEdit.setReadOnly(True)
 
     def All(self, check_state):
         # disconnect 'showMessage' to improve time performance
@@ -1257,6 +1275,31 @@ class ComboCheckBox(QComboBox):
             self.showMessage()
         for i in range(1, self.row_num):
             self.qCheckBox[i].stateChanged.connect(self.showMessage)
+
+    def regex_select(self):
+        text = self.qLineEdit.text()
+        new_tests_list = []  # 保存筛选出来dog的列表
+        tests_index_list = []
+        try:
+            if text != '':
+                for index, data in enumerate(self.items[1:]):  # 遍历列表
+                    if re.match(text, data) != None:  # 如果正则匹配出的数据不为None, 就将此数据添加到新列表中
+                        new_tests_list.append(data)
+                        tests_index_list.append(index)
+                if len(tests_index_list) != 0:
+                    self.clear()
+                    for i in tests_index_list:
+                        self.qCheckBox[i+1].setChecked(True)
+                    # self.showMessage()
+        except re.error:
+            pass
+        # new_tests_list = list(filter(lambda x: re.match(text, x) != None, self.items[1:]))
+        print(new_tests_list)
+        if len(tests_index_list) != 0:
+            logging.info('Debug message: ' + ', '.join(new_tests_list)) #.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        else:
+            logging.info('Debug message: ' + 'No Test Instances Found.')
+        pass
 
     def clear(self):
         for i in range(self.row_num):
@@ -1281,7 +1324,7 @@ if __name__ == '__main__':
         pathname = os.path.dirname(sys.executable)
     else:
         pathname = os.path.dirname(__file__)
-    logging.basicConfig(filename=pathname + '\\app.log', level=logging.ERROR,
+    logging.basicConfig(filename=pathname + '\\app.log', level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
     sys.excepthook = MyExceptHook.handle_exception
     app = QApplication(sys.argv)
