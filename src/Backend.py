@@ -104,7 +104,7 @@ class Backend(ABC):
 
         # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
         table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
-        table = table[0:17]
+        # table = table[0:17]
         plt.subplot(211)
         cell_text = []
         for row in range(len(table)):

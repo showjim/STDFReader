@@ -95,7 +95,7 @@ class FileReaders(ABC):
                 unit_vect_nam_list.append(str(tmplist[i]).split('|')[4])
         data_summary_all.columns = [tname_list, hilimit_list, lolimit_list, unit_vect_nam_list, tnumber_list]
 
-        data_summary_all.to_csv(output_file_name + "_csv_log.csv")
+        data_summary_all.to_csv(output_file_name + "_csv_log.csv", index=False)
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod

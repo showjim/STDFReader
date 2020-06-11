@@ -39,7 +39,6 @@ import xlsxwriter
 import logging
 
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 # from seaborn import heatmap as heatmap
 
@@ -48,7 +47,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.6'
+Version = 'Beta 0.4.7'
 
 
 ###################################################
@@ -79,6 +78,7 @@ class Application(QMainWindow):  # QWidget):
         self.df_csv = pd.DataFrame()
         self.sdr_parse = []
         self.list_of_duplicate_test_numbers = []
+        self.s2s_correlation_report_df = pd.DataFrame()
 
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
@@ -153,12 +153,17 @@ class Application(QMainWindow):  # QWidget):
             'Generate an Site2Site correlation report')
         self.generate_correlation_button_s2s.clicked.connect(self.generate_s2s_correlation_report)
 
-        # Generates a wafer map comparison
-        self.generate_wafer_cmp_button = QPushButton(
-            'Generate wafer map comparison stdf files')
-        self.generate_wafer_cmp_button.setToolTip(
-            'Generate a wafer map comparison .csv for correlation')
-        self.generate_wafer_cmp_button.clicked.connect(self.make_wafer_map_cmp)
+        # Selects a test result for s2s correlation
+        self.select_s2s_test_menu = ComboCheckBox()  # ComboCheckBox() # QComboBox()
+        self.select_s2s_test_menu.setToolTip(
+            'Select the tests to produce the heatmap results for site-to-site correlation')
+
+        # Button to generate the s2s test results for the desired tests from the selected s2s menu
+        self.generate_heatmap_button = QPushButton(
+            'Generate heatmap from selected Site2Site tests')
+        self.generate_heatmap_button.setToolTip(
+            'Generate a heatmap with the selected s2s tests from the parsed .csv')
+        self.generate_heatmap_button.clicked.connect(lambda: self.make_s2s_correlation_heatmap(self.s2s_correlation_report_df))
 
         self.progress_bar = QProgressBar()
 
@@ -199,7 +204,8 @@ class Application(QMainWindow):  # QWidget):
         self.limit_toggle.setEnabled(False)
         self.generate_correlation_button.setEnabled(False)
         self.generate_correlation_button_s2s.setEnabled(False)
-        self.generate_wafer_cmp_button.setEnabled(False)
+        self.select_s2s_test_menu.setEnabled(False)
+        self.generate_heatmap_button.setEnabled(False)
 
         self.main_window()
 
@@ -217,6 +223,8 @@ class Application(QMainWindow):  # QWidget):
         layout = QGridLayout()
         layout.addWidget(self.generate_correlation_button, 0, 0)
         layout.addWidget(self.generate_correlation_button_s2s, 0, 1)
+        layout.addWidget(self.select_s2s_test_menu, 1, 0, 1, 2)
+        layout.addWidget(self.generate_heatmap_button, 2, 0)
         self.correlation_tab.setLayout(layout)
 
     # Main interface method
@@ -381,10 +389,10 @@ class Application(QMainWindow):  # QWidget):
 
                     # Extracts the test name for the selecting
                     tmp_pd = self.df_csv.columns
-                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:17]  # Get the part info
-                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[17:]
-                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[17:]
-                    self.test_info_list = tmp_pd.values.tolist()[17:]
+                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
+                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
+                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
+                    self.test_info_list = tmp_pd.values.tolist()[16:]
                     self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
                                                         zip(self.tname_list, self.tnumber_list)]
                     # Change the multi-level columns to single level columns
@@ -393,7 +401,7 @@ class Application(QMainWindow):  # QWidget):
 
                     # Data cleaning, get rid of '(F)'
                     self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
-                    self.df_csv.iloc[:, 17:] = self.df_csv.iloc[:, 17:].astype('float')
+                    self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
                     self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
                     self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
                     self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
@@ -414,8 +422,8 @@ class Application(QMainWindow):  # QWidget):
 
                 self.file_selected = True
 
-                self.select_test_menu.loadItems(
-                    self.list_of_test_numbers_string)
+                self.select_test_menu.loadItems(self.list_of_test_numbers_string)
+                self.select_s2s_test_menu.loadItems(self.list_of_test_numbers_string)
 
                 self.selected_tests = []
 
@@ -434,7 +442,8 @@ class Application(QMainWindow):  # QWidget):
                 self.limit_toggle.setEnabled(True)
                 self.generate_correlation_button.setEnabled(True)
                 self.generate_correlation_button_s2s.setEnabled(True)
-                self.generate_wafer_cmp_button.setEnabled(True)
+                self.select_s2s_test_menu.setEnabled(False)
+                self.generate_heatmap_button.setEnabled(False)
                 self.main_window()
 
             else:
@@ -934,12 +943,11 @@ class Application(QMainWindow):  # QWidget):
         s2s_correlation_report_name = str(self.file_path + "_s2s_correlation_table.xlsx")
         self.status_text.setText(
             str(s2s_correlation_report_name.split('/')[-1] + " is generating..."))
-        s2s_correlation_report_df = self.make_s2s_correlation_table()
-        self.make_s2s_correlation_heatmap(s2s_correlation_report_df)
+        self.s2s_correlation_report_df = self.make_s2s_correlation_table()
         self.progress_bar.setValue(95)
         # In case someone has the file open
         try:
-            if s2s_correlation_report_df.empty:
+            if self.s2s_correlation_report_df.empty:
                 self.status_text.setText(
                     str('Only 1 Site Data Found in .csv file !!!'))
                 self.progress_bar.setValue(0)
@@ -950,8 +958,8 @@ class Application(QMainWindow):  # QWidget):
                     format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
 
                     # Write correlation table
-                    s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
-                    row_table, column_table = s2s_correlation_report_df.shape
+                    self.s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
+                    row_table, column_table = self.s2s_correlation_report_df.shape
                     worksheet = writer.sheets['Site2Site correlation table']
                     worksheet.conditional_format(1, column_table, row_table, column_table,
                                                  {'type': 'cell', 'criteria': '>=',
@@ -962,6 +970,8 @@ class Application(QMainWindow):  # QWidget):
                     self.progress_bar.setValue(100)
                 self.status_text.setText(
                     str(s2s_correlation_report_name.split('/')[-1] + " written successfully!"))
+                self.select_s2s_test_menu.setEnabled(True)
+                self.generate_heatmap_button.setEnabled(True)
         except xlsxwriter.exceptions.FileCreateError:  # PermissionError:
             self.status_text.setText(
                 str("Please close " + s2s_correlation_report_name.split('/')[-1]))
@@ -1020,7 +1030,12 @@ class Application(QMainWindow):  # QWidget):
 
     def make_s2s_correlation_heatmap(self, correlation_df):
         matplotlib.use('qt5Agg')
-        df = correlation_df.iloc[:, 3:-2]
+        self.select_s2s_test_menu.setEnabled(False)
+        self.generate_heatmap_button.setEnabled(False)
+        self.selected_s2s_tests = self.select_s2s_test_menu.Selectlist()
+        s2s_test_list = [x.split(' - ')[1] for x in self.selected_s2s_tests]
+        df = correlation_df.iloc[:, 2:-2]
+        df = df.loc[s2s_test_list]
         corr_data = df.corr()
 
         fig = plt.figure()  # 分辨率
@@ -1044,7 +1059,8 @@ class Application(QMainWindow):  # QWidget):
 
         plt.title('Correlogram of Each Site')
         plt.show()
-        matplotlib.use('Agg')
+        self.select_s2s_test_menu.setEnabled(True)
+        self.generate_heatmap_button.setEnabled(True)
         pass
 
     # Get the summary results for all sites/each site in each test
@@ -1068,7 +1084,7 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = df_csv.iloc[:, i + 17].to_numpy()
+            all_data_array = df_csv.iloc[:, i + 16].to_numpy()
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
@@ -1088,7 +1104,7 @@ class Application(QMainWindow):  # QWidget):
             if (not merge_sites) or output_them_both:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = site_test_data_df.iloc[:, i + 17].to_numpy()
+                    site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy()
 
                     ## Get rid of (F) and conver to float on series
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
@@ -1122,7 +1138,7 @@ class Application(QMainWindow):  # QWidget):
     # should be an array of arrays of arrays with the same length as test_list, which is an array of tuples with each
     # tuple representing the test number and name of the test data in that specific trial
     def plot_list_of_tests(self):
-
+        matplotlib.use('Agg')
         if self.file_selected:
 
             self.generate_pdf_button.setEnabled(False)
@@ -1163,8 +1179,8 @@ class Application(QMainWindow):  # QWidget):
 
 class ComboCheckBox(QComboBox):
     def loadItems(self, items):
-        self.items = items
-        self.items.insert(0, 'ALL DATA')
+        self.items = ['ALL DATA'] + items
+        # self.items.insert(0, 'ALL DATA')
         self.row_num = len(self.items)
         self.Selectedrow_num = 0
         self.qCheckBox = []
@@ -1182,12 +1198,16 @@ class ComboCheckBox(QComboBox):
         # self.qLineEdit.textChanged.connect(self.printResults)
 
     def showPopup(self):
-        #  重写showPopup方法，避免下拉框数据多而导致显示不全的问题
-        # select_list = self.Selectlist()  # 当前选择数据
-        # self.loadItems(items=self.items[1:])  # 重新添加组件
-        # for select in select_list:
-        #     index = self.items[:].index(select)
-        #     self.qCheckBox[index].setChecked(True)  # 选中组件
+        # 重写showPopup方法，避免下拉框数据多而导致显示不全的问题
+        select_list = self.Selectlist()  # 当前选择数据
+        self.loadItems(items=self.items[1:])  # 重新添加组件
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.disconnect()
+        for select in select_list:
+            index = self.items[:].index(select)
+            self.qCheckBox[index].setChecked(True)  # 选中组件
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.connect(self.showMessage)
         return QComboBox.showPopup(self)
 
     def addQCheckBox(self, i):
