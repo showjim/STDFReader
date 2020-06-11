@@ -1195,6 +1195,7 @@ class ComboCheckBox(QComboBox):
         self.Selectedrow_num = 0
         self.items = []
         self.row_num = 0
+        self.popupAboutToBeShown.connect(self.regex_select)
 
     def loadItems(self, items):
         self.items = ['ALL DATA'] + items
@@ -1216,7 +1217,6 @@ class ComboCheckBox(QComboBox):
         self.setView(self.qListWidget)
         self.setLineEdit(self.qLineEdit)
         # self.qLineEdit.textChanged.connect(self.printResults)
-        self.popupAboutToBeShown.connect(self.regex_select)
 
     def showPopup(self):
         self.popupAboutToBeShown.emit()
@@ -1247,7 +1247,7 @@ class ComboCheckBox(QComboBox):
         return Outputlist
 
     def showMessage(self):
-        self.qLineEdit.setReadOnly(False)
+        # self.qLineEdit.setReadOnly(False)
         self.qLineEdit.clear()
         Outputlist = self.Selectlist()
 
