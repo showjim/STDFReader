@@ -1201,6 +1201,11 @@ class ComboCheckBox(QComboBox):
         # self.items.insert(0, 'ALL DATA')
         self.row_num = len(self.items)
 
+        self.qListWidget = QListWidget()
+        self.qLineEdit = QLineEdit()
+        self.qCheckBox = []
+        self.Selectedrow_num = 0
+
         # self.qLineEdit.setReadOnly(True)
         self.addQCheckBox(0)
         self.qCheckBox[0].stateChanged.connect(self.All)
@@ -1212,18 +1217,17 @@ class ComboCheckBox(QComboBox):
         self.setLineEdit(self.qLineEdit)
         # self.qLineEdit.textChanged.connect(self.printResults)
         self.popupAboutToBeShown.connect(self.regex_select)
-        # QComboBox.activated.connect(self.regex_select)
 
     def showPopup(self):
         self.popupAboutToBeShown.emit()
         # 重写showPopup方法，避免下拉框数据多而导致显示不全的问题
-        # select_list = self.Selectlist()  # 当前选择数据
-        # self.loadItems(items=self.items[1:])  # 重新添加组件
+        select_list = self.Selectlist()  # 当前选择数据
+        self.loadItems(items=self.items[1:])  # 重新添加组件
         # for i in range(1, self.row_num):
         #     self.qCheckBox[i].stateChanged.disconnect()
-        # for select in select_list:
-        #     index = self.items[:].index(select)
-        #     self.qCheckBox[index].setChecked(True)  # 选中组件
+        for select in select_list:
+            index = self.items[:].index(select)
+            self.qCheckBox[index].setChecked(True)  # 选中组件
         # for i in range(1, self.row_num):
         #     self.qCheckBox[i].stateChanged.connect(self.showMessage)
         return QComboBox.showPopup(self)
