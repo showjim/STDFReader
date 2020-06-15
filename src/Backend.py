@@ -308,9 +308,9 @@ class Backend(ABC):
             minimum = 0
             maximum = 0
 
-        if (minimum == float('-inf')) or (maximum == float('inf')):
-            minimum = 0
-            maximum = 0
+        # if (minimum == float('-inf')) or (maximum == float('inf')):
+        #     minimum = 0
+        #     maximum = 0
 
         if (minimum is None) and (maximum is None):
             minimum = 0
@@ -325,7 +325,8 @@ class Backend(ABC):
         volt_data = []
 
         # Pass/fail data is stupid
-        if minimum == maximum or min(site_data) == max(site_data):
+        if minimum == maximum or min(site_data) == max(site_data) or \
+                ((minimum == float('-inf')) or (maximum == float('inf'))):
             mean_result = np.mean(site_data)
             std_string = str(np.std(site_data))
             cp_result = 'n/a'
