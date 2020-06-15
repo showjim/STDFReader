@@ -269,7 +269,7 @@ class MyTestResultProfiler:
 
         # This is the functional test results
         if rectype == V4.ftr:
-            tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|' + '|' + '|' + \
+            tname_tnumber = str(fields[V4.ftr.TEST_NUM]) + '|' + fields[V4.ftr.TEST_TXT] + '|-1|-1|' + \
                             fields[V4.ftr.VECT_NAM]
             if not (tname_tnumber in self.test_result_dict):
                 self.test_result_dict[tname_tnumber] = [None] * self.site_count
