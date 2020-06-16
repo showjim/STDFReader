@@ -48,7 +48,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.4.9'
+Version = 'Beta 0.5.0'
 
 
 ###################################################
@@ -312,9 +312,9 @@ class Application(QMainWindow):  # QWidget):
 
         # Move QFileDialog out of QThread, in case of error under win 7
         self.status_text.setText('Parsing to .csv file, please wait...')
-        filterboi = 'STDF (*.stdf *.std)'
+        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
         filepath = QFileDialog.getOpenFileNames(
-            caption='Open STDF File', filter=filterboi)
+            caption='Open STDF or GZ File', filter=filterboi)
 
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
