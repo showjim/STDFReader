@@ -78,7 +78,7 @@ class Backend(ABC):
 
     # Plots the results of everything from one test
     @staticmethod
-    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit):
+    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit, plot_table):
 
         # Find the limits
         low_lim = Backend.get_plot_min(data, test_tuple, num_of_sites)
@@ -87,49 +87,50 @@ class Backend(ABC):
 
         print(test_tuple)
 
-        if low_lim == 'n/a':
-
-            if min(np.concatenate(test_data)) < 0:
-                low_lim = min(np.concatenate(test_data, axis=0))
-
-            else:
-                low_lim = 0
-
-        if hi_lim == 'n/a' or low_lim > hi_lim:
-            hi_lim = max(np.concatenate(test_data, axis=0))
+        # if low_lim == float('-inf'):
+        #
+        #     if min(np.concatenate(test_data)) < 0:
+        #         low_lim = min(np.concatenate(test_data, axis=0))
+        # 
+        #     else:
+        #         low_lim = 0
+        #
+        # if hi_lim == float('inf') or low_lim > hi_lim:
+        #     hi_lim = max(np.concatenate(test_data, axis=0))
 
         # Title for everything
         plt.suptitle(
             str("Test: " + test_tuple[0] + " - " + test_tuple[1] + " - Units: " + units))
 
-        # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
-        table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
-        # table = table[0:17]
-        plt.subplot(211)
-        cell_text = []
-        for row in range(len(table)):
-            cell_text.append(table.iloc[row])
+        if plot_table:
+            # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
+            table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
+            # table = table[0:17]
+            plt.subplot(111)
+            cell_text = []
+            for row in range(len(table)):
+                cell_text.append(table.iloc[row])
 
-        plt.table(cellText=cell_text, colLabels=table.columns, loc='center')
-        plt.axis('off')
+            plt.table(cellText=cell_text, colLabels=table.columns, loc='center')
+            plt.axis('off')
+        else:
+            # Plots the trendline
+            plt.subplot(211)
+            Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
+            plt.xlabel("Trials")
+            plt.ylabel(units)
+            plt.title("Trendline")
+            plt.grid(color='0.9', linestyle='--', linewidth=1)
 
-        # Plots the trendline
-        plt.subplot(223)
-        Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
-        plt.xlabel("Trials")
-        plt.ylabel(units)
-        plt.title("Trendline")
-        plt.grid(color='0.9', linestyle='--', linewidth=1)
-
-        # Plots the histogram
-        plt.subplot(224)
-        Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit)
-        plt.xlabel(units)
-        plt.xticks(rotation=45)  # Tilted 45 degree angle
-        plt.ylabel("Trials")
-        plt.title("Histogram")
-        plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
-        plt.legend(loc='best')
+            # Plots the histogram
+            plt.subplot(212)
+            Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit)
+            plt.xlabel(units)
+            plt.xticks(rotation=45)  # Tilted 45 degree angle
+            plt.ylabel("Trials")
+            plt.title("Histogram")
+            plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
+            plt.legend(loc='best')
 
     # TestNumber (string) + ListOfTests (list of tuples) -> ListOfTests with TestNumber as the 0th index (list of tuples)
     # Takes a string representing a test number and returns any test names associated with that test number
@@ -226,13 +227,13 @@ class Backend(ABC):
 
         # Plots the minimum and maximum barriers
         if fail_limit:
-            if minimum == 'n/a' or minimum == float('-inf'):
+            if minimum == float('-inf'):
                 plt.plot(range(0, len(test_data[0])), [
                     0] * len(test_data[0]), color="red", linewidth=3.0)
                 plt.plot(range(0, len(test_data[0])), [
                     maximum] * len(test_data[0]), color="red", linewidth=3.0)
 
-            elif maximum == 'n/a' or maximum == float('inf'):
+            elif maximum == float('inf'):
                 plt.plot(range(0, len(test_data[0])), [
                     minimum] * len(test_data[0]), color="red", linewidth=3.0)
                 plt.plot(range(0, len(test_data[0])), [max(np.concatenate(
@@ -248,9 +249,9 @@ class Backend(ABC):
 
             # My feeble attempt to get pretty dynamic limits
             if minimum == maximum:
-                plt.ylim(ymin=-0.05)
+                plt.ylim(ymin=minimum - abs(0.05 * expand))
                 # try:
-                plt.ylim(ymax=max(maximum + abs(0.05 * expand), 1.05))
+                plt.ylim(ymax=maximum + abs(0.05 * expand))
                 # except ValueError:
                 #     # print(type(maximum))
                 #     print(max(maximum + abs(0.05 * expand), 1.05))
@@ -264,8 +265,8 @@ class Backend(ABC):
                 plt.ylim(ymax=maximum + abs(0.05 * expand))
         else:
             if minimum == maximum:
-                plt.ylim(ymin=-0.05)
-                plt.ylim(ymax=max(maximum + abs(0.05 * expand), 1.05))
+                plt.ylim(ymin=minimum - abs(0.05 * expand))
+                plt.ylim(ymax=maximum + abs(0.05 * expand))
             else:
                 plt.ylim(ymin=(min(data_min, minimum - abs(0.05 * expand))))
                 # try:
@@ -304,9 +305,9 @@ class Backend(ABC):
 
         high_limit = maximum
         low_limit = minimum
-        if minimum == 'n/a' and maximum == 'n/a':
-            minimum = 0
-            maximum = 0
+        # if minimum == 'n/a' and maximum == 'n/a':
+        #     minimum = 0
+        #     maximum = 0
 
         # if (minimum == float('-inf')) or (maximum == float('inf')):
         #     minimum = 0
@@ -382,11 +383,11 @@ class Backend(ABC):
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
         # try:
-        if low_limit == 'n/a' or low_limit == None or low_limit == float('inf') or low_limit == float('-inf'):
+        if low_limit == None or low_limit == float('inf') or low_limit == float('-inf'):
             site_results.append(str(low_limit))
         else:
             site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
-        if high_limit == 'n/a' or high_limit == None or high_limit == float('inf') or high_limit == float('-inf'):
+        if high_limit == None or high_limit == float('inf') or high_limit == float('-inf'):
             site_results.append(str(high_limit))
         else:
             site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
@@ -423,7 +424,7 @@ class Backend(ABC):
     @staticmethod
     def calculate_fails(site_data, minimum, maximum):
         fails_count = 0
-        if minimum != 'n/a' or maximum != 'n/a':
+        if minimum != float('-inf') or maximum != float('inf'):
             # Increase a fails counter for every data point that exceeds an extreme
             for i in range(0, len(site_data)):
                 if site_data[i] > float(maximum) or site_data[i] < float(minimum):
@@ -435,16 +436,16 @@ class Backend(ABC):
     @staticmethod
     def plot_full_test_hist(test_data, minimum, maximum, fail_limit):
 
-        # in case of n/a or inf
-        if minimum == 'n/a' or minimum == float('-inf'):
+        # in case of inf
+        if minimum == float('-inf'):
 
-            new_minimum = min(min(np.concatenate(test_data, axis=0)), 0)
+            new_minimum = min(np.concatenate(test_data, axis=0))
 
         else:
 
             new_minimum = min(min(np.concatenate(test_data, axis=0)), minimum)
 
-        if maximum == 'n/a' or maximum == float('inf'):
+        if maximum == float('inf'):
 
             new_maximum = max(np.concatenate(test_data, axis=0))
 
@@ -452,9 +453,9 @@ class Backend(ABC):
 
             new_maximum = max(max(np.concatenate(test_data, axis=0)), maximum)
 
-        if (minimum == float('-inf')) or (maximum == float('inf')):
-            minimum = 0
-            maximum = 0
+        # if (minimum == float('-inf')) or (maximum == float('inf')):
+        #     minimum = 0
+        #     maximum = 0
 
         # Plots each site one at a time
         for i in range(0, len(test_data)):
@@ -463,48 +464,54 @@ class Backend(ABC):
 
         if fail_limit == False:
 
-            # My feeble attempt to get pretty dynamic limits
+            # My attempt to get pretty dynamic limits
             if minimum == maximum:
-                plt.xlim(xmin=-0.05)
-                plt.xlim(xmax=1.05)
+                plt.xlim(xmin=minimum - abs(0.05 * minimum))
+                plt.xlim(xmax=minimum + abs(0.05 * minimum))
 
-            elif minimum == 'n/a':
+            elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
-                plt.xlim(xmin=-0.05)
-                plt.xlim(xmax=maximum + abs(0.05 * expand))
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
-            elif maximum == 'n/a':
-                expand = max(
-                    [abs(minimum), abs(max(np.concatenate(test_data, axis=0)))])
-                plt.xlim(xmin=minimum - abs(0.05 * expand))
-                plt.xlim(xmax=max(np.concatenate(
-                    test_data, axis=0)) + abs(0.05 * expand))
+            elif maximum == float('inf') and minimum != float('-inf'):
+                expand = abs(minimum)
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
+            elif maximum == float('inf') and minimum == float('-inf'):
+                expand = max([abs(new_minimum), abs(new_maximum)])
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
             else:
                 expand = max([abs(minimum), abs(maximum)])
-                plt.xlim(xmin=minimum - abs(0.05 * expand))
-                plt.xlim(xmax=maximum + abs(0.05 * expand))
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
         else:
 
             if minimum == maximum:
-                plt.axvline(x=0, linestyle="--")
-                plt.axvline(x=1, linestyle="--")
-                plt.xlim(xmin=-0.05)
-                plt.xlim(xmax=1.05)
+                plt.axvline(x=minimum, linestyle="--")
+                plt.axvline(x=minimum, linestyle="--")
+                plt.xlim(xmin=minimum - abs(0.05 * minimum))
+                plt.xlim(xmax=minimum + abs(0.05 * minimum))
 
-            elif minimum == 'n/a':
+            elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
                 plt.axvline(x=maximum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
-            elif maximum == 'n/a':
+            elif maximum == float('inf') and minimum != float('-inf'):
                 expand = abs(minimum)
                 plt.axvline(x=minimum, linestyle="--")
                 plt.xlim(xmin=new_minimum - abs(0.05 * expand))
                 plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
+            elif maximum == float('inf') and minimum == float('-inf'):
+                expand = max([abs(new_minimum), abs(new_maximum)])
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
             else:
                 expand = max([abs(minimum), abs(maximum)])
                 plt.axvline(x=minimum, linestyle="--")
@@ -532,21 +539,21 @@ class Backend(ABC):
 
         # Damn pass/fail data exceptions everywhere
         if minimum == maximum:
-            binboi = np.linspace(minimum - 1, maximum + 1, 21)
+            binboi = np.linspace(minimum - 1, maximum + 1, 101)
 
         elif minimum > maximum:
             binboi = np.linspace(minimum, max(
-                np.concatenate(test_data, axis=0)), 21)
+                np.concatenate(test_data, axis=0)), 101)
 
-        elif minimum == 'n/a':
-            binboi = np.linspace(0, maximum, 21)
+        elif minimum == float('-inf'):
+            binboi = np.linspace(0, maximum, 101)
 
-        elif maximum == 'n/a':
+        elif maximum == float('inf'):
             binboi = np.linspace(minimum, max(
-                np.concatenate(test_data, axis=0)), 21)
+                np.concatenate(test_data, axis=0)), 101)
 
         else:
-            binboi = np.linspace(minimum, maximum, 21)
+            binboi = np.linspace(minimum, maximum, 101)
         # try:
         plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         # except ValueError:
@@ -585,7 +592,7 @@ class Backend(ABC):
     # Credit to: countrymarmot on github gist:  https://gist.github.com/countrymarmot/8413981
     @staticmethod
     def cp(site_data, minimum, maximum):
-        if minimum == 'n/a' or maximum == 'n/a':
+        if minimum == float('-inf') or maximum == float('inf'):
             return 'n/a'
         else:
             sigma = np.std(site_data)
@@ -594,7 +601,7 @@ class Backend(ABC):
 
     @staticmethod
     def cpk(site_data, minimum, maximum):
-        if minimum == 'n/a' or maximum == 'n/a':
+        if minimum == float('-inf') or maximum == float('inf'):
             return 'n/a'
         else:
             sigma = np.std(site_data)
@@ -607,7 +614,7 @@ class Backend(ABC):
     # One sided calculations (cpl/cpu)
     @staticmethod
     def cpl(site_data, minimum):
-        if minimum == 'n/a':
+        if minimum == float('-inf'):
             return 'n/a'
         else:
             sigma = np.std(site_data)
@@ -617,7 +624,7 @@ class Backend(ABC):
 
     @staticmethod
     def cpu(site_data, maximum):
-        if maximum == 'n/a':
+        if maximum == float('inf'):
             return 'n/a'
         else:
             sigma = np.std(site_data)
