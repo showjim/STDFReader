@@ -466,8 +466,8 @@ class Backend(ABC):
 
             # My attempt to get pretty dynamic limits
             if minimum == maximum:
-                plt.xlim(xmin=minimum - abs(0.05 * minimum))
-                plt.xlim(xmax=minimum + abs(0.05 * minimum))
+                plt.xlim(xmin=minimum - abs(0.25 * minimum))
+                plt.xlim(xmax=minimum + abs(0.25 * minimum))
 
             elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
@@ -493,25 +493,25 @@ class Backend(ABC):
             if minimum == maximum:
                 plt.axvline(x=minimum, linestyle="--")
                 plt.axvline(x=minimum, linestyle="--")
-                plt.xlim(xmin=minimum - abs(0.05 * minimum))
-                plt.xlim(xmax=minimum + abs(0.05 * minimum))
+                plt.xlim(xmin=minimum - 1)
+                plt.xlim(xmax=minimum + 1)
 
             elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
                 plt.axvline(x=maximum, linestyle="--")
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
 
             elif maximum == float('inf') and minimum != float('-inf'):
                 expand = abs(minimum)
                 plt.axvline(x=minimum, linestyle="--")
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
 
             elif maximum == float('inf') and minimum == float('-inf'):
                 expand = max([abs(new_minimum), abs(new_maximum)])
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                plt.xlim(xmin=new_minimum - 1)
+                plt.xlim(xmax=new_maximum + 1)
             else:
                 expand = max([abs(minimum), abs(maximum)])
                 plt.axvline(x=minimum, linestyle="--")
@@ -539,21 +539,21 @@ class Backend(ABC):
 
         # Damn pass/fail data exceptions everywhere
         if minimum == maximum:
-            binboi = np.linspace(minimum - 1, maximum + 1, 101)
+            binboi = np.linspace(minimum - 1, maximum + 1, 51)
 
         elif minimum > maximum:
             binboi = np.linspace(minimum, max(
-                np.concatenate(test_data, axis=0)), 101)
+                np.concatenate(test_data, axis=0)), 51)
 
         elif minimum == float('-inf'):
-            binboi = np.linspace(0, maximum, 101)
+            binboi = np.linspace(0, maximum, 51)
 
         elif maximum == float('inf'):
             binboi = np.linspace(minimum, max(
-                np.concatenate(test_data, axis=0)), 101)
+                np.concatenate(test_data, axis=0)), 51)
 
         else:
-            binboi = np.linspace(minimum, maximum, 101)
+            binboi = np.linspace(minimum, maximum, 51)
         # try:
         plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         # except ValueError:

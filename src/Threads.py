@@ -64,7 +64,7 @@ class PdfWriterThread(QThread):
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
                     all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
                     self.selected_tests[i].split(' - '), self.limits_toggled, True))
-                plt.figure(figsize=(11, 8.5))
+                # plt.figure(figsize=(11, 8.5))
                 pdfTemp.savefig(Backend.plot_everything_from_one_test(
                     all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
                     self.selected_tests[i].split(' - '), self.limits_toggled, False))
