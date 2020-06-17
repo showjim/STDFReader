@@ -105,7 +105,7 @@ class Backend(ABC):
         # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
         table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
         # cell_text = table.copy()
-        plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+        plt.subplot2grid((2, 3), (1, 2))
         cell_text = []
         for row in range(len(table)):
             cell_text.append([table.index[row]] + table.iloc[row].to_list())
@@ -114,7 +114,7 @@ class Backend(ABC):
         plt.axis('off')
         # else:
         # Plots the trendline
-        plt.subplot2grid((2, 3), (0, 0), colspan=2)
+        plt.subplot2grid((2, 3), (0, 0), colspan=3)
         Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
         plt.xlabel("Trials")
         plt.ylabel(units)
