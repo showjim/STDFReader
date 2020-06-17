@@ -78,7 +78,7 @@ class Backend(ABC):
 
     # Plots the results of everything from one test
     @staticmethod
-    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit, plot_table):
+    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit):
 
         # Find the limits
         low_lim = Backend.get_plot_min(data, test_tuple, num_of_sites)
@@ -102,35 +102,34 @@ class Backend(ABC):
         plt.suptitle(
             str("Test: " + test_tuple[0] + " - " + test_tuple[1] + " - Units: " + units))
 
-        if plot_table:
-            # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
-            table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
-            # table = table[0:17]
-            plt.subplot(111)
-            cell_text = []
-            for row in range(len(table)):
-                cell_text.append(table.iloc[row])
+        # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
+        table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
+        # cell_text = table.copy()
+        plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+        cell_text = []
+        for row in range(len(table)):
+            cell_text.append([table.index[row]] + table.iloc[row].to_list())
 
-            plt.table(cellText=cell_text, colLabels=table.columns, loc='center')
-            plt.axis('off')
-        else:
-            # Plots the trendline
-            plt.subplot(211)
-            Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
-            plt.xlabel("Trials")
-            plt.ylabel(units)
-            plt.title("Trendline")
-            plt.grid(color='0.9', linestyle='--', linewidth=1)
+        plt.table(cellText=cell_text, loc='center')
+        plt.axis('off')
+        # else:
+        # Plots the trendline
+        plt.subplot2grid((2, 3), (0, 0), colspan=2)
+        Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
+        plt.xlabel("Trials")
+        plt.ylabel(units)
+        plt.title("Trendline")
+        plt.grid(color='0.9', linestyle='--', linewidth=1)
 
-            # Plots the histogram
-            plt.subplot(212)
-            Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit)
-            plt.xlabel(units)
-            plt.xticks(rotation=45)  # Tilted 45 degree angle
-            plt.ylabel("Trials")
-            plt.title("Histogram")
-            plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
-            plt.legend(loc='best')
+        # Plots the histogram
+        plt.subplot2grid((2, 3), (1, 0), colspan=2)
+        Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit)
+        plt.xlabel(units)
+        plt.xticks(rotation=45)  # Tilted 45 degree angle
+        plt.ylabel("Trials")
+        plt.title("Histogram")
+        plt.grid(color='0.9', linestyle='--', linewidth=1, axis='y')
+        plt.legend(loc='best')
 
     # TestNumber (string) + ListOfTests (list of tuples) -> ListOfTests with TestNumber as the 0th index (list of tuples)
     # Takes a string representing a test number and returns any test names associated with that test number
@@ -295,7 +294,7 @@ class Backend(ABC):
             test_results.append(Backend.site_array(
                 test_data[i], minimum, maximum, sdr_parse[i], units))
 
-        table = pd.DataFrame(test_results, columns=parameters)
+        table = pd.DataFrame(test_results, columns=parameters).T
 
         return table
 
@@ -305,6 +304,8 @@ class Backend(ABC):
 
         high_limit = maximum
         low_limit = minimum
+        if units.startswith('Unnamed'):
+            units = ''
         # if minimum == 'n/a' and maximum == 'n/a':
         #     minimum = 0
         #     maximum = 0
