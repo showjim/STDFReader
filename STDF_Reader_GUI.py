@@ -1223,13 +1223,14 @@ class ComboCheckBox(QComboBox):
         # 重写showPopup方法，避免下拉框数据多而导致显示不全的问题
         select_list = self.Selectlist()  # 当前选择数据
         self.loadItems(items=self.items[1:])  # 重新添加组件
-        # for i in range(1, self.row_num):
-        #     self.qCheckBox[i].stateChanged.disconnect()
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.disconnect()
         for select in select_list:
             index = self.items[:].index(select)
             self.qCheckBox[index].setChecked(True)  # 选中组件
-        # for i in range(1, self.row_num):
-        #     self.qCheckBox[i].stateChanged.connect(self.showMessage)
+        for i in range(1, self.row_num):
+            self.qCheckBox[i].stateChanged.connect(self.showMessage)
+        self.showMessage()
         return QComboBox.showPopup(self)
 
     def addQCheckBox(self, i):
