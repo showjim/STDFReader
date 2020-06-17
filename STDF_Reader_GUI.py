@@ -1293,9 +1293,13 @@ class ComboCheckBox(QComboBox):
                         tests_index_list.append(index)
                 if len(tests_index_list) != 0:
                     self.clear()
+                    for i in range(1, self.row_num):
+                        self.qCheckBox[i].stateChanged.disconnect()
                     for i in tests_index_list:
                         self.qCheckBox[i+1].setChecked(True)
-                    # self.showMessage()
+                    for i in range(1, self.row_num):
+                        self.qCheckBox[i].stateChanged.connect(self.showMessage)
+                    self.showMessage()
         except re.error:
             pass
         # new_tests_list = list(filter(lambda x: re.match(text, x) != None, self.items[1:]))
