@@ -421,6 +421,16 @@ class Backend(ABC):
     def db2v(db):
         return 10 ** (db / 20)
 
+    # Function to convert from mW to dBm
+    @staticmethod
+    def mW2dBm(mW):
+        return 10. * np.log10(mW)
+
+    # Function to convert from dBm to mW
+    @staticmethod
+    def dBm2mW(dBm):
+        return 10 ** ((dBm) / 10.)
+
     # Counts the number of fails in a data set
     @staticmethod
     def calculate_fails(site_data, minimum, maximum):
