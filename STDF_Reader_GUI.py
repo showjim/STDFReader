@@ -41,7 +41,7 @@ import re
 
 import matplotlib
 import matplotlib.pyplot as plt
-# from seaborn import heatmap as heatmap
+from mpl_toolkits.mplot3d import axes3d
 
 # from numba import jit
 from src.Backend import Backend
@@ -1045,6 +1045,7 @@ class Application(QMainWindow):  # QWidget):
         df = df.loc[s2s_test_list]
         corr_data = df.corr()
 
+        # Plot the heatmap of corr
         fig = plt.figure()  # 分辨率
         ax = fig.add_subplot(111)
         ax.set_yticks(range(len(corr_data.columns)))
@@ -1063,8 +1064,26 @@ class Application(QMainWindow):  # QWidget):
                 # kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
                 text = im.axes.text(j, i, valfmt(corr_data.iloc[i, j]), va='center', ha='center')
                 texts.append(text)
-
         plt.title('Correlogram of Each Site')
+
+        # Plot the trending of eacj site
+        fig = plt.figure()
+        ax_3d = fig.add_subplot(111, projection='3d')
+        ax_3d.set_xlabel("Test Index")
+        ax_3d.set_ylabel("Site")
+        ax_3d.set_yticks(range(len(df.columns)))
+        ax_3d.set_yticklabels(df.columns)
+        ax_3d.set_zlabel("Data Value")
+        # ax_3d.view_init(90, 0)
+        z = np.linspace(0, len(df.columns) - 1, len(df.columns))
+        row, col = df.shape
+        y = np.linspace(0, row - 1, row)
+        for i in range(col):
+            x = df.iloc[:, i].to_list()
+            tmp_z = [z[i]] * len(y)
+            ax_3d.plot(y, tmp_z, x)
+        plt.title('Trending of Each Site')
+
         plt.show()
         self.select_s2s_test_menu.setEnabled(True)
         self.generate_heatmap_button.setEnabled(True)
