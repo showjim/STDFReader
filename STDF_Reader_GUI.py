@@ -1084,7 +1084,7 @@ class Application(QMainWindow):  # QWidget):
             ax_3d.plot(y, tmp_z, x)
         plt.title('Trending of Each Site')
         # Adjust the 3D axes scale
-        ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1, 0.5, 0.5, 1]))
+        ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1.2, 1, 1, 1]))
         plt.show()
         self.select_s2s_test_menu.setEnabled(True)
         self.generate_heatmap_button.setEnabled(True)

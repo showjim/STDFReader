@@ -7,6 +7,7 @@ from abc import ABC
 import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -124,6 +125,11 @@ class Backend(ABC):
         # Plots the histogram
         ax = plt.subplot2grid((2, 3), (1, 0), colspan=2, projection='3d')
         Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit, ax)
+        ax.set_xlabel(units)
+        # ax.set_xticklabels(units, rotation=45)
+        ax.set_ylabel('Site')
+        ax.set_zlabel("Trials")
+        ax.legend(loc='best')
         # plt.xlabel(units)
         # plt.xticks(rotation=45)  # Tilted 45 degree angle
         # plt.ylabel("Trials")
@@ -527,13 +533,10 @@ class Backend(ABC):
                 expand = max([abs(minimum), abs(maximum)])
                 # ax.axvline(x=minimum, linestyle="--")
                 # ax.axvline(x=maximum, linestyle="--")
-                ax.set_xlim(new_minimum - abs(0.05 * expand),new_maximum + abs(0.05 * expand))
-                ax.set_xlabel('X')
-                ax.set_ylabel('Y')
-                ax.set_zlabel('Z')
+                ax.set_xlim(new_minimum - abs(0.05 * expand), new_maximum + abs(0.05 * expand))
+                ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1.2, 1, 1, 1]))
 
         # ax.set_zlim(0,len(test_data[0]))
-
 
     # Plots a single site's results
     @staticmethod
@@ -571,9 +574,11 @@ class Backend(ABC):
         # plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         hist, bins = np.histogram(site_data, bins=binboi)
         xs = (bins[:-1] + bins[1:]) / 2
-        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width = np.diff(binboi).mean())
-        ax.plot(xs=[minimum] * 10, ys=np.linspace(0, np.max(hist), 10), zs=site_num, zdir='y', color='red', linestyle='--')
-        ax.plot(xs=[maximum] * 10, ys=np.linspace(0, np.max(hist), 10), zs=site_num, zdir='y', color='red', linestyle='--')
+        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width=np.diff(binboi).mean(), label='site ' + str(site_num))
+        X, Y = np.meshgrid(minimum, np.linspace(0, np.max(hist), 10))
+        ax.plot(xs=X, ys=Y, zs=site_num, zdir='y', color='red', linestyle='--')
+        X, Y = np.meshgrid(maximum, np.linspace(0, np.max(hist), 10))
+        ax.plot(xs=X, ys=Y, zs=site_num, zdir='y', color='red', linestyle='--')
         # except ValueError:
         #     print(binboi)
         #     print(type(minimum))
