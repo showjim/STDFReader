@@ -473,65 +473,67 @@ class Backend(ABC):
             Backend.plot_single_site_hist(
                 test_data[i], new_minimum, new_maximum, test_data, i, ax)
 
-        # if fail_limit == False:
-        #
-        #     # My attempt to get pretty dynamic limits
-        #     if minimum == maximum:
-        #         plt.xlim(xmin=minimum - abs(0.25 * minimum))
-        #         plt.xlim(xmax=minimum + abs(0.25 * minimum))
-        #
-        #     elif minimum == float('-inf') and maximum != float('inf'):
-        #         expand = abs(maximum)
-        #         plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.05 * expand))
-        #
-        #     elif maximum == float('inf') and minimum != float('-inf'):
-        #         expand = abs(minimum)
-        #         plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.05 * expand))
-        #
-        #     elif maximum == float('inf') and minimum == float('-inf'):
-        #         expand = max([abs(new_minimum), abs(new_maximum)])
-        #         plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.05 * expand))
-        #     else:
-        #         expand = max([abs(minimum), abs(maximum)])
-        #         plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.05 * expand))
-        #
-        # else:
-        #
-        #     if minimum == maximum:
-        #         plt.axvline(x=minimum, linestyle="--")
-        #         plt.axvline(x=minimum, linestyle="--")
-        #         plt.xlim(xmin=minimum - 1)
-        #         plt.xlim(xmax=minimum + 1)
-        #
-        #     elif minimum == float('-inf') and maximum != float('inf'):
-        #         expand = abs(maximum)
-        #         plt.axvline(x=maximum, linestyle="--")
-        #         plt.xlim(xmin=new_minimum - abs(0.1 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.1 * expand))
-        #
-        #     elif maximum == float('inf') and minimum != float('-inf'):
-        #         expand = abs(minimum)
-        #         plt.axvline(x=minimum, linestyle="--")
-        #         plt.xlim(xmin=new_minimum - abs(0.1 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.1 * expand))
-        #
-        #     elif maximum == float('inf') and minimum == float('-inf'):
-        #         expand = max([abs(new_minimum), abs(new_maximum)])
-        #         plt.xlim(xmin=new_minimum - 1)
-        #         plt.xlim(xmax=new_maximum + 1)
-        #     else:
-        #         expand = max([abs(minimum), abs(maximum)])
-        #         plt.axvline(x=minimum, linestyle="--")
-        #         plt.axvline(x=maximum, linestyle="--")
-        #         plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-        #         plt.xlim(xmax=new_maximum + abs(0.05 * expand))
-        #
-        # plt.ylim(ymin=0)
-        # plt.ylim(ymax=len(test_data[0]))
+        if fail_limit == False:
+
+            # My attempt to get pretty dynamic limits
+            if minimum == maximum:
+                plt.xlim(xmin=minimum - abs(0.25 * minimum))
+                plt.xlim(xmax=minimum + abs(0.25 * minimum))
+
+            elif minimum == float('-inf') and maximum != float('inf'):
+                expand = abs(maximum)
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+
+            elif maximum == float('inf') and minimum != float('-inf'):
+                expand = abs(minimum)
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+
+            elif maximum == float('inf') and minimum == float('-inf'):
+                expand = max([abs(new_minimum), abs(new_maximum)])
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+            else:
+                expand = max([abs(minimum), abs(maximum)])
+                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+
+        else:
+
+            if minimum == maximum:
+                plt.axvline(x=minimum, linestyle="--")
+                plt.axvline(x=minimum, linestyle="--")
+                plt.xlim(xmin=minimum - 1)
+                plt.xlim(xmax=minimum + 1)
+
+            elif minimum == float('-inf') and maximum != float('inf'):
+                expand = abs(maximum)
+                plt.axvline(x=maximum, linestyle="--")
+                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
+
+            elif maximum == float('inf') and minimum != float('-inf'):
+                expand = abs(minimum)
+                plt.axvline(x=minimum, linestyle="--")
+                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
+
+            elif maximum == float('inf') and minimum == float('-inf'):
+                expand = max([abs(new_minimum), abs(new_maximum)])
+                plt.xlim(xmin=new_minimum - 1)
+                plt.xlim(xmax=new_maximum + 1)
+            else:
+                expand = max([abs(minimum), abs(maximum)])
+                # ax.axvline(x=minimum, linestyle="--")
+                # ax.axvline(x=maximum, linestyle="--")
+                ax.set_xlim(new_minimum - abs(0.05 * expand),new_maximum + abs(0.05 * expand))
+                ax.set_xlabel('X')
+                ax.set_ylabel('Y')
+                ax.set_zlabel('Z')
+
+        # ax.set_zlim(0,len(test_data[0]))
+
 
     # Plots a single site's results
     @staticmethod
@@ -569,7 +571,9 @@ class Backend(ABC):
         # plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         hist, bins = np.histogram(site_data, bins=binboi)
         xs = (bins[:-1] + bins[1:]) / 2
-        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8)
+        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width = np.diff(binboi).mean())
+        ax.plot(xs=[minimum] * 10, ys=np.linspace(0, np.max(hist), 10), zs=site_num, zdir='y', color='red', linestyle='--')
+        ax.plot(xs=[maximum] * 10, ys=np.linspace(0, np.max(hist), 10), zs=site_num, zdir='y', color='red', linestyle='--')
         # except ValueError:
         #     print(binboi)
         #     print(type(minimum))
