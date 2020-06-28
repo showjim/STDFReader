@@ -1075,13 +1075,13 @@ class Application(QMainWindow):  # QWidget):
         ax_3d.set_yticklabels(df.columns)
         ax_3d.set_zlabel("Data Value")
         # ax_3d.view_init(90, 0)
-        z = np.linspace(0, len(df.columns) - 1, len(df.columns))
+        site_num = np.linspace(0, len(df.columns) - 1, len(df.columns))
         row, col = df.shape
-        y = np.linspace(0, row - 1, row)
+        test_index = np.linspace(0, row - 1, row)
+        X, Z = np.meshgrid(test_index, site_num)
         for i in range(col):
-            x = df.iloc[:, i].to_list()
-            tmp_z = [z[i]] * len(y)
-            ax_3d.plot(y, tmp_z, x)
+            Y = df.iloc[:, i].to_list()
+            ax_3d.plot(xs=X[i], ys=Y, zs=Z[i], zdir='y')
         plt.title('Trending of Each Site')
         # Adjust the 3D axes scale
         ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1.2, 1, 1, 1]))
