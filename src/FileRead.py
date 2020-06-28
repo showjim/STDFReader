@@ -75,8 +75,8 @@ class FileReaders(ABC):
             if data_summary_all.empty:
                 data_summary_all = data_summary.frame
             else:
-                data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
-                # data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False, join='outer', ignore_index=True)
+                # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
+                data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False, join='outer', ignore_index=True)
         # Set multiple level columns for csv table
         tname_list = []
         tnumber_list = []
