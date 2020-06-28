@@ -728,10 +728,10 @@ class Application(QMainWindow):  # QWidget):
         all_bin_summary_list = []
         lot_id_list = self.df_csv['LOT_ID'].unique()
         for lot_id in lot_id_list:
-            wafer_id_list = self.df_csv['WAFER_ID'].unique()
+            single_lot_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id])]
+            wafer_id_list = single_lot_df['WAFER_ID'].unique()
             for wafer_id in wafer_id_list:
-                single_wafer_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id]) &
-                                              self.df_csv['WAFER_ID'].isin([wafer_id])]
+                single_wafer_df = single_lot_df[single_lot_df['WAFER_ID'].isin([wafer_id])]
                 die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
                 retest_die_df = single_wafer_df[single_wafer_df['RC'].isin(['Retest'])]
                 retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
