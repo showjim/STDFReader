@@ -864,7 +864,7 @@ class Application(QMainWindow):  # QWidget):
 
             correlation_df = pd.concat([table_list[0].Site, table_list[0].Units, table_list[0].LowLimit,
                                         table_list[0].HiLimit, table_list[0].Mean, table_list[1].Mean, mean_delta,
-                                        mean_delta_over_limit], axis=1)
+                                        mean_delta_over_limit, mean_delta_over_base], axis=1)
             correlation_df.columns = parameters
             # csv_summary_name = str(self.file_path + "_correlation_table.csv")
             #
