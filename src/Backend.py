@@ -285,7 +285,7 @@ class Backend(ABC):
     @staticmethod
     def table_of_results(test_data, sdr_parse, minimum, maximum, units):
         parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
-                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpk']
+                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         # Clarification
         if 'db' in units.lower():
@@ -338,8 +338,8 @@ class Backend(ABC):
             mean_result = np.mean(site_data)
             std_string = str(np.std(site_data))
             cp_result = 'n/a'
-            # cpl_result = 'n/a'
-            # cpu_result = 'n/a'
+            cpl_result = 'n/a'
+            cpu_result = 'n/a'
             cpk_result = 'n/a'
 
         # The struggles of logarithmic data
@@ -355,10 +355,10 @@ class Backend(ABC):
 
             cp_result = float(Decimal(Backend.cp(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
-            # cpl_result = str(Decimal(Backend.cpl(
-            #     volt_data, Backend.db2v(minimum))).quantize(Decimal('0.001')))
-            # cpu_result = str(Decimal(Backend.cpu(
-            #     volt_data, Backend.db2v(maximum))).quantize(Decimal('0.001')))
+            cpl_result = str(Decimal(Backend.cpl(
+                volt_data, Backend.db2v(minimum))).quantize(Decimal('0.001')))
+            cpu_result = str(Decimal(Backend.cpu(
+                volt_data, Backend.db2v(maximum))).quantize(Decimal('0.001')))
             cpk_result = float(Decimal(Backend.cpk(volt_data, Backend.db2v(
                 minimum), Backend.db2v(maximum))).quantize(Decimal('0.001')))
 
@@ -370,10 +370,10 @@ class Backend(ABC):
                 Decimal(np.std(site_data)).quantize(Decimal('0.001')))
             cp_result = float(
                 Decimal(Backend.cp(site_data, minimum, maximum)).quantize(Decimal('0.001')))
-            # cpl_result = str(
-            #     Decimal(Backend.cpu(site_data, minimum)).quantize(Decimal('0.001')))
-            # cpu_result = str(
-            #     Decimal(Backend.cpl(site_data, maximum)).quantize(Decimal('0.001')))
+            cpl_result = str(
+                Decimal(Backend.cpl(site_data, minimum)).quantize(Decimal('0.001')))
+            cpu_result = str(
+                Decimal(Backend.cpu(site_data, maximum)).quantize(Decimal('0.001')))
             cpk_result = float(
                 Decimal(Backend.cpk(site_data, minimum, maximum)).quantize(Decimal('0.001')))
             # except decimal.InvalidOperation:
@@ -411,8 +411,8 @@ class Backend(ABC):
 
         site_results.append(std_string)
         site_results.append(cp_result)
-        # site_results.append(cpl_result)
-        # site_results.append(cpu_result)
+        site_results.append(cpl_result)
+        site_results.append(cpu_result)
         site_results.append(cpk_result)
 
         return site_results

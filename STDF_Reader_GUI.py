@@ -524,9 +524,15 @@ class Application(QMainWindow):  # QWidget):
                 data_summary.to_excel(writer, sheet_name='Data Statistics')
                 row_table, column_table = data_summary.shape
                 worksheet = writer.sheets['Data Statistics']
-                worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
+                worksheet.conditional_format(1, column_table - 3, row_table, column_table - 3,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 3.3, 'format': format_4XXX})
+                worksheet.conditional_format(1, column_table - 2, row_table, column_table - 2,
+                                             {'type': 'cell', 'criteria': '<',
+                                              'value': 1.33, 'format': format_4XXX})
+                worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
+                                             {'type': 'cell', 'criteria': '<',
+                                              'value': 1.33, 'format': format_4XXX})
                 worksheet.conditional_format(1, column_table, row_table, column_table,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
@@ -1101,7 +1107,7 @@ class Application(QMainWindow):  # QWidget):
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
 
         parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
-                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpk']
+                      'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         summary_results = []
 
