@@ -48,7 +48,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.5.2'
+Version = 'Beta 0.5.3'
 
 
 ###################################################
@@ -813,9 +813,14 @@ class Application(QMainWindow):  # QWidget):
                 correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
                 row_table, column_table = correlation_table.shape
                 worksheet = writer.sheets['2 STDF correlation table']
-                worksheet.conditional_format(1, column_table, row_table, column_table,
+                # Highlight dif/limit > 5%
+                worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
                                              {'type': 'cell', 'criteria': '>=',
                                               'value': 0.05, 'format': format_4XXX})
+                # Highlight dif/base > 10%
+                worksheet.conditional_format(1, column_table, row_table, column_table,
+                                             {'type': 'cell', 'criteria': '>=',
+                                              'value': 0.1, 'format': format_4XXX})
                 worksheet.write_string(row_table + 2, 0, 'Base: ' + file_list[0])
                 worksheet.write_string(row_table + 3, 0, 'CMP: ' + file_list[1])
                 worksheet.autofilter(0, 0, row_table, column_table)
@@ -841,7 +846,8 @@ class Application(QMainWindow):  # QWidget):
 
     def make_correlation_table(self):
         parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
-                      'Mean(cmp)', 'Mean Diff(base - cmp)', 'Mean Diff Over Limit']
+                      'Mean(cmp)', 'Mean Diff(base - cmp)', 'Mean Diff Over Limit(dif/delta limit)',
+                      'Mean Diff Over Base(dif/base)']
         file_list = self.df_csv['FILE_NAM'].unique()
         correlation_df = pd.DataFrame()
         if self.file_selected and len(file_list) > 1:
@@ -854,6 +860,7 @@ class Application(QMainWindow):  # QWidget):
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
             mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
+            mean_delta_over_base = mean_delta / table_list[0].Mean.astype(float)
 
             correlation_df = pd.concat([table_list[0].Site, table_list[0].Units, table_list[0].LowLimit,
                                         table_list[0].HiLimit, table_list[0].Mean, table_list[1].Mean, mean_delta,
