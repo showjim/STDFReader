@@ -142,7 +142,7 @@ class Application(QMainWindow):  # QWidget):
 
         # Generates a correlation report for all sites of the loaded data
         self.generate_correlation_button = QPushButton(
-            'Generate correlation report of 2 stdf files')
+            'Generate correlation report of multiple stdf files')
         self.generate_correlation_button.setToolTip(
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
@@ -851,9 +851,7 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(0)
 
     def make_correlation_table(self):
-        parameters = ['Site', 'Units', 'LowLimit', 'HiLimit', 'Mean(base)',
-                      'Mean(cmp)', 'Mean Diff(base - cmp)', 'Mean Diff Over Limit(dif/delta limit)',
-                      'Mean Diff Over Base(dif/base)']
+        parameters = ['Site', 'Units', 'LowLimit', 'HiLimit']
         file_list = self.df_csv['FILE_NAM'].unique()
         correlation_df = pd.DataFrame()
         if self.file_selected and len(file_list) > 1:
@@ -862,15 +860,25 @@ class Application(QMainWindow):  # QWidget):
                 tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
                 table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
                                                          self.list_of_test_numbers, False, True))
-            mean_delta = table_list[0].Mean.astype(float) - table_list[1].Mean.astype(float)
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
-            mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
-            mean_delta_over_base = mean_delta / table_list[0].Mean.astype(float)
 
             correlation_df = pd.concat([table_list[0].Site, table_list[0].Units, table_list[0].LowLimit,
-                                        table_list[0].HiLimit, table_list[0].Mean, table_list[1].Mean, mean_delta,
-                                        mean_delta_over_limit, mean_delta_over_base], axis=1)
+                                        table_list[0].HiLimit], axis=1)
+
+            for i in range(len(file_list)):
+                correlation_df = pd.concat([correlation_df, table_list[i].Mean.astype('float')], axis=1)
+                parameters = parameters + ['Mean(' + file_list[i] + ')']
+            correlation_df.columns = parameters
+            parameters = parameters + ['Mean Diff(max - min)', 'Mean Diff Over Limit(dif/delta limit)',
+                                       'Mean Diff Over Base(dif/first file data)']
+            # Add mean delta column
+            mean_delta = correlation_df.iloc[:, 4:].max(axis=1) - correlation_df.iloc[:, 4:].min(axis=1)
+            mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
+            # Assume table 0 is the base one
+            mean_delta_over_base = mean_delta / table_list[0].Mean.astype(float)
+            correlation_df = pd.concat([correlation_df, mean_delta, mean_delta_over_limit, mean_delta_over_base], axis=1)
+
             correlation_df.columns = parameters
             # csv_summary_name = str(self.file_path + "_correlation_table.csv")
             #
