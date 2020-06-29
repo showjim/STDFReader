@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 ###################################################
-# STDF Reader GUI                                 #
-# Version: Beta 0.4                               #
+# STDF Reader Tool                                #
+# Version: Beta 0.5                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A project forked from Thomas Kaunzinger         #
