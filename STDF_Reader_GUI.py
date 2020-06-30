@@ -520,10 +520,17 @@ class Application(QMainWindow):  # QWidget):
                 format_1XXX = workbook.add_format({'bg_color': '#008000'})
                 # Dark green for Bin 7XXX
                 format_7XXX = workbook.add_format({'bg_color': '#C6EFCE'})
+                # Add width and format for first column
+                format1 = workbook.add_format({'align': 'left'})
 
                 data_summary.to_excel(writer, sheet_name='Data Statistics')
                 row_table, column_table = data_summary.shape
                 worksheet = writer.sheets['Data Statistics']
+                # Freeze pane on the top row
+                worksheet.freeze_panes(1, 0)
+                # Set the width and align
+                worksheet.set_column('A:A', 25, format1)
+
                 worksheet.conditional_format(1, column_table - 3, row_table, column_table - 3,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 3.3, 'format': format_4XXX})
@@ -814,11 +821,21 @@ class Application(QMainWindow):  # QWidget):
                 workbook = writer.book
                 # Light red fill for Bin 4XXX
                 format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+                # Add width and format for first column
+                format1 = workbook.add_format({'align': 'left'})
 
                 # Write correlation table
                 correlation_table.to_excel(writer, sheet_name='2 STDF correlation table')
                 row_table, column_table = correlation_table.shape
                 worksheet = writer.sheets['2 STDF correlation table']
+
+                # Freeze pane on the top row
+                worksheet.freeze_panes(1, 0)
+                # worksheet.split_panes(15, 8.43)
+
+                # Set the width and align
+                worksheet.set_column('A:A', 25, format1)
+
                 # Highlight dif/limit > 5%
                 worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
                                              {'type': 'cell', 'criteria': '>=',
@@ -827,6 +844,8 @@ class Application(QMainWindow):  # QWidget):
                 worksheet.conditional_format(1, column_table, row_table, column_table,
                                              {'type': 'cell', 'criteria': '>=',
                                               'value': 0.1, 'format': format_4XXX})
+                for i in range(1, row_table):
+                    worksheet.conditional_format(i, 5, i, column_table - 3, {'type': '3_color_scale'})
                 worksheet.write_string(row_table + 2, 0, 'Base: ' + file_list[0])
                 worksheet.write_string(row_table + 3, 0, 'CMP: ' + file_list[1])
                 worksheet.autofilter(0, 0, row_table, column_table)
@@ -984,6 +1003,8 @@ class Application(QMainWindow):  # QWidget):
                     workbook = writer.book
                     # Light red fill for Bin 4XXX
                     format_4XXX = workbook.add_format({'bg_color': '#FFC7CE'})
+                    # Add width and format for first column
+                    format1 = workbook.add_format({'align': 'left'})
 
                     # Write correlation table
                     self.s2s_correlation_report_df.to_excel(writer, sheet_name='Site2Site correlation table')
@@ -992,6 +1013,10 @@ class Application(QMainWindow):  # QWidget):
                     worksheet.conditional_format(1, column_table, row_table, column_table,
                                                  {'type': 'cell', 'criteria': '>=',
                                                   'value': 0.05, 'format': format_4XXX})
+                    # Freeze pane on the top row
+                    worksheet.freeze_panes(1, 0)
+                    # Set the width and align
+                    worksheet.set_column('A:A', 25, format1)
                     for i in range(1, row_table):
                         worksheet.conditional_format(i, 3, i, column_table - 2, {'type': '3_color_scale'})
                     worksheet.autofilter(0, 0, row_table, column_table)
