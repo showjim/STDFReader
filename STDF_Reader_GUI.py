@@ -140,6 +140,11 @@ class Application(QMainWindow):  # QWidget):
         self.limit_toggle.stateChanged.connect(self.toggler)
         self.limits_toggled = True
 
+        self.group_toggle = QCheckBox('Plot tendency by file', self)
+        self.group_toggle.setChecked(False)
+        self.group_toggle.stateChanged.connect(self.group_by_file)
+        self.group_toggled = False
+
         # Generates a correlation report for all sites of the loaded data
         self.generate_correlation_button = QPushButton(
             'Generate correlation report of multiple stdf files')
@@ -186,7 +191,8 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_task = PdfWriterThread(file_path=self.file_path, all_data=self.df_csv,
                                              ptr_data=self.test_info_list, number_of_sites=self.number_of_sites,
                                              selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
-                                             list_of_test_numbers=self.list_of_test_numbers, site_list=self.sdr_parse)
+                                             list_of_test_numbers=self.list_of_test_numbers, site_list=self.sdr_parse,
+                                             group_by_file=self.group_toggled)
 
         self.threaded_task.notify_progress_bar.connect(self.on_progress)
         self.threaded_task.notify_status_text.connect(self.on_update_text)
@@ -203,6 +209,7 @@ class Application(QMainWindow):  # QWidget):
         self.select_test_menu.setEnabled(False)
         self.generate_summary_button.setEnabled(False)
         self.limit_toggle.setEnabled(False)
+        self.group_toggle.setEnabled(False)
         self.generate_correlation_button.setEnabled(False)
         self.generate_correlation_button_s2s.setEnabled(False)
         self.select_s2s_test_menu.setEnabled(False)
@@ -213,10 +220,11 @@ class Application(QMainWindow):  # QWidget):
     # Tab for data analysis
     def tab_data_analysis(self):
         layout = QGridLayout()
-        layout.addWidget(self.generate_summary_button, 0, 0, 1, 2)
-        layout.addWidget(self.select_test_menu, 1, 0, 1, 2)
+        layout.addWidget(self.generate_summary_button, 0, 0, 1, 3)
+        layout.addWidget(self.select_test_menu, 1, 0, 1, 3)
         layout.addWidget(self.generate_pdf_button, 2, 0)
         layout.addWidget(self.limit_toggle, 2, 1)
+        layout.addWidget(self.group_toggle, 2, 2)
         self.data_analysis_tab.setLayout(layout)
 
     # Tab for data correlation
@@ -357,6 +365,14 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.limits_toggled = False
 
+    # Checks if the plot rhe tendency group by file or not
+    def group_by_file(self, state):
+
+        if state == Qt.Checked:
+            self.group_toggled = True
+        else:
+            self.group_toggled = False
+
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
 
@@ -442,6 +458,7 @@ class Application(QMainWindow):  # QWidget):
                 self.select_test_menu.setEnabled(True)
                 self.generate_summary_button.setEnabled(True)
                 self.limit_toggle.setEnabled(True)
+                self.group_toggle.setEnabled(True)
                 self.generate_correlation_button.setEnabled(True)
                 self.generate_correlation_button_s2s.setEnabled(True)
                 self.select_s2s_test_menu.setEnabled(False)
@@ -1223,7 +1240,7 @@ class Application(QMainWindow):  # QWidget):
                                                  number_of_sites=self.number_of_sites,
                                                  selected_tests=self.selected_tests, limits_toggled=self.limits_toggled,
                                                  list_of_test_numbers=self.list_of_test_numbers,
-                                                 site_list=self.sdr_parse)
+                                                 site_list=self.sdr_parse, group_by_file=self.group_toggled)
 
             self.threaded_task.notify_progress_bar.connect(self.on_progress)
             self.threaded_task.notify_status_text.connect(self.on_update_text)

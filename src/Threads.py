@@ -23,7 +23,7 @@ class PdfWriterThread(QThread):
     notify_status_text = pyqtSignal(str)
 
     def __init__(self, file_path, all_data, ptr_data, number_of_sites, selected_tests, limits_toggled,
-                 list_of_test_numbers, site_list, parent=None):
+                 list_of_test_numbers, site_list, group_by_file, parent=None):
         QThread.__init__(self, parent)
 
         self.file_path = file_path
@@ -32,6 +32,7 @@ class PdfWriterThread(QThread):
         self.number_of_sites = number_of_sites
         self.selected_tests = selected_tests
         self.limits_toggled = limits_toggled
+        self.group_by_file = group_by_file
         self.list_of_test_numbers = list_of_test_numbers
         self.sdr_parse = site_list
 
@@ -42,40 +43,74 @@ class PdfWriterThread(QThread):
         pp = PdfFileMerger()
 
         site_test_data_dic = {}
-        for j in self.sdr_parse:
-            site_test_data_dic[str(j)] = self.df_csv[self.df_csv.SITE_NUM == j]
+        if self.group_by_file:
+            file_list = self.df_csv['FILE_NAM'].unique()
+            for j in file_list:
+                site_test_data_dic[str(j)] = self.df_csv[self.df_csv.FILE_NAM == j]
+        else:
+            for j in self.sdr_parse:
+                site_test_data_dic[str(j)] = self.df_csv[self.df_csv.SITE_NUM == j]
 
         # if self.selected_tests == [['', 'ALL DATA']]:
         if len(self.selected_tests) > 0:
+            if self.group_by_file:
+                for i in range(len(self.selected_tests)):
+                    site_test_data_list = []
+                    for j in file_list:
+                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                        tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
+                        ## Ignore fail value
+                        # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
+                        #                                errors='coerce').dropna().values.tolist()
+                        site_test_data_list.append(tmp_site_test_data_list)
+                    all_data_array = site_test_data_list
+                    pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
-            for i in range(len(self.selected_tests)):
-                site_test_data_list = []
-                for j in self.sdr_parse:
-                    site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
-                    tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
-                    ## Ignore fail value
-                    # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
-                    #                                errors='coerce').dropna().values.tolist()
-                    site_test_data_list.append(tmp_site_test_data_list)
-                all_data_array = site_test_data_list
-                pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
+                    plt.figure(figsize=(11, 8.5))
+                    pdfTemp.savefig(Backend.plot_everything_from_one_test(
+                        all_data_array, file_list, self.test_info_list, self.number_of_sites,
+                        self.selected_tests[i].split(' - '), self.limits_toggled, self.group_by_file))
 
-                plt.figure(figsize=(11, 8.5))
-                pdfTemp.savefig(Backend.plot_everything_from_one_test(
-                    all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
-                    self.selected_tests[i].split(' - '), self.limits_toggled))
+                    pdfTemp.close()
 
-                pdfTemp.close()
+                    pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
 
-                pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
+                    self.notify_status_text.emit(str(str(
+                        i) + "/" + str(len(self.selected_tests)) + " test results completed"))
 
-                self.notify_status_text.emit(str(str(
-                    i) + "/" + str(len(self.selected_tests)) + " test results completed"))
+                    self.notify_progress_bar.emit(
+                        int((i + 1) / len(self.selected_tests) * 90))
 
-                self.notify_progress_bar.emit(
-                    int((i + 1) / len(self.selected_tests) * 90))
+                    plt.close()
+            else:
+                for i in range(len(self.selected_tests)):
+                    site_test_data_list = []
+                    for j in self.sdr_parse:
+                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                        tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
+                        ## Ignore fail value
+                        # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
+                        #                                errors='coerce').dropna().values.tolist()
+                        site_test_data_list.append(tmp_site_test_data_list)
+                    all_data_array = site_test_data_list
+                    pdfTemp = PdfPages(str(self.file_path + "_results_temp"))
 
-                plt.close()
+                    plt.figure(figsize=(11, 8.5))
+                    pdfTemp.savefig(Backend.plot_everything_from_one_test(
+                        all_data_array, self.sdr_parse, self.test_info_list, self.number_of_sites,
+                        self.selected_tests[i].split(' - '), self.limits_toggled, self.group_by_file))
+
+                    pdfTemp.close()
+
+                    pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
+
+                    self.notify_status_text.emit(str(str(
+                        i) + "/" + str(len(self.selected_tests)) + " test results completed"))
+
+                    self.notify_progress_bar.emit(
+                        int((i + 1) / len(self.selected_tests) * 90))
+
+                    plt.close()
 
         else:
             self.notify_status_text.emit(

@@ -79,7 +79,7 @@ class Backend(ABC):
 
     # Plots the results of everything from one test
     @staticmethod
-    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit):
+    def plot_everything_from_one_test(test_data, sdr_parse, data, num_of_sites, test_tuple, fail_limit, group_by_file):
 
         # Find the limits
         low_lim = Backend.get_plot_min(data, test_tuple, num_of_sites)
@@ -116,7 +116,7 @@ class Backend(ABC):
         # else:
         # Plots the trendline
         plt.subplot2grid((2, 3), (0, 0), colspan=3)
-        Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit)
+        Backend.plot_full_test_trend(test_data, low_lim, hi_lim, fail_limit, sdr_parse, group_by_file)
         plt.xlabel("Trials")
         plt.ylabel(units)
         plt.title("Trendline")
@@ -129,7 +129,7 @@ class Backend(ABC):
         # ax.set_xticklabels(units, rotation=45)
         ax.set_ylabel('Site')
         ax.set_zlabel("Trials")
-        ax.legend(loc='best')
+        # ax.legend(loc='best')
         # plt.xlabel(units)
         # plt.xticks(rotation=45)  # Tilted 45 degree angle
         # plt.ylabel("Trials")
@@ -214,7 +214,7 @@ class Backend(ABC):
 
     # Plots the results of all sites from one test
     @staticmethod
-    def plot_full_test_trend(test_data, minimum, maximum, fail_limit):
+    def plot_full_test_trend(test_data, minimum, maximum, fail_limit, label_list, group_by_file):
 
         data_min = min(np.concatenate(test_data, axis=0))
         data_max = max(np.concatenate(test_data, axis=0))
@@ -228,7 +228,8 @@ class Backend(ABC):
 
         # Plots each site one at a time
         for i in range(0, len(test_data)):
-            Backend.plot_single_site_trend(test_data[i])
+            Backend.plot_single_site_trend(test_data[i], group_by_file, label_list, i)
+        plt.legend()
 
         # Plots the minimum and maximum barriers
         if fail_limit:
@@ -540,8 +541,12 @@ class Backend(ABC):
 
     # Plots a single site's results
     @staticmethod
-    def plot_single_site_trend(site_data):
-        plt.plot(range(0, len(site_data)), site_data)
+    def plot_single_site_trend(site_data, group_by_file, label_list, i):
+        marker_list = ['o','+','x','*','.','v','s']
+        if group_by_file:
+            plt.scatter(range(0, len(site_data)), site_data, marker=marker_list[i], alpha=0.4, label=label_list[i])
+        else:
+            plt.plot(range(0, len(site_data)), site_data, alpha=0.4, label='site ' + str(label_list[i]))
 
     # Plots a single site's results as a histogram
     @staticmethod
@@ -574,7 +579,7 @@ class Backend(ABC):
         # plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         hist, bins = np.histogram(site_data, bins=binboi)
         xs = (bins[:-1] + bins[1:]) / 2
-        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width=np.diff(binboi).mean(), label='site ' + str(site_num))
+        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width=np.diff(binboi).mean()) # , label='site ' + str(site_num))
         X, Y = np.meshgrid(minimum, np.linspace(0, np.max(hist), 10))
         ax.plot(xs=X, ys=Y, zs=site_num, zdir='y', color='red', linestyle='--')
         X, Y = np.meshgrid(maximum, np.linspace(0, np.max(hist), 10))
