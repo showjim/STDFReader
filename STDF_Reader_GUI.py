@@ -356,6 +356,7 @@ class Application(QMainWindow):  # QWidget):
 
     def set_progress_bar_max(self):
         self.progress_bar.setMaximum(100)
+        QMessageBox.information(self, 'Go ahead, bro', 'Parse Complete !', QMessageBox.Ok)
 
     # Checks if the toggle by limits mark is checked or not
     def toggler(self, state):
