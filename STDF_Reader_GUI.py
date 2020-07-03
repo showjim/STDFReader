@@ -4,6 +4,7 @@
 # Version: Beta 0.5                               #
 #                                                 #
 # Sep. 18, 2019                                   #
+# A light STDF reader and analysis tool           #
 # A project forked from Thomas Kaunzinger         #
 #                                                 #
 # References:                                     #
@@ -57,10 +58,7 @@ Version = 'Beta 0.5.5'
 # QT GUI FUNCTIONALITY #
 ########################
 
-# Object oriented programming should be illegal cus i forgot how to be good at it
 # These are the functions for the QMainWindow/widget application objects that run the whole interface
-
-
 class Application(QMainWindow):  # QWidget):
 
     # Construct me
@@ -169,7 +167,8 @@ class Application(QMainWindow):  # QWidget):
             'Generate heatmap from selected Site2Site tests')
         self.generate_heatmap_button.setToolTip(
             'Generate a heatmap with the selected s2s tests from the parsed .csv')
-        self.generate_heatmap_button.clicked.connect(lambda: self.make_s2s_correlation_heatmap(self.s2s_correlation_report_df))
+        self.generate_heatmap_button.clicked.connect(
+            lambda: self.make_s2s_correlation_heatmap(self.s2s_correlation_report_df))
 
         self.progress_bar = QProgressBar()
 
@@ -260,18 +259,12 @@ class Application(QMainWindow):  # QWidget):
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         layout.addWidget(tabs, 3, 0, 1, 2)
-
-        # layout.addWidget(self.generate_summary_button, 3, 0)  # , 1, 2)
-        # layout.addWidget(self.generate_summary_button_split, 3, 1)
-        # layout.addWidget(self.select_test_menu, 4, 0, 1, 2)
-        # layout.addWidget(self.generate_pdf_button, 5, 0)
-        # layout.addWidget(self.limit_toggle, 5, 1)
         layout.addWidget(self.progress_bar, 6, 0, 1, 2)
 
-        # 创建一个 QWidget ，并将其布局设置为 layout_grid ：
+        # Create an QWidget, and use layout_grid
         widget = QWidget()
         widget.setLayout(layout)
-        # 将 widget 设为主窗口的 central widget ：
+        # Set 'widget' as central widget
         self.setCentralWidget(widget)
 
         # Window settings
@@ -291,11 +284,6 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a file to parse the data
     def open_parsing_dialog(self):
-
-        # self.threaded_text_parser.start()
-        #
-        # self.main_window()
-
         self.status_text.setText('Parsing to .txt, please wait...')
         filterboi = 'STDF (*.stdf *.std)'
         filepath = QFileDialog.getOpenFileName(
@@ -315,7 +303,7 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a file to parse the data to an csv
     def open_parsing_dialog_csv(self):
-        # I can not figure out the process when parse STDF, so...
+        # I can not figure out the process when parsing STDF, so...
         self.progress_bar.setMinimum(0)
 
         # Move QFileDialog out of QThread, in case of error under win 7
@@ -376,100 +364,98 @@ class Application(QMainWindow):  # QWidget):
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
+        # Only accepts text files
+        filterboi = 'CSV Table (*.csv)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open .csv File', filter=filterboi)
 
-        # Change to allow to upload file without restart program
-        if True:  # self.file_selected:
-            # Only accepts text files
-            filterboi = 'CSV Table (*.csv)'
-            filepath = QFileDialog.getOpenFileName(
-                caption='Open .csv File', filter=filterboi)
+        self.file_path = filepath[0]
 
-            self.file_path = filepath[0]
+        # Because you can open it and select nothing smh
+        if self.file_path != '':
 
-            # Because you can open it and select nothing smh
-            if self.file_path != '':
+            self.txt_upload_button.setEnabled(False)
 
-                # self.txt_upload_button.setEnabled(False)
+            self.progress_bar.setValue(0)
+            self.list_of_test_numbers = []
+            self.list_of_duplicate_test_numbers = []
+            startt = time.time()
 
-                self.progress_bar.setValue(0)
-                self.list_of_test_numbers = []
-                self.list_of_duplicate_test_numbers = []
-                startt = time.time()
+            if self.file_path.endswith(".txt"):
+                pass
+            elif self.file_path.endswith(".std"):
+                pass
+            elif self.file_path.endswith(".csv"):
+                self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
+                # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
+                # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
 
-                if self.file_path.endswith(".txt"):
-                    pass
-                elif self.file_path.endswith(".std"):
-                    pass
-                elif self.file_path.endswith(".csv"):
-                    self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
-                    # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
-                    # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
+                # Extracts the test name for the selecting
+                tmp_pd = self.df_csv.columns
+                self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
+                self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
+                self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
+                self.test_info_list = tmp_pd.values.tolist()[16:]
+                self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
+                                                    zip(self.tname_list, self.tnumber_list)]
+                # Change the multi-level columns to single level columns
+                self.single_columns = self.single_columns + self.list_of_test_numbers_string
+                self.df_csv.columns = self.single_columns
 
-                    # Extracts the test name for the selecting
-                    tmp_pd = self.df_csv.columns
-                    self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
-                    self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
-                    self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
-                    self.test_info_list = tmp_pd.values.tolist()[16:]
-                    self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
-                                                        zip(self.tname_list, self.tnumber_list)]
-                    # Change the multi-level columns to single level columns
-                    self.single_columns = self.single_columns + self.list_of_test_numbers_string
-                    self.df_csv.columns = self.single_columns
+                # Data cleaning, get rid of '(F)'
+                self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
+                self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
+                self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
+                self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
+                self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
 
-                    # Data cleaning, get rid of '(F)'
-                    self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
-                    self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
-                    self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
-                    self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
-                    self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
-                    self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
+                # Extract the test name and test number list
+                self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
 
-                    # Extract the test name and test number list
-                    self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+                # Get site array
+                self.sdr_parse = self.df_csv['SITE_NUM'].unique()
+                self.number_of_sites = len(self.sdr_parse)
 
-                    # Get site array
-                    self.sdr_parse = self.df_csv['SITE_NUM'].unique()
-                    self.number_of_sites = len(self.sdr_parse)
+            endt = time.time()
+            print('读取时间：', endt - startt)
+            logging.info('Debug message: ' + '读取时间：' + str(endt - startt))
+            # sdr_parse = self.sdr_data[0].split("|")
 
-                endt = time.time()
-                print('读取时间：', endt - startt)
-                logging.info('Debug message: ' + '读取时间：' + str(endt - startt))
-                # sdr_parse = self.sdr_data[0].split("|")
+            self.progress_bar.setValue(35)
 
-                self.progress_bar.setValue(35)
+            self.file_selected = True
 
-                self.file_selected = True
+            self.select_test_menu.loadItems(self.list_of_test_numbers_string)
+            self.select_s2s_test_menu.loadItems(self.list_of_test_numbers_string)
 
-                self.select_test_menu.loadItems(self.list_of_test_numbers_string)
-                self.select_s2s_test_menu.loadItems(self.list_of_test_numbers_string)
+            self.selected_tests = []
 
-                self.selected_tests = []
-
-                # log parsed document, if duplicate test number exist, show warning !
-                if len(self.list_of_duplicate_test_numbers) > 0:
-                    self.status_text.setText(
-                        'Parsed .csv uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
-                else:
-                    self.status_text.setText('Parsed .csv uploaded!')
-
-                self.progress_bar.setValue(100)
-
-                self.generate_pdf_button.setEnabled(True)
-                self.select_test_menu.setEnabled(True)
-                self.generate_summary_button.setEnabled(True)
-                self.limit_toggle.setEnabled(True)
-                self.group_toggle.setEnabled(True)
-                self.generate_correlation_button.setEnabled(True)
-                self.generate_correlation_button_s2s.setEnabled(True)
-                self.select_s2s_test_menu.setEnabled(False)
-                self.generate_heatmap_button.setEnabled(False)
-                self.main_window()
-
+            # log parsed document, if duplicate test number exist, show warning !
+            if len(self.list_of_duplicate_test_numbers) > 0:
+                self.status_text.setText(
+                    'Parsed .csv uploaded! But Duplicate Test Number Found! Please Check \'duplicate_test_number.csv\'')
             else:
+                self.status_text.setText('Parsed .csv uploaded!')
 
-                self.status_text.setText('Please select a file')
+            self.progress_bar.setValue(100)
+            self.txt_upload_button.setEnabled(True)
+            self.generate_pdf_button.setEnabled(True)
+            self.select_test_menu.setEnabled(True)
+            self.generate_summary_button.setEnabled(True)
+            self.limit_toggle.setEnabled(True)
+            self.group_toggle.setEnabled(True)
+            self.generate_correlation_button.setEnabled(True)
+            self.generate_correlation_button_s2s.setEnabled(True)
+            self.select_s2s_test_menu.setEnabled(False)
+            self.generate_heatmap_button.setEnabled(False)
+            self.main_window()
 
+        else:
+
+            self.status_text.setText('Please select a file')
+
+    # find out the duplicate test number with differnet test name
     def list_duplicates_of(self, seq, item, start_index):  # start_index is to reduce the complex
         start_at = -1
         locs = []
@@ -486,6 +472,7 @@ class Application(QMainWindow):  # QWidget):
                     break
         return locs
 
+    # Create a xlsx report including Data Statistics, Duplicate Test Number and Wafer Map
     def generate_analysis_report(self):
         analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
         self.status_text.setText(
@@ -632,7 +619,6 @@ class Application(QMainWindow):  # QWidget):
                     start_column = 0
                     for j in range(len(wafer_map_list[i])):
                         wafer_map = wafer_map_list[i][j]
-                        # if i == 0 and j == 0:
                         row_table, column_table = wafer_map.shape
                         wafer_map.to_excel(writer, sheet_name='Wafer Map', startrow=start_row, startcol=start_column)
 
@@ -706,26 +692,10 @@ class Application(QMainWindow):  # QWidget):
 
         # Won't perform action unless there's actually a file
         if self.file_selected:
-
             self.progress_bar.setValue(0)
-
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers, True, True)
-
             self.progress_bar.setValue(80)
-
-            # csv_summary_name = str(self.file_path[:-11] + "_data_summary.csv")
-            #
-            # # In case someone has the file open
-            # try:
-            #     table.to_csv(path_or_buf=csv_summary_name)
-            #     self.status_text.setText(
-            #         str(csv_summary_name + " written successfully!"))
-            #     self.progress_bar.setValue(100)
-            # except PermissionError:
-            #     self.status_text.setText(
-            #         str("Please close " + csv_summary_name + "_data_summary.csv"))
-            #     self.progress_bar.setValue(0)
         else:
             self.status_text.setText('Please select a file')
         return table
@@ -745,14 +715,6 @@ class Application(QMainWindow):  # QWidget):
         if len(self.list_of_duplicate_test_numbers) > 0:
             log_csv = pd.DataFrame(self.list_of_duplicate_test_numbers,
                                    columns=['Test Number', 'Test Name', 'Test Name'])
-            # try:
-            #     log_csv.to_csv(path_or_buf=str(
-            #         self.file_path[:-11].split('/')[-1] + "_duplicate_test_number.csv"))
-            # except PermissionError:
-            #     self.status_text.setText(
-            #         str(
-            #             "Please close duplicate_test_number.csv file to generate a new one !!!"))
-
         return log_csv
 
     def make_bin_summary(self):
@@ -914,7 +876,8 @@ class Application(QMainWindow):  # QWidget):
             mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
             # Assume table 0 is the base one
             mean_delta_over_base = mean_delta / table_list[0].Mean.astype(float)
-            correlation_df = pd.concat([correlation_df, mean_delta, mean_delta_over_limit, mean_delta_over_base], axis=1)
+            correlation_df = pd.concat([correlation_df, mean_delta, mean_delta_over_limit, mean_delta_over_base],
+                                       axis=1)
 
             correlation_df.columns = parameters
             # csv_summary_name = str(self.file_path + "_correlation_table.csv")
@@ -982,19 +945,13 @@ class Application(QMainWindow):  # QWidget):
                 row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
                 col_name = int(col_names[i])
                 if len(row_name) == 0:
-                    axis_list = ''
-                    base_bin_num = ''
-                    cmp_bin_num = ''
-                    # axis_dic['Axis'].append(axis_list)
-                    # axis_dic['Base Bin Number'].append(base_bin_num)
-                    # axis_dic['CMP Bin Number'].append(cmp_bin_num)
-                    # self.progress_bar.setValue(95)
+                    pass
                 else:
                     for j in row_name:
                         axis_list = [col_name, int(j)]
                         base_bin_num = base_df.loc[j, col_name]
                         cmp_bin_num = cmp_df.loc[j, col_name]
-                        
+
                         axis_dic['Axis'].append(axis_list)
                         axis_dic['Base Bin Number'].append(base_bin_num)
                         axis_dic['CMP Bin Number'].append(cmp_bin_num)
@@ -1152,7 +1109,6 @@ class Application(QMainWindow):  # QWidget):
         plt.show()
         self.select_s2s_test_menu.setEnabled(True)
         self.generate_heatmap_button.setEnabled(True)
-        pass
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
@@ -1302,16 +1258,19 @@ class ComboCheckBox(QComboBox):
         self.setLineEdit(self.qLineEdit)
         # self.qLineEdit.textChanged.connect(self.printResults)
 
+    # Re-write showPopup method, to avoid the incomplete display when too many items
     def showPopup(self):
         self.popupAboutToBeShown.emit()
-        # 重写showPopup方法，避免下拉框数据多而导致显示不全的问题
-        select_list = self.Selectlist()  # 当前选择数据
-        self.loadItems(items=self.items[1:])  # 重新添加组件
+        # Select current items
+        select_list = self.Selectlist()
+        # Reload the items
+        self.loadItems(items=self.items[1:])
         for i in range(1, self.row_num):
             self.qCheckBox[i].stateChanged.disconnect()
         for select in select_list:
             index = self.items[:].index(select)
-            self.qCheckBox[index].setChecked(True)  # 选中组件
+            # Check the items
+            self.qCheckBox[index].setChecked(True)
         for i in range(1, self.row_num):
             self.qCheckBox[i].stateChanged.connect(self.showMessage)
         self.showMessage()
@@ -1325,9 +1284,6 @@ class ComboCheckBox(QComboBox):
 
     def Selectlist(self):
         Outputlist = [ch.text() for ch in self.qCheckBox[1:] if ch.isChecked()]
-        # for i in range(1, self.row_num):
-        #     if self.qCheckBox[i].isChecked():
-        #         Outputlist.append(self.qCheckBox[i].text())
         self.Selectedrow_num = len(Outputlist)
         return Outputlist
 
@@ -1337,13 +1293,16 @@ class ComboCheckBox(QComboBox):
         Outputlist = self.Selectlist()
 
         if self.Selectedrow_num == 0:
-            self.qCheckBox[0].setCheckState(0)  # Clear, nothing is selected
+            # Clear, nothing is selected
+            self.qCheckBox[0].setCheckState(0)
             show = ''
         elif self.Selectedrow_num == self.row_num - 1:
-            self.qCheckBox[0].setCheckState(2)  # All are selected
+            # All are selected
+            self.qCheckBox[0].setCheckState(2)
             show = 'ALL DATA'
         else:
-            self.qCheckBox[0].setCheckState(1)  # Part is/are selected
+            # Part is/are selected
+            self.qCheckBox[0].setCheckState(1)
             show = ';'.join(Outputlist)
         self.qLineEdit.setText(show)
         # self.qLineEdit.setReadOnly(True)
@@ -1367,7 +1326,7 @@ class ComboCheckBox(QComboBox):
 
     def regex_select(self):
         text = self.qLineEdit.text()
-        new_tests_list = []  # 保存筛选出来dog的列表
+        new_tests_list = []  # 保存筛选出来log的列表
         tests_index_list = []
         try:
             if text != '':
@@ -1380,7 +1339,7 @@ class ComboCheckBox(QComboBox):
                     for i in range(1, self.row_num):
                         self.qCheckBox[i].stateChanged.disconnect()
                     for i in tests_index_list:
-                        self.qCheckBox[i+1].setChecked(True)
+                        self.qCheckBox[i + 1].setChecked(True)
                     for i in range(1, self.row_num):
                         self.qCheckBox[i].stateChanged.connect(self.showMessage)
                     self.showMessage()
@@ -1389,7 +1348,8 @@ class ComboCheckBox(QComboBox):
         # new_tests_list = list(filter(lambda x: re.match(text, x) != None, self.items[1:]))
         print(new_tests_list)
         if len(tests_index_list) != 0:
-            logging.info('Debug message: ' + ', '.join(new_tests_list)) #.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+            logging.info('Debug message: ' + ', '.join(
+                new_tests_list))  # .error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
         else:
             logging.info('Debug message: ' + 'No Test Instances Found.')
         pass

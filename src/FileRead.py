@@ -13,11 +13,10 @@ from pystdf.Importer import STDF2DataFrame
 # FILE READING AND PARSING #
 ############################
 
-# We're living that object oriented life now
-# Here's where I put my functions for reading files
+# So sad there is no detaial document about PySTDF, thanks to Thomas's code as sample
 class FileReaders(ABC):
 
-    # processing that big boi
+    # This function is to parse STDF into an ATDF like log, abandon this part now
     @staticmethod
     def process_file(filename):
 
