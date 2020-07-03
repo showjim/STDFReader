@@ -80,21 +80,25 @@ class Application(QMainWindow):  # QWidget):
         self.list_of_duplicate_test_numbers = []
         self.s2s_correlation_report_df = pd.DataFrame()
 
-        exitAct = QAction(QIcon('exit.png'), '&Exit', self)
-        exitAct.setShortcut('Ctrl+Q')
-        exitAct.triggered.connect(qApp.quit)
-        aboutAct = QAction(QIcon('about.png'), '&About', self)
-        aboutAct.triggered.connect(self.aboutecho)
+        # exitAct = QAction(QIcon('exit.png'), '&Exit', self)
+        # exitAct.setShortcut('Ctrl+Q')
+        # exitAct.triggered.connect(qApp.quit)
+        # aboutAct = QAction(QIcon('about.png'), '&About', self)
+        # aboutAct.triggered.connect(self.aboutecho)
+        #
+        # menubar = self.menuBar()
+        # fileMenu = menubar.addMenu('&File')
+        # helpMenu = menubar.addMenu('&Help')
+        # fileMenu.addAction(exitAct)
+        # helpMenu.addAction(aboutAct)
 
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-        helpMenu = menubar.addMenu('&Help')
-        fileMenu.addAction(exitAct)
-        helpMenu.addAction(aboutAct)
-
+        self.window_title = QLabel()
+        self.window_title.setText('STDF Reader For AP ' + Version)
         self.button_close = QPushButton(qta.icon('mdi.window-close'), '')
+        self.button_about = QPushButton(qta.icon('mdi.window-maximize'), '')
         self.button_mini = QPushButton(qta.icon('mdi.window-minimize'), '')
         self.button_close.clicked.connect(self.close)
+        self.button_about.clicked.connect(self.aboutecho)
         self.button_mini.clicked.connect(self.showMinimized)
 
         self.status_text = QLabel()
@@ -180,7 +184,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (800, 300)
+        self.WINDOW_SIZE = (700, 300)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -254,12 +258,15 @@ class Application(QMainWindow):  # QWidget):
         self.setLayout(layout)
 
         # Adds the widgets together in the grid
-        layout.addWidget(self.status_text, 0, 0, 1, 31)
-        layout.addWidget(self.button_mini, 0, 30, 1, 1)
+        self.window_title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.window_title, 0, 0, 1, 32)
+        layout.addWidget(self.button_mini, 0, 29, 1, 1)
+        layout.addWidget(self.button_about, 0, 30, 1, 1)
         layout.addWidget(self.button_close, 0, 31, 1, 1)
-        layout.addWidget(self.stdf_upload_button_xlsx, 1, 0, 1, 16)
-        layout.addWidget(self.stdf_upload_button, 1, 16, 1, 16)
-        layout.addWidget(self.txt_upload_button, 2, 0, 1, 32)
+        layout.addWidget(self.status_text, 1, 0, 1, 31)
+        layout.addWidget(self.stdf_upload_button_xlsx, 2, 0, 1, 16)
+        layout.addWidget(self.stdf_upload_button, 2, 16, 1, 16)
+        layout.addWidget(self.txt_upload_button, 3, 0, 1, 32)
 
         tabs = QTabWidget(self)
         self.data_analysis_tab = QWidget()
@@ -268,8 +275,8 @@ class Application(QMainWindow):  # QWidget):
         self.tab_data_correlation()
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
-        layout.addWidget(tabs, 3, 0, 1, 32)
-        layout.addWidget(self.progress_bar, 6, 0, 1, 32)
+        layout.addWidget(tabs, 4, 0, 1, 32)
+        layout.addWidget(self.progress_bar, 7, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
         widget = QWidget()
@@ -279,6 +286,8 @@ class Application(QMainWindow):  # QWidget):
 
         self.button_close.setStyleSheet(
             '''QPushButton{background:#F76677;border-radius:5px;}QPushButton:hover{background:red;}''')
+        self.button_about.setStyleSheet(
+            '''QPushButton{background:#F7D674;border-radius:5px;}QPushButton:hover{background:yellow;}''')
         self.button_mini.setStyleSheet(
             '''QPushButton{background:#6DDF6D;border-radius:5px;}QPushButton:hover{background:green;}''')
 
