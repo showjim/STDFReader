@@ -105,14 +105,15 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='blue', color_active='orange'),
+        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='grey', color_active='black'),
                                                    'Parse STD/STDF to .xlsx table (very slow)')
+        # self.stdf_upload_button_xlsx.setStyleSheet("background-color: grey; border-radius:5px;")
         self.stdf_upload_button_xlsx.setToolTip(
             'Browse for a file ending in .std to create a parsed .xlsx file')
         self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv
-        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='blue', color_active='orange'),
+        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='grey', color_active='black'),
                                               'Parse STD/STDF to .csv log')
         self.stdf_upload_button.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
@@ -120,14 +121,14 @@ class Application(QMainWindow):  # QWidget):
             self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='blue', color_active='orange'),
+        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='grey', color_active='black'),
                                              'Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
             'Browse for the .csv file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
 
         # Generates a summary of the loaded text
-        self.generate_summary_button = QPushButton(qta.icon('mdi.google-analytics', color='blue', color_active='orange'),
+        self.generate_summary_button = QPushButton(qta.icon('mdi.google-analytics', color='grey', color_active='black'),
                                                    'Generate data analysis report')
         self.generate_summary_button.setToolTip(
             'Generate a .xlsx data analysis report for the uploaded parsed .csv')
@@ -139,7 +140,7 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the PDF results for')
 
         # Button to generate the test results for the desired tests from the selected menu
-        self.generate_pdf_button = QPushButton(qta.icon('fa5s.file-pdf', color='blue', color_active='orange'),
+        self.generate_pdf_button = QPushButton(qta.icon('fa5s.file-pdf', color='grey', color_active='black'),
                                                'Generate .pdf from selected tests')
         self.generate_pdf_button.setToolTip(
             'Generate a .pdf file with the selected tests from the parsed .txt')
@@ -156,14 +157,14 @@ class Application(QMainWindow):  # QWidget):
         self.group_toggled = False
 
         # Generates a correlation report for all sites of the loaded data
-        self.generate_correlation_button = QPushButton(qta.icon('mdi.file-compare', color='blue', color_active='orange'),
+        self.generate_correlation_button = QPushButton(qta.icon('mdi.file-compare', color='grey', color_active='black'),
                                                        'Generate correlation report of multiple stdf files')
         self.generate_correlation_button.setToolTip(
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
 
         # Generates a correlation report for site2site compare
-        self.generate_correlation_button_s2s = QPushButton(qta.icon('mdi.sitemap', color='blue', color_active='orange'),
+        self.generate_correlation_button_s2s = QPushButton(qta.icon('mdi.sitemap', color='grey', color_active='black'),
                                                            'Generate correlation of Site2Site')
         self.generate_correlation_button_s2s.setToolTip(
             'Generate an Site2Site correlation report')
@@ -175,7 +176,7 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the heatmap results for site-to-site correlation')
 
         # Button to generate the s2s test results for the desired tests from the selected s2s menu
-        self.generate_heatmap_button = QPushButton(qta.icon('mdi.chart-scatter-plot', color='blue', color_active='orange'),
+        self.generate_heatmap_button = QPushButton(qta.icon('mdi.chart-scatter-plot', color='grey', color_active='black'),
                                                    'Generate heatmap from selected Site2Site tests')
         self.generate_heatmap_button.setToolTip(
             'Generate a heatmap with the selected s2s tests from the parsed .csv')
@@ -295,7 +296,7 @@ class Application(QMainWindow):  # QWidget):
         self.setWindowFlag(Qt.FramelessWindowHint)  # 隐藏边框
         pe = QPalette()
         self.setAutoFillBackground(True)
-        pe.setColor(QPalette.Window, Qt.white)  # 设置背景色
+        pe.setColor(QPalette.Window, Qt.lightGray)  # 设置背景色
         # pe.setColor(QPalette.Background,Qt.blue)
         self.setPalette(pe)
 
@@ -897,6 +898,10 @@ class Application(QMainWindow):  # QWidget):
             self.status_text.setText(
                 str("Please close " + correlation_report_name.split('/')[-1]))
             self.progress_bar.setValue(0)
+        except IndexError:
+            self.status_text.setText(
+                str("Can not find 2 or more set data in csv file, please check your input!"))
+            self.progress_bar.setValue(0)
 
     def make_correlation_table(self):
         parameters = ['Site', 'Units', 'LowLimit', 'HiLimit']
@@ -971,43 +976,44 @@ class Application(QMainWindow):  # QWidget):
                         80 + int(i / (len(file_list) + len(lot_id_list) + len(wafer_id_list)) * 10))
 
             all_wafer_map_list.append(tmp_wafer_map_list)
+        cmp_result_list = []
+        if len(all_wafer_map_list) >= 2:
+            # Compare the First two wafer map in all_wafer_map_list
+            base_df = all_wafer_map_list[0][0].fillna(value='')
+            cmp_df = all_wafer_map_list[1][0].fillna(value='')
+            df1_r, df1_c = base_df.shape
+            df2_r, df2_c = cmp_df.shape
 
-        # Compare the First two wafer map in all_wafer_map_list
-        base_df = all_wafer_map_list[0][0].fillna(value='')
-        cmp_df = all_wafer_map_list[1][0].fillna(value='')
-        df1_r, df1_c = base_df.shape
-        df2_r, df2_c = cmp_df.shape
+            if (df1_r != df2_r) or (df1_c != df2_c):
+                result_df = pd.DataFrame({'name': ['Dimension Mismatch of First 2 Wafer Map !!!']})
+                axis_df = pd.DataFrame({'name': ['这也没有 !!!']})
+                # raise Exception('Dimension Mismatch!')
+            else:
+                result_df = base_df.copy()
+                row_names = result_df.index.values
+                col_names = result_df.columns.values
+                axis_dic = {'Axis': [], 'Base Bin Number': [], 'CMP Bin Number': []}
+                for i in range(df1_c):
+                    result_df.iloc[:, i] = np.where(base_df.iloc[:, i] == cmp_df.iloc[:, i],
+                                                    base_df.iloc[:, i], base_df.iloc[:, i].astype(str) + '-->' +
+                                                    cmp_df.iloc[:, i].astype(str))
+                    row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
+                    col_name = int(col_names[i])
+                    if len(row_name) == 0:
+                        pass
+                    else:
+                        for j in row_name:
+                            axis_list = [col_name, int(j)]
+                            base_bin_num = base_df.loc[j, col_name]
+                            cmp_bin_num = cmp_df.loc[j, col_name]
 
-        if (df1_r != df2_r) or (df1_c != df2_c):
-            result_df = pd.DataFrame({'name': ['Dimension Mismatch of First 2 Wafer Map !!!']})
-            axis_df = pd.DataFrame({'name': ['这也没有 !!!']})
-            # raise Exception('Dimension Mismatch!')
-        else:
-            result_df = base_df.copy()
-            row_names = result_df.index.values
-            col_names = result_df.columns.values
-            axis_dic = {'Axis': [], 'Base Bin Number': [], 'CMP Bin Number': []}
-            for i in range(df1_c):
-                result_df.iloc[:, i] = np.where(base_df.iloc[:, i] == cmp_df.iloc[:, i],
-                                                base_df.iloc[:, i], base_df.iloc[:, i].astype(str) + '-->' +
-                                                cmp_df.iloc[:, i].astype(str))
-                row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
-                col_name = int(col_names[i])
-                if len(row_name) == 0:
-                    pass
-                else:
-                    for j in row_name:
-                        axis_list = [col_name, int(j)]
-                        base_bin_num = base_df.loc[j, col_name]
-                        cmp_bin_num = cmp_df.loc[j, col_name]
-
-                        axis_dic['Axis'].append(axis_list)
-                        axis_dic['Base Bin Number'].append(base_bin_num)
-                        axis_dic['CMP Bin Number'].append(cmp_bin_num)
-                        self.progress_bar.setValue(
-                            90 + int(i / (df1_c + len(row_name)) * 5))
-            axis_df = pd.DataFrame.from_dict(axis_dic, orient='index').T
-        cmp_result_list = [result_df, axis_df]
+                            axis_dic['Axis'].append(axis_list)
+                            axis_dic['Base Bin Number'].append(base_bin_num)
+                            axis_dic['CMP Bin Number'].append(cmp_bin_num)
+                            self.progress_bar.setValue(
+                                90 + int(i / (df1_c + len(row_name)) * 5))
+                axis_df = pd.DataFrame.from_dict(axis_dic, orient='index').T
+            cmp_result_list = [result_df, axis_df]
         return cmp_result_list
 
     def generate_s2s_correlation_report(self):
