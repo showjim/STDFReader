@@ -39,6 +39,7 @@ import time
 import xlsxwriter
 import logging
 import re
+import qtawesome as qta
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -49,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.5.5'
+Version = 'Beta 0.5.6'
 
 
 ###################################################
@@ -91,32 +92,39 @@ class Application(QMainWindow):  # QWidget):
         fileMenu.addAction(exitAct)
         helpMenu.addAction(aboutAct)
 
+        self.button_close = QPushButton(qta.icon('mdi.window-close'), '')
+        self.button_mini = QPushButton(qta.icon('mdi.window-minimize'), '')
+        self.button_close.clicked.connect(self.close)
+        self.button_mini.clicked.connect(self.showMinimized)
+
         self.status_text = QLabel()
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button_xlsx = QPushButton('Parse STD/STDF to .xlsx table (very slow)')
+        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='blue', color_active='orange'),
+                                                   'Parse STD/STDF to .xlsx table (very slow)')
         self.stdf_upload_button_xlsx.setToolTip(
             'Browse for a file ending in .std to create a parsed .xlsx file')
         self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv
-        self.stdf_upload_button = QPushButton(
-            'Parse STD/STDF to .csv log')
+        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='blue', color_active='orange'),
+                                              'Parse STD/STDF to .csv log')
         self.stdf_upload_button.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
         self.stdf_upload_button.clicked.connect(
             self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton('Upload parsed .csv file')
+        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='blue', color_active='orange'),
+                                             'Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
             'Browse for the .csv file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
 
         # Generates a summary of the loaded text
-        self.generate_summary_button = QPushButton(
-            'Generate data analysis report')
+        self.generate_summary_button = QPushButton(qta.icon('mdi.google-analytics', color='blue', color_active='orange'),
+                                                   'Generate data analysis report')
         self.generate_summary_button.setToolTip(
             'Generate a .xlsx data analysis report for the uploaded parsed .csv')
         self.generate_summary_button.clicked.connect(self.generate_analysis_report)
@@ -127,8 +135,8 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the PDF results for')
 
         # Button to generate the test results for the desired tests from the selected menu
-        self.generate_pdf_button = QPushButton(
-            'Generate .pdf from selected tests')
+        self.generate_pdf_button = QPushButton(qta.icon('fa5s.file-pdf', color='blue', color_active='orange'),
+                                               'Generate .pdf from selected tests')
         self.generate_pdf_button.setToolTip(
             'Generate a .pdf file with the selected tests from the parsed .txt')
         self.generate_pdf_button.clicked.connect(self.plot_list_of_tests)
@@ -144,15 +152,15 @@ class Application(QMainWindow):  # QWidget):
         self.group_toggled = False
 
         # Generates a correlation report for all sites of the loaded data
-        self.generate_correlation_button = QPushButton(
-            'Generate correlation report of multiple stdf files')
+        self.generate_correlation_button = QPushButton(qta.icon('mdi.file-compare', color='blue', color_active='orange'),
+                                                       'Generate correlation report of multiple stdf files')
         self.generate_correlation_button.setToolTip(
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
 
         # Generates a correlation report for site2site compare
-        self.generate_correlation_button_s2s = QPushButton(
-            'Generate correlation of Site2Site')
+        self.generate_correlation_button_s2s = QPushButton(qta.icon('mdi.sitemap', color='blue', color_active='orange'),
+                                                           'Generate correlation of Site2Site')
         self.generate_correlation_button_s2s.setToolTip(
             'Generate an Site2Site correlation report')
         self.generate_correlation_button_s2s.clicked.connect(self.generate_s2s_correlation_report)
@@ -163,8 +171,8 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the heatmap results for site-to-site correlation')
 
         # Button to generate the s2s test results for the desired tests from the selected s2s menu
-        self.generate_heatmap_button = QPushButton(
-            'Generate heatmap from selected Site2Site tests')
+        self.generate_heatmap_button = QPushButton(qta.icon('mdi.chart-scatter-plot', color='blue', color_active='orange'),
+                                                   'Generate heatmap from selected Site2Site tests')
         self.generate_heatmap_button.setToolTip(
             'Generate a heatmap with the selected s2s tests from the parsed .csv')
         self.generate_heatmap_button.clicked.connect(
@@ -172,7 +180,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 280)
+        self.WINDOW_SIZE = (800, 300)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -246,10 +254,12 @@ class Application(QMainWindow):  # QWidget):
         self.setLayout(layout)
 
         # Adds the widgets together in the grid
-        layout.addWidget(self.status_text, 0, 0, 1, 2)
-        layout.addWidget(self.stdf_upload_button_xlsx, 1, 0)
-        layout.addWidget(self.stdf_upload_button, 1, 1)
-        layout.addWidget(self.txt_upload_button, 2, 0, 1, 2)
+        layout.addWidget(self.status_text, 0, 0, 1, 31)
+        layout.addWidget(self.button_mini, 0, 30, 1, 1)
+        layout.addWidget(self.button_close, 0, 31, 1, 1)
+        layout.addWidget(self.stdf_upload_button_xlsx, 1, 0, 1, 16)
+        layout.addWidget(self.stdf_upload_button, 1, 16, 1, 16)
+        layout.addWidget(self.txt_upload_button, 2, 0, 1, 32)
 
         tabs = QTabWidget(self)
         self.data_analysis_tab = QWidget()
@@ -258,14 +268,27 @@ class Application(QMainWindow):  # QWidget):
         self.tab_data_correlation()
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
-        layout.addWidget(tabs, 3, 0, 1, 2)
-        layout.addWidget(self.progress_bar, 6, 0, 1, 2)
+        layout.addWidget(tabs, 3, 0, 1, 32)
+        layout.addWidget(self.progress_bar, 6, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
         widget = QWidget()
         widget.setLayout(layout)
         # Set 'widget' as central widget
         self.setCentralWidget(widget)
+
+        self.button_close.setStyleSheet(
+            '''QPushButton{background:#F76677;border-radius:5px;}QPushButton:hover{background:red;}''')
+        self.button_mini.setStyleSheet(
+            '''QPushButton{background:#6DDF6D;border-radius:5px;}QPushButton:hover{background:green;}''')
+
+        self.setWindowOpacity(0.95)  # 设置窗口透明度
+        self.setWindowFlag(Qt.FramelessWindowHint)  # 隐藏边框
+        pe = QPalette()
+        self.setAutoFillBackground(True)
+        pe.setColor(QPalette.Window, Qt.white)  # 设置背景色
+        # pe.setColor(QPalette.Background,Qt.blue)
+        self.setPalette(pe)
 
         # Window settings
         self.show()
@@ -281,6 +304,23 @@ class Application(QMainWindow):  # QWidget):
         center_point = QDesktopWidget().availableGeometry().center()
         window.moveCenter(center_point)
         self.move(window.topLeft())
+
+    # 重写三个方法使我们的Example窗口支持拖动,上面参数window就是拖动对象
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.m_drag = True
+            self.m_DragPosition = event.globalPos() - self.pos()
+            event.accept()
+            self.setCursor(QCursor(Qt.OpenHandCursor))
+
+    def mouseMoveEvent(self, QMouseEvent):
+        if Qt.LeftButton and self.m_drag:
+            self.move(QMouseEvent.globalPos() - self.m_DragPosition)
+            QMouseEvent.accept()
+
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.m_drag = False
+        self.setCursor(QCursor(Qt.ArrowCursor))
 
     # Opens and reads a file to parse the data
     def open_parsing_dialog(self):
