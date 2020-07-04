@@ -292,12 +292,12 @@ class Application(QMainWindow):  # QWidget):
         self.button_mini.setStyleSheet(
             '''QPushButton{background:#6DDF6D;border-radius:5px;}QPushButton:hover{background:green;}''')
 
-        self.setWindowOpacity(0.95)  # 设置窗口透明度
+        self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.setWindowFlag(Qt.FramelessWindowHint)  # 隐藏边框
         pe = QPalette()
         self.setAutoFillBackground(True)
         pe.setColor(QPalette.Window, Qt.lightGray)  # 设置背景色
-        # pe.setColor(QPalette.Background,Qt.blue)
+        pe.setColor(QPalette.Background, Qt.lightGray)
         self.setPalette(pe)
 
         # Window settings
