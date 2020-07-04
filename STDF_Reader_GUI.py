@@ -94,7 +94,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.window_title = QLabel()
         self.window_title.setText('STDF Reader For AP ' + Version)
-        self.window_title.setFont(QFont("Times", weight=QFont.Bold))
+        self.window_title.setFont(QFont("Times", 14, weight=QFont.Bold))
         pix = QPixmap('./img/icon.ico')
         self.window_title_img = QLabel()
         self.window_title_img.setPixmap(pix)
