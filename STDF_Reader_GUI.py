@@ -94,6 +94,20 @@ class Application(QMainWindow):  # QWidget):
 
         self.window_title = QLabel()
         self.window_title.setText('STDF Reader For AP ' + Version)
+        self.window_title.setFont(QFont("Times", weight=QFont.Bold))
+        pix = QPixmap('./img/icon.ico')
+        self.window_title_img = QLabel()
+        self.window_title_img.setPixmap(pix)
+        # self.window_title_img.setGeometry(0, 100, 3, 3)
+        self.window_title_img.setScaledContents(True)
+        self.window_title_img.setMaximumHeight(20)
+        self.window_title_img.setMaximumWidth(20)
+        # lb1 = QLabel(self)
+        # lb1.setGeometry(0, 250, 300, 200)
+        # lb1.setPixmap(pix)
+        # lb1.setStyleSheet("border: 2px solid red")
+        # lb1.setScaledContents(True)
+
         self.button_close = QPushButton(qta.icon('mdi.window-close'), '')
         self.button_about = QPushButton(qta.icon('mdi.window-maximize'), '')
         self.button_mini = QPushButton(qta.icon('mdi.window-minimize'), '')
@@ -185,7 +199,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 300)
+        self.WINDOW_SIZE = (700, 320)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -259,8 +273,10 @@ class Application(QMainWindow):  # QWidget):
         self.setLayout(layout)
 
         # Adds the widgets together in the grid
-        self.window_title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.window_title, 0, 0, 1, 32)
+        # self.window_title.setAlignment(Qt.AlignCenter)
+        # self.window_title_img.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.window_title_img, 0, 11, 1, 1)
+        layout.addWidget(self.window_title, 0, 12, 1, 10)
         layout.addWidget(self.button_mini, 0, 29, 1, 1)
         layout.addWidget(self.button_about, 0, 30, 1, 1)
         layout.addWidget(self.button_close, 0, 31, 1, 1)
@@ -297,7 +313,7 @@ class Application(QMainWindow):  # QWidget):
         pe = QPalette()
         self.setAutoFillBackground(True)
         pe.setColor(QPalette.Window, Qt.lightGray)  # 设置背景色
-        pe.setColor(QPalette.Background, Qt.lightGray)
+        # pe.setColor(QPalette.Background, Qt.lightGray)
         self.setPalette(pe)
 
         # Window settings
