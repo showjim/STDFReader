@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
 
-Version = 'Beta 0.5.6'
+Version = 'Beta 0.5.7'
 
 
 ###################################################
@@ -119,15 +119,15 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='grey', color_active='black'),
-                                                   'Parse STD/STDF to .xlsx table (very slow)')
+        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='gray', color_active='black'),
+                                                   'Parse STD/STDF to .xlsx table')
         # self.stdf_upload_button_xlsx.setStyleSheet("background-color: grey; border-radius:5px;")
         self.stdf_upload_button_xlsx.setToolTip(
             'Browse for a file ending in .std to create a parsed .xlsx file')
         self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv
-        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='grey', color_active='black'),
+        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='gray', color_active='black'),
                                               'Parse STD/STDF to .csv log')
         self.stdf_upload_button.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
