@@ -92,12 +92,18 @@ class Application(QMainWindow):  # QWidget):
         # fileMenu.addAction(exitAct)
         # helpMenu.addAction(aboutAct)
 
+        # Set icon for window, the img path should be full absolute path for compiling
+        self.pix = QPixmap(r'.\img\icon.ico')
+        icon = QIcon()
+        icon.addPixmap(self.pix, QIcon.Normal, QIcon.Off)
+        self.setWindowIcon(icon)
+
+        # Set the window title
         self.window_title = QLabel()
         self.window_title.setText('STDF Reader For AP ' + Version)
         self.window_title.setFont(QFont("Times", 14, weight=QFont.Bold))
-        pix = QPixmap('./img/icon.ico')
         self.window_title_img = QLabel()
-        self.window_title_img.setPixmap(pix)
+        self.window_title_img.setPixmap(self.pix)
         # self.window_title_img.setGeometry(0, 100, 3, 3)
         self.window_title_img.setScaledContents(True)
         self.window_title_img.setMaximumHeight(20)
