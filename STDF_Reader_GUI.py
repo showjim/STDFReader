@@ -119,7 +119,7 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
 
         # Button to parse to .txt
-        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='gray', color_active='black'),
+        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
                                                    'Parse STD/STDF to .xlsx table')
         # self.stdf_upload_button_xlsx.setStyleSheet("background-color: grey; border-radius:5px;")
         self.stdf_upload_button_xlsx.setToolTip(
@@ -127,7 +127,7 @@ class Application(QMainWindow):  # QWidget):
         self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv
-        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='gray', color_active='black'),
+        self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
                                               'Parse STD/STDF to .csv log')
         self.stdf_upload_button.setToolTip(
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
@@ -135,14 +135,14 @@ class Application(QMainWindow):  # QWidget):
             self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='grey', color_active='black'),
+        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='black', color_active='black'),
                                              'Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
             'Browse for the .csv file containing the parsed STDF data')
         self.txt_upload_button.clicked.connect(self.open_text)
 
         # Generates a summary of the loaded text
-        self.generate_summary_button = QPushButton(qta.icon('mdi.google-analytics', color='grey', color_active='black'),
+        self.generate_summary_button = QPushButton(qta.icon('mdi.google-analytics', color='blue', color_active='black'),
                                                    'Generate data analysis report')
         self.generate_summary_button.setToolTip(
             'Generate a .xlsx data analysis report for the uploaded parsed .csv')
@@ -154,7 +154,7 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the PDF results for')
 
         # Button to generate the test results for the desired tests from the selected menu
-        self.generate_pdf_button = QPushButton(qta.icon('fa5s.file-pdf', color='grey', color_active='black'),
+        self.generate_pdf_button = QPushButton(qta.icon('fa5s.file-pdf', color='red', color_active='black'),
                                                'Generate .pdf from selected tests')
         self.generate_pdf_button.setToolTip(
             'Generate a .pdf file with the selected tests from the parsed .txt')
@@ -171,14 +171,14 @@ class Application(QMainWindow):  # QWidget):
         self.group_toggled = False
 
         # Generates a correlation report for all sites of the loaded data
-        self.generate_correlation_button = QPushButton(qta.icon('mdi.file-compare', color='grey', color_active='black'),
+        self.generate_correlation_button = QPushButton(qta.icon('mdi.file-compare', color='black', color_active='black'),
                                                        'Generate correlation report of multiple stdf files')
         self.generate_correlation_button.setToolTip(
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
 
         # Generates a correlation report for site2site compare
-        self.generate_correlation_button_s2s = QPushButton(qta.icon('mdi.sitemap', color='grey', color_active='black'),
+        self.generate_correlation_button_s2s = QPushButton(qta.icon('mdi.sitemap', color='yellow', color_active='black'),
                                                            'Generate correlation of Site2Site')
         self.generate_correlation_button_s2s.setToolTip(
             'Generate an Site2Site correlation report')
@@ -190,7 +190,7 @@ class Application(QMainWindow):  # QWidget):
             'Select the tests to produce the heatmap results for site-to-site correlation')
 
         # Button to generate the s2s test results for the desired tests from the selected s2s menu
-        self.generate_heatmap_button = QPushButton(qta.icon('mdi.chart-scatter-plot', color='grey', color_active='black'),
+        self.generate_heatmap_button = QPushButton(qta.icon('mdi.chart-scatter-plot', color='orange', color_active='black'),
                                                    'Generate heatmap from selected Site2Site tests')
         self.generate_heatmap_button.setToolTip(
             'Generate a heatmap with the selected s2s tests from the parsed .csv')
@@ -199,7 +199,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 320)
+        self.WINDOW_SIZE = (700, 300)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -308,12 +308,12 @@ class Application(QMainWindow):  # QWidget):
         self.button_mini.setStyleSheet(
             '''QPushButton{background:#6DDF6D;border-radius:5px;}QPushButton:hover{background:green;}''')
 
-        self.setWindowOpacity(0.9)  # 设置窗口透明度
+        self.setWindowOpacity(0.95)  # 设置窗口透明度
         self.setWindowFlag(Qt.FramelessWindowHint)  # 隐藏边框
         pe = QPalette()
         self.setAutoFillBackground(True)
-        pe.setColor(QPalette.Window, Qt.lightGray)  # 设置背景色
-        # pe.setColor(QPalette.Background, Qt.lightGray)
+        # pe.setColor(QPalette.Window, Qt.lightGray)  # 设置背景色
+        pe.setColor(QPalette.Background, Qt.lightGray)
         self.setPalette(pe)
 
         # Window settings
