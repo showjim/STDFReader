@@ -40,7 +40,7 @@ jobs:
         cd package
         git clone --depth=1 https://github.com/showjim/pystdf.git
         cd pystdf
-        sudo python setup.py install
+        python setup.py install
 
     - name: Run a multi-line script
       run: |
