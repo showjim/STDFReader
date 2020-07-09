@@ -31,6 +31,7 @@ jobs:
         pip install pyinstaller
         pip install pyqt5
         pip install qtawesome
+        pip install matplotlib
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         
     - name: Install self-build pystdf
@@ -46,7 +47,7 @@ jobs:
         echo Add other actions to build,
         echo test, and deploy your project.
         docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=.\\img\\icon.ico STDF_Reader_GUI.py'
-        zip -r $GITHUB_WORKSPACE/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/STDF_Reader_GUI.exe
+        zip -r $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.exe
     
     - name: Upload artifact
       uses: actions/upload-artifact@master
