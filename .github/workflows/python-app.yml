@@ -45,7 +45,7 @@ jobs:
       run: |
         echo Add other actions to build,
         echo test, and deploy your project.
-        docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=.\img\icon.ico STDF_Reader_GUI.py'
+        docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=.\\img\\icon.ico STDF_Reader_GUI.py'
         zip -r $GITHUB_WORKSPACE/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/STDF_Reader_GUI.exe
     
     - name: Upload artifact
