@@ -1,0 +1,55 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy
+        pip install pandas
+        pip install pypdf2
+        pip install xlsxwriter
+        pip install pyinstaller
+        pip install pyqt5
+        pip install qtawesome
+        # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Install self-build pystdf
+      run: |
+        sudo mkdir -p /package
+        cd package
+        git clone --depth=1 https://github.com/showjim/pystdf.git
+        cd pystdf
+        sudo python setup.py install
+
+    - name: Run a multi-line script
+      run: |
+        echo Add other actions to build,
+        echo test, and deploy your project.
+        docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=.\img\icon.ico STDF_Reader_GUI.py'
+        zip -r $GITHUB_WORKSPACE/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/STDF_Reader_GUI.exe
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: STDF_Reader_GUI
+        path: dist/
