@@ -93,7 +93,7 @@ class Application(QMainWindow):  # QWidget):
         # helpMenu.addAction(aboutAct)
 
         # Set icon for window, the img path should be full absolute path for compiling
-        self.pix = QPixmap(r'.\img\icon.ico')
+        self.pix = QPixmap(pathname + r'\img\icon.ico')
         icon = QIcon()
         icon.addPixmap(self.pix, QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
