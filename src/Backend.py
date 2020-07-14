@@ -456,19 +456,12 @@ class Backend(ABC):
 
         # in case of inf
         if minimum == float('-inf'):
-
             new_minimum = min(np.concatenate(test_data, axis=0))
-
         else:
-
             new_minimum = min(min(np.concatenate(test_data, axis=0)), minimum)
-
         if maximum == float('inf'):
-
             new_maximum = max(np.concatenate(test_data, axis=0))
-
         else:
-
             new_maximum = max(max(np.concatenate(test_data, axis=0)), maximum)
 
         # if (minimum == float('-inf')) or (maximum == float('inf')):
@@ -484,69 +477,72 @@ class Backend(ABC):
 
             # My attempt to get pretty dynamic limits
             if minimum == maximum:
-                plt.xlim(xmin=minimum - abs(0.25 * minimum))
-                plt.xlim(xmax=minimum + abs(0.25 * minimum))
+                expand = abs(20.0 * minimum)
+                # plt.xlim(xmin=minimum - abs(0.25 * minimum))
+                # plt.xlim(xmax=minimum + abs(0.25 * minimum))
 
             elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                # plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
             elif maximum == float('inf') and minimum != float('-inf'):
                 expand = abs(minimum)
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                # plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.05 * expand))
 
             elif maximum == float('inf') and minimum == float('-inf'):
                 expand = max([abs(new_minimum), abs(new_maximum)])
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                # plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.05 * expand))
             else:
                 expand = max([abs(minimum), abs(maximum)])
-                plt.xlim(xmin=new_minimum - abs(0.05 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+                # plt.xlim(xmin=new_minimum - abs(0.05 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.05 * expand))
+            ax.set_xlim(new_minimum - abs(0.05 * expand), new_maximum + abs(0.05 * expand))
 
         else:
 
             if minimum == maximum:
-                plt.axvline(x=minimum, linestyle="--")
-                plt.axvline(x=minimum, linestyle="--")
-                plt.xlim(xmin=minimum - 1)
-                plt.xlim(xmax=minimum + 1)
+                # plt.axvline(x=minimum, linestyle="--")
+                # plt.axvline(x=minimum, linestyle="--")
+                # plt.xlim(xmin=minimum - 1)
+                # plt.xlim(xmax=minimum + 1)
+                expand = abs(20.0 * minimum)
 
             elif minimum == float('-inf') and maximum != float('inf'):
                 expand = abs(maximum)
-                plt.axvline(x=maximum, linestyle="--")
-                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
+                # plt.axvline(x=maximum, linestyle="--")
+                # plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.1 * expand))
 
             elif maximum == float('inf') and minimum != float('-inf'):
                 expand = abs(minimum)
-                plt.axvline(x=minimum, linestyle="--")
-                plt.xlim(xmin=new_minimum - abs(0.1 * expand))
-                plt.xlim(xmax=new_maximum + abs(0.1 * expand))
+                # plt.axvline(x=minimum, linestyle="--")
+                # plt.xlim(xmin=new_minimum - abs(0.1 * expand))
+                # plt.xlim(xmax=new_maximum + abs(0.1 * expand))
 
             elif maximum == float('inf') and minimum == float('-inf'):
-                expand = max([abs(new_minimum), abs(new_maximum)])
-                plt.xlim(xmin=new_minimum - 1)
-                plt.xlim(xmax=new_maximum + 1)
+                expand = 20 # max([abs(new_minimum), abs(new_maximum)])
+                # plt.xlim(xmin=new_minimum - 1)
+                # plt.xlim(xmax=new_maximum + 1)
             else:
                 expand = max([abs(minimum), abs(maximum)])
                 # ax.axvline(x=minimum, linestyle="--")
                 # ax.axvline(x=maximum, linestyle="--")
-                ax.set_xlim(new_minimum - abs(0.05 * expand), new_maximum + abs(0.05 * expand))
-                ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1.2, 1, 1, 1]))
+            ax.set_xlim(new_minimum - abs(0.05 * expand), new_maximum + abs(0.05 * expand))
+        ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1.2, 1, 1, 1]))
 
         # ax.set_zlim(0,len(test_data[0]))
 
     # Plots a single site's results
     @staticmethod
     def plot_single_site_trend(site_data, group_by_file, label_list, i):
-        marker_list = ['o','+','x','*','.','v','s']
+        marker_list = ['o','+','x','*','.','v','s','p','D','d','^','1']
         if group_by_file:
             plt.scatter(range(0, len(site_data)), site_data, marker=marker_list[i], alpha=0.6, label=label_list[i])
         else:
-            plt.plot(range(0, len(site_data)), site_data, alpha=0.6, label='site ' + str(label_list[i]))
+            plt.plot(range(0, len(site_data)), site_data, marker=marker_list[i], alpha=0.6, label='site ' + str(label_list[i]))
 
     # Plots a single site's results as a histogram
     @staticmethod
