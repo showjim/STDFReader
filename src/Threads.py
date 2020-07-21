@@ -216,4 +216,24 @@ class XlsxParseThread(QThread):
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_excel.xlsx created!'))
 
+
+class DiagParseThread(QThread):
+    notify_status_text = pyqtSignal(str)
+
+    def __init__(self, file_path, parent=None):
+
+        QThread.__init__(self, parent)
+        self.filepath = file_path
+
+    # Opens and reads a file to parse the data
+    def run(self):
+
+        if self.filepath == '':
+            self.notify_status_text.emit('Please select a file')
+        else:
+            output_file_name = self.filepath
+            FileReaders.to_ASCII(self.filepath)
+            self.notify_status_text.emit(
+                str(output_file_name.split('/')[-1] + '_diag_log.csv created!'))
+
 ###################################################

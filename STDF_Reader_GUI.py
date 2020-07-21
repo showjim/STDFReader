@@ -48,9 +48,9 @@ from mpl_toolkits.mplot3d import Axes3D
 # from numba import jit
 from src.Backend import Backend
 from src.FileRead import FileReaders
-from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread
+from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.5.9'
+Version = 'Beta 0.6'
 
 
 ###################################################
@@ -123,6 +123,13 @@ class Application(QMainWindow):  # QWidget):
 
         self.status_text = QLabel()
         self.status_text.setText('Welcome!')
+        self.status_text.setFont(QFont("Times", 12, weight=QFont.Bold))
+
+        self.step_1 = QLabel()
+        self.step_1.setText('Step 1 --->')
+
+        self.step_2 = QLabel()
+        self.step_2.setText('Step 2 --->')
 
         # Button to parse to .txt
         self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
@@ -216,9 +223,9 @@ class Application(QMainWindow):  # QWidget):
 
         # Convert STR/PSR to ASCII log
         self.convert_SDTFV42007_to_ASCII = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
-                                          'Convert STDFV4-2007.1 to ASCII log')
+                                          'Convert Diagnosis STDFV4-2007.1 to ASCII log')
         self.convert_SDTFV42007_to_ASCII.setToolTip('Convert STR/PSR to Mentor like ASCII log')
-        self.convert_SDTFV42007_to_ASCII.clicked.connect(self.make_STR_PSR_to_csv)
+        self.convert_SDTFV42007_to_ASCII.clicked.connect(self.open_parsing_diagnosis_ascii)
 
         self.progress_bar = QProgressBar()
 
@@ -248,8 +255,10 @@ class Application(QMainWindow):  # QWidget):
             self.on_update_text)
 
         self.threaded_xlsx_parser = XlsxParseThread(file_path=self.file_path)
-        self.threaded_xlsx_parser.notify_status_text.connect(
-            self.on_update_text)
+        self.threaded_xlsx_parser.notify_status_text.connect(self.on_update_text)
+
+        self.threaded_diagnosis_parser = DiagParseThread(file_path=self.file_path)
+        self.threaded_diagnosis_parser.notify_status_text.connect(self.on_update_text)
 
         self.generate_pdf_button.setEnabled(False)
         self.select_test_menu.setEnabled(False)
@@ -289,11 +298,10 @@ class Application(QMainWindow):  # QWidget):
     # Tab for tools
     def tab_tools(self):
         layout = QGridLayout()
-        # layout.addWidget(self.generate_correlation_button_s2s, 0, 1)
-        layout.addWidget(self.select_test_for_subcsv_menu, 0, 0, 1, 2)
-        layout.addWidget(self.extract_subcsv, 1, 0)
-        # layout.addWidget(self.generate_heatmap_button, 2, 0)
-        layout.addWidget(self.convert_SDTFV42007_to_ASCII, 1, 1)
+        layout.addWidget(self.stdf_upload_button_xlsx, 0, 0)
+        layout.addWidget(self.convert_SDTFV42007_to_ASCII, 0, 1)
+        layout.addWidget(self.select_test_for_subcsv_menu, 1, 0, 1, 2)
+        layout.addWidget(self.extract_subcsv, 2, 0)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -315,9 +323,11 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.button_about, 0, 30, 1, 1)
         layout.addWidget(self.button_close, 0, 31, 1, 1)
         layout.addWidget(self.status_text, 1, 0, 1, 32)
-        layout.addWidget(self.stdf_upload_button_xlsx, 2, 0, 1, 16)
-        layout.addWidget(self.stdf_upload_button, 2, 16, 1, 16)
-        layout.addWidget(self.txt_upload_button, 3, 0, 1, 32)
+        # layout.addWidget(self.stdf_upload_button_xlsx, 2, 0, 1, 16)
+        layout.addWidget(self.step_1, 2, 8, 1, 1)
+        layout.addWidget(self.stdf_upload_button, 2, 9, 1, 16)
+        layout.addWidget(self.step_2, 3, 8, 1, 1)
+        layout.addWidget(self.txt_upload_button, 3, 9, 1, 16)
 
         tabs = QTabWidget(self)
         self.data_analysis_tab = QWidget()
@@ -443,6 +453,23 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_xlsx_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_xlsx_parser.start()
         self.stdf_upload_button_xlsx.setEnabled(True)
+        self.main_window()
+
+    # Convert STDF V4 2007.1 to Mentor like log
+    def open_parsing_diagnosis_ascii(self):
+        self.progress_bar.setMinimum(0)
+        self.status_text.setText('Parsing Diagnosis file to .csv, please wait...')
+        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open STDF or GZ File', filter=filterboi)
+        self.status_text.update()
+        self.convert_SDTFV42007_to_ASCII.setEnabled(False)
+        self.progress_bar.setMaximum(0)
+        self.threaded_diagnosis_parser = DiagParseThread(filepath[0])
+        self.threaded_diagnosis_parser.notify_status_text.connect(self.on_update_text)
+        self.threaded_diagnosis_parser.finished.connect(self.set_progress_bar_max)
+        self.threaded_diagnosis_parser.start()
+        self.convert_SDTFV42007_to_ASCII.setEnabled(True)
         self.main_window()
 
     def set_progress_bar_max(self):
@@ -1272,16 +1299,6 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.status_text.setText('Please select one or more tests and try again!')
             self.progress_bar.setValue(0)
-
-    # Convert STDF V4 2007.1 to Mentor like log
-    def make_STR_PSR_to_csv(self):
-        #csv_name = str(self.file_path[:-11] + "_extract_tests.csv")
-        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
-        filepath = QFileDialog.getOpenFileNames(
-            caption='Open STDF or GZ File', filter=filterboi)
-        FileReaders.to_ASCII(filepath[0][0])
-
-
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):

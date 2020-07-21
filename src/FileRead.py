@@ -156,7 +156,7 @@ class FileReaders(ABC):
         endt = time.time()
         print('STDF处理时间：', endt - startt)
 
-        stdf_df.all_test_result_pd.to_csv(filename + "_stdf_v4_2007_1_log.csv", index=False)
+        stdf_df.all_test_result_pd.to_csv(filename + "_diag_log.csv", index=False)
 
 # Get the test time, small case from pystdf
 class MyTestTimeProfiler:
