@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6'
+Version = 'Beta 0.6.1'
 
 
 ###################################################
@@ -125,11 +125,11 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
         self.status_text.setFont(QFont("Times", 12, weight=QFont.Bold))
 
-        self.step_1 = QLabel()
-        self.step_1.setText('Step 1 --->')
+        self.step_1 = QGroupBox()
+        self.step_1.setTitle('Step 1: Convert to CSV')
 
-        self.step_2 = QLabel()
-        self.step_2.setText('Step 2 --->')
+        self.step_2 = QGroupBox()
+        self.step_2.setTitle('Step 2: Upload CSV for Analysis')
 
         # Button to parse to .txt
         self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
@@ -146,7 +146,7 @@ class Application(QMainWindow):  # QWidget):
         self.stdf_upload_button.clicked.connect(self.open_parsing_dialog_csv)
 
         # Button to upload the .txt file to work with
-        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='black', color_active='black'),
+        self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='blue', color_active='black'),
                                              'Upload parsed .csv file')
         self.txt_upload_button.setToolTip(
             'Browse for the .csv file containing the parsed STDF data')
@@ -324,10 +324,18 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.button_close, 0, 31, 1, 1)
         layout.addWidget(self.status_text, 1, 0, 1, 32)
         # layout.addWidget(self.stdf_upload_button_xlsx, 2, 0, 1, 16)
-        layout.addWidget(self.step_1, 2, 8, 1, 1)
-        layout.addWidget(self.stdf_upload_button, 2, 9, 1, 16)
-        layout.addWidget(self.step_2, 3, 8, 1, 1)
-        layout.addWidget(self.txt_upload_button, 3, 9, 1, 16)
+        # layout.addWidget(self.test_frame, 2, 0, 2, 16)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.stdf_upload_button)
+        self.step_1.setLayout(vbox)
+        layout.addWidget(self.step_1, 2, 0, 3, 16)
+        # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
+        vbox2 = QVBoxLayout()
+        vbox2.addWidget(self.txt_upload_button)
+        self.step_2.setLayout(vbox2)
+        layout.addWidget(self.step_2, 2, 16, 3, 16)
+        # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
 
         tabs = QTabWidget(self)
         self.data_analysis_tab = QWidget()
@@ -339,7 +347,7 @@ class Application(QMainWindow):  # QWidget):
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         tabs.addTab(self.tools_tab, 'Some Tools')
-        layout.addWidget(tabs, 4, 0, 1, 32)
+        layout.addWidget(tabs, 6, 0, 1, 32)
         layout.addWidget(self.progress_bar, 7, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
