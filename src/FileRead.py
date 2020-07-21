@@ -133,6 +133,31 @@ class FileReaders(ABC):
 
         writer.save()
 
+    @staticmethod
+    def to_ASCII(filename):
+        # Open std file/s
+        if filename.endswith(".std") or filename.endswith(".stdf"):
+            f = open(filename, 'rb')
+        elif filename.endswith(".gz"):
+            f = gzip.open(filename, 'rb')
+        reopen_fn = None
+
+        # I guess I'm making a parsing object here, but again I didn't write this part
+        p = Parser(inp=f, reopen_fn=reopen_fn)
+
+        fname = filename  # + "_csv_log.csv"
+        startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
+
+        # Writing to a text file instead of vomiting it to the console
+        stdf_df = My_STDF_V4_2007_1_Profiler(filename)
+        p.addSink(stdf_df)
+        p.parse()
+
+        endt = time.time()
+        print('STDF处理时间：', endt - startt)
+
+        stdf_df.all_test_result_pd.to_csv(filename + "_stdf_v4_2007_1_log.csv", index=False)
+
 # Get the test time, small case from pystdf
 class MyTestTimeProfiler:
     def __init__(self):
@@ -391,29 +416,90 @@ class MyTestResultProfiler:
 
 # Get STR, PSR data from STDF V4-2007.1
 class My_STDF_V4_2007_1_Profiler:
-    def __init__(self):
-        self.is_V4_2007_1 = False
-        self.pmr_dict = {}
-        self.pat_nam_dict = {}
-        self.mod_nam_dict = {}
-        self.str_cyc_ofst_dict = {}
-        self.str_fail_pin_dict = {}
-        self.str_exp_data_dict = {}
-        self.str_cap_data_dict = {}
-
-    def after_begin(self):
+    def __init__(self, filename):
         self.reset_flag = False
+        self.lastrectype = None
+        self.is_V4_2007_1 = False
+        self.pmr_dict = {}
+        self.pat_name = ''
+        self.mod_name = ''
+
+        self.file_nam = filename.split('/')[-1]
+        self.tester_nam = ''
+        self.start_t = ''
+        self.pgm_nam = ''
+        self.lot_id = ''
+        self.wafer_id = ''
+        self.job_nam = ''
+
+        self.cont_flag = 0
+        self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
+                                 'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
+                                 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'TEST_NAME': [],
+                                 'PAT_NAME': [], 'MOD_NAME': [], 'FAIL_COUNT': [], 'FAIL_CYCLE': [],
+                                 'FAIL_PIN': [], 'EXP_DATA': [], 'CAP_DATA': []}
+        self.cyc_ofst = []
+        self.fail_pin = []
+        self.exp_data = []
+        self.cap_data = []
+        self.all_test_result_pd = pd.DataFrame()
+        self.total_logged_count = 0
+        self.row_cnt = 0
+
+    def after_begin(self, dataSource):
+        self.reset_flag = False
+        self.lastrectype = None
         self.is_V4_2007_1 = False
         self.pmr_dict = {}
         self.pat_nam_dict = {}
         self.mod_nam_dict = {}
-        self.str_cyc_ofst_dict = {}
-        self.str_fail_pin_dict = {}
-        self.str_exp_data_dict = {}
-        self.str_cap_data_dict = {}
+        self.cont_flag = 0
+        self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
+                                 'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
+                                 'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'TEST_NAME': [],
+                                 'PAT_NAME': [], 'MOD_NAME': [], 'FAIL_COUNT': [], 'FAIL_CYCLE': [],
+                                 'FAIL_PIN': [], 'EXP_DATA': [], 'CAP_DATA': []}
 
-    def after_send(self, data):
+        self.cyc_ofst = []
+        self.fail_pin = []
+        self.exp_data = []
+        self.cap_data = []
+        self.all_test_result_pd = pd.DataFrame()
+        self.total_logged_count = 0
+        self.row_cnt = 0
+
+    def after_send(self, dataSource, data):
         rectype, fields = data
+        # First, get lot/wafer ID etc.
+        if rectype == V4.mir:
+            self.tester_nam = str(fields[V4.mir.NODE_NAM])
+            start_t = time.localtime(int(fields[V4.mir.START_T]))
+            self.start_t = str(time.strftime("%Y/%m/%d-%H:%M:%S", start_t))
+            self.job_nam = str(fields[V4.mir.JOB_NAM])
+            self.lot_id = str(fields[V4.mir.LOT_ID])
+        if rectype == V4.wir:
+            self.wafer_id = str(fields[V4.wir.WAFER_ID])
+            self.DIE_ID = []
+        if rectype == V4.bps:
+            self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
+        if rectype == V4.pir:
+            # Found BPS and EPS in sample stdf, add 'lastrectype' to overcome it
+            if self.reset_flag or self.lastrectype != rectype:
+                self.reset_flag = False
+                self.site_count = 0
+                self.site_array = []
+                self.row_cnt = []
+                self.test_result_dict = {'FILE_NAM': [], 'TESTER_NAM': [], 'START_T': [], 'PGM_NAM': [],
+                                         'JOB_NAM': [], 'LOT_ID': [], 'WAFER_ID': [], 'SITE_NUM': [],
+                                         'X_COORD': [], 'Y_COORD': [], 'PART_ID': [], 'TEST_NAME': [],
+                                         'PAT_NAME': [], 'MOD_NAME': [], 'FAIL_CNT': [], 'LOGGED_FAIL_CNT': [],
+                                         'FAIL_CYCLE': [], 'FAIL_PIN': [], 'EXP_DATA': [], 'CAP_DATA': []}
+
+            self.site_count += 1
+            self.site_array.append(fields[V4.pir.SITE_NUM])
+            # self.test_result_dict['SITE_NUM'] = self.site_array
+            self.row_cnt.append(0)
+
         if rectype == V4.vur and fields[V4.vur.UPD_NAM] == 'Scan:2007.1':
             self.is_V4_2007_1 = True
         if rectype == V4.pmr:
@@ -423,18 +509,66 @@ class My_STDF_V4_2007_1_Profiler:
             self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[0]
             self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[1]
         if rectype == V4.str:
-            self.str_cyc_ofst_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.CYC_OFST]
-            self.str_fail_pin_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.PMR_INDX]
-            self.str_exp_data_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.EXP_DATA]
-            self.str_cap_data_dict[str(fields[V4.psr.PSR_REF])] = fields[V4.str.CAP_DATA]
-        if rectype == V4.eps:
-            pass
-        if rectype == V4.prr:
-            pass
+            for i in range(self.site_count):
+                if fields[V4.str.SITE_NUM] == self.site_array[i]:
+                    self.cont_flag = fields[V4.str.CONT_FLG]
+                    self.cyc_ofst = self.cyc_ofst + fields[V4.str.CYC_OFST]
+                    self.fail_pin = self.fail_pin + [self.pmr_dict[str(number)]  for number in fields[V4.str.PMR_INDX]] # fields[V4.str.PMR_INDX]
+                    self.exp_data = self.exp_data + [chr(number) for number in fields[V4.str.EXP_DATA]] # fields[V4.str.EXP_DATA]
+                    self.cap_data = self.cap_data + [chr(number) for number in fields[V4.str.CAP_DATA]] # fields[V4.str.CAP_DATA]
 
-    def after_complete(self):
-        if self.count:
-            mean = self.total / self.count
-            print("Total test time: %f s, avg: %f s" % (self.total / 1000.0, mean))
-        else:
-            print("No test time samples found :(")
+                    if self.cont_flag == 0:
+                        self.total_logged_count = fields[V4.str.TOTL_CNT]
+                        self.row_cnt[i] = self.row_cnt[i] + self.total_logged_count
+
+                        self.test_result_dict['SITE_NUM'] = self.test_result_dict['SITE_NUM'] + [fields[V4.str.SITE_NUM]] * self.total_logged_count
+                        self.test_result_dict['FAIL_CNT'] = self.test_result_dict['FAIL_CNT'] + [fields[V4.str.TOTF_CNT]] * self.total_logged_count
+                        self.test_result_dict['LOGGED_FAIL_CNT'] = self.test_result_dict['LOGGED_FAIL_CNT'] + [fields[V4.str.TOTL_CNT]] * self.total_logged_count
+                        self.test_result_dict['TEST_NAME'] = self.test_result_dict['TEST_NAME'] + [fields[V4.str.TEST_TXT]] * self.total_logged_count
+                        self.test_result_dict['PAT_NAME'] = self.test_result_dict['PAT_NAME'] + [self.pat_nam_dict[str(fields[V4.str.PSR_REF])]] * self.total_logged_count
+                        self.test_result_dict['MOD_NAME'] = self.test_result_dict['MOD_NAME'] + [self.mod_nam_dict[str(fields[V4.str.PSR_REF])]] * self.total_logged_count
+
+                        self.test_result_dict['FAIL_CYCLE'] = self.test_result_dict['FAIL_CYCLE'] + self.cyc_ofst
+                        self.test_result_dict['FAIL_PIN'] = self.test_result_dict['FAIL_PIN'] + self.fail_pin
+                        self.test_result_dict['EXP_DATA'] = self.test_result_dict['EXP_DATA'] + self.exp_data
+                        self.test_result_dict['CAP_DATA'] = self.test_result_dict['CAP_DATA'] + self.cap_data
+                        # Reset
+                        self.cyc_ofst = []
+                        self.fail_pin = []
+                        self.exp_data = []
+                        self.cap_data = []
+                        pass
+                    else:
+                        pass
+
+        if rectype == V4.eps:
+            self.reset_flag = True
+        if rectype == V4.prr:  # and fields[V4.prr.SITE_NUM]:
+            for i in range(self.site_count):
+                if fields[V4.prr.SITE_NUM] == self.site_array[i]:
+                    die_x = fields[V4.prr.X_COORD]
+                    die_y = fields[V4.prr.Y_COORD]
+                    part_id = fields[V4.prr.PART_ID]
+
+                    self.test_result_dict['FILE_NAM'] += [self.file_nam] * self.row_cnt[i]
+                    self.test_result_dict['TESTER_NAM'] += [self.tester_nam] * self.row_cnt[i]
+                    self.test_result_dict['START_T'] += [self.start_t] * self.row_cnt[i]
+                    self.test_result_dict['PGM_NAM'] += [self.pgm_nam] * self.row_cnt[i]
+
+                    self.test_result_dict['JOB_NAM'] += [self.job_nam] * self.row_cnt[i]
+                    self.test_result_dict['LOT_ID'] += [self.lot_id] * self.row_cnt[i]
+                    self.test_result_dict['WAFER_ID'] += [self.wafer_id] * self.row_cnt[i]
+
+                    self.test_result_dict['X_COORD'] += [die_x] * self.row_cnt[i]
+                    self.test_result_dict['Y_COORD'] += [die_y] * self.row_cnt[i]
+                    self.test_result_dict['PART_ID'] += [part_id] * self.row_cnt[i]
+            # Send current part result to all test result pd
+            if fields[V4.prr.SITE_NUM] == self.site_array[-1]:
+                # tmp_pd = pd.DataFrame(self.test_result_dict)
+                tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
+                # tmp_pd.transpose()
+                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
+        self.lastrectype = rectype
+
+    def after_complete(self, dataSource):
+        pass

@@ -214,6 +214,12 @@ class Application(QMainWindow):  # QWidget):
         self.extract_subcsv.setToolTip('Extract a sub-CSV log for chosen tests')
         self.extract_subcsv.clicked.connect(self.make_subcsv_for_chosen_tests)
 
+        # Convert STR/PSR to ASCII log
+        self.convert_SDTFV42007_to_ASCII = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
+                                          'Convert STDFV4-2007.1 to ASCII log')
+        self.convert_SDTFV42007_to_ASCII.setToolTip('Convert STR/PSR to Mentor like ASCII log')
+        self.convert_SDTFV42007_to_ASCII.clicked.connect(self.make_STR_PSR_to_csv)
+
         self.progress_bar = QProgressBar()
 
         self.WINDOW_SIZE = (700, 300)
@@ -287,6 +293,7 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.select_test_for_subcsv_menu, 0, 0, 1, 2)
         layout.addWidget(self.extract_subcsv, 1, 0)
         # layout.addWidget(self.generate_heatmap_button, 2, 0)
+        layout.addWidget(self.convert_SDTFV42007_to_ASCII, 1, 1)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -1265,6 +1272,16 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.status_text.setText('Please select one or more tests and try again!')
             self.progress_bar.setValue(0)
+
+    # Convert STDF V4 2007.1 to Mentor like log
+    def make_STR_PSR_to_csv(self):
+        #csv_name = str(self.file_path[:-11] + "_extract_tests.csv")
+        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
+        filepath = QFileDialog.getOpenFileNames(
+            caption='Open STDF or GZ File', filter=filterboi)
+        FileReaders.to_ASCII(filepath[0][0])
+
+
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
