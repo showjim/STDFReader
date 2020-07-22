@@ -329,12 +329,12 @@ class Application(QMainWindow):  # QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self.stdf_upload_button)
         self.step_1.setLayout(vbox)
-        layout.addWidget(self.step_1, 2, 0, 3, 16)
+        layout.addWidget(self.step_1, 2, 0, 2, 16)
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.txt_upload_button)
         self.step_2.setLayout(vbox2)
-        layout.addWidget(self.step_2, 2, 16, 3, 16)
+        layout.addWidget(self.step_2, 2, 16, 2, 16)
         # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
 
         tabs = QTabWidget(self)
@@ -347,8 +347,8 @@ class Application(QMainWindow):  # QWidget):
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         tabs.addTab(self.tools_tab, 'Some Tools')
-        layout.addWidget(tabs, 6, 0, 1, 32)
-        layout.addWidget(self.progress_bar, 7, 0, 1, 32)
+        layout.addWidget(tabs, 5, 0, 4, 32)
+        layout.addWidget(self.progress_bar, 10, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
         widget = QWidget()
