@@ -435,8 +435,9 @@ class Application(QMainWindow):  # QWidget):
 
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
-        self.progress_bar.setMaximum(0)
+        # self.progress_bar.setMaximum(0)
         self.threaded_csv_parser = CsvParseThread(filepath)
+        self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_csv_parser.start()

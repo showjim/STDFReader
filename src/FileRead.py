@@ -3,6 +3,7 @@ import pandas as pd
 from abc import ABC
 import time
 import gzip
+import os
 
 from pystdf.IO import Parser
 import pystdf.V4 as V4
@@ -46,7 +47,7 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_csv(file_names, output_file_name):
+    def to_csv(file_names, output_file_name, notify_progress_bar):
         data_summary_all = pd.DataFrame()
         for filename in file_names:
             # Open std file/s
@@ -55,15 +56,14 @@ class FileReaders(ABC):
             elif filename.endswith(".gz"):
                 f = gzip.open(filename, 'rb')
             reopen_fn = None
-
             # I guess I'm making a parsing object here, but again I didn't write this part
             p = Parser(inp=f, reopen_fn=reopen_fn)
-
+            fsize = os.path.getsize(filename)
             fname = filename  # + "_csv_log.csv"
             startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
             # Writing to a text file instead of vomiting it to the console
-            data_summary = MyTestResultProfiler(filename=fname)
+            data_summary = MyTestResultProfiler(filename=fname,file=f, filezise = fsize, notify_progress_bar=notify_progress_bar)
             p.addSink(data_summary)
             p.parse()
 
@@ -184,7 +184,7 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self, filename):
+    def __init__(self, filename, file, filezise, notify_progress_bar):
         self.filename = filename
         self.reset_flag = False
         self.total = 0
@@ -208,6 +208,10 @@ class MyTestResultProfiler:
 
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
+
+        self.file = file #io.BytesIO(b'')
+        self.filezise = filezise
+        self.notify_progress_bar = notify_progress_bar
 
     def after_begin(self, dataSource):
         self.reset_flag = False
@@ -365,6 +369,8 @@ class MyTestResultProfiler:
             self.sbin_description[sbin_num] = str(sbin_nam) # str(sbin_num) + ' - ' + str(sbin_nam)
 
         self.lastrectype = rectype
+        self.notify_progress_bar.emit(int(self.file.tell()/self.filezise*100))
+        # print(int(self.file.tell()/self.filezise*100))
 
     def after_complete(self, dataSource):
         start_t = time.time()
