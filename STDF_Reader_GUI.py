@@ -125,11 +125,10 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText('Welcome!')
         self.status_text.setFont(QFont("Times", 12, weight=QFont.Bold))
 
-        self.step_1 = QGroupBox()
-        self.step_1.setTitle('Step 1: Convert to CSV')
+        self.step_1 = QGroupBox('Step 1: Convert to CSV')
 
-        self.step_2 = QGroupBox()
-        self.step_2.setTitle('Step 2: Upload CSV for Analysis')
+        self.step_2 = QGroupBox('Step 2: Upload CSV for Analysis')
+        # self.step_2.setTitle('Step 2: Upload CSV for Analysis')
 
         # Button to parse to .txt
         self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
@@ -329,12 +328,12 @@ class Application(QMainWindow):  # QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self.stdf_upload_button)
         self.step_1.setLayout(vbox)
-        layout.addWidget(self.step_1, 2, 0, 2, 16)
+        layout.addWidget(self.step_1, 2, 0, 2, 17)
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.txt_upload_button)
         self.step_2.setLayout(vbox2)
-        layout.addWidget(self.step_2, 2, 16, 2, 16)
+        layout.addWidget(self.step_2, 2, 17, 2, 16)
         # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
 
         tabs = QTabWidget(self)
@@ -442,7 +441,7 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_csv_parser.start()
         self.stdf_upload_button.setEnabled(True)
-        self.main_window()
+        # self.main_window()
 
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
@@ -462,7 +461,7 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_xlsx_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_xlsx_parser.start()
         self.stdf_upload_button_xlsx.setEnabled(True)
-        self.main_window()
+        # self.main_window()
 
     # Convert STDF V4 2007.1 to Mentor like log
     def open_parsing_diagnosis_ascii(self):
@@ -479,7 +478,7 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_diagnosis_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_diagnosis_parser.start()
         self.convert_SDTFV42007_to_ASCII.setEnabled(True)
-        self.main_window()
+        # self.main_window()
 
     def set_progress_bar_max(self):
         self.progress_bar.setMaximum(100)
