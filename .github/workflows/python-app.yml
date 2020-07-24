@@ -48,7 +48,7 @@ jobs:
         # echo test, and deploy your project.
         # docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=.\\img\\icon.ico STDF_Reader_GUI.py'
         # sudo zip -r $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.exe
-        pyinstaller --onefile -w --icon=.\\img\\icon.ico STDF_Reader_GUI.py
+        pyinstaller --onefile --icon=.\\img\\icon.ico STDF_Reader_GUI.py
     
     - name: Upload artifact
       uses: actions/upload-artifact@master
