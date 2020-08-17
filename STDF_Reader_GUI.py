@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.2'
+Version = 'Beta 0.6.3'
 
 
 ###################################################
@@ -679,16 +679,16 @@ class Application(QMainWindow):  # QWidget):
                 # Set the width and align
                 worksheet.set_column('A:A', 25, format1)
 
-                worksheet.conditional_format(1, column_table - 3, row_table, column_table - 3,
+                worksheet.conditional_format(1, 12, row_table, 12,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 3.3, 'format': format_4XXX})
-                worksheet.conditional_format(1, column_table - 2, row_table, column_table - 2,
+                worksheet.conditional_format(1, 13, row_table, 13,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
-                worksheet.conditional_format(1, column_table - 1, row_table, column_table - 1,
+                worksheet.conditional_format(1, 14, row_table, 14,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
-                worksheet.conditional_format(1, column_table, row_table, column_table,
+                worksheet.conditional_format(1, 15, row_table, 15,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
                 worksheet.autofilter(0, 0, row_table, column_table)
@@ -1355,9 +1355,13 @@ class Application(QMainWindow):  # QWidget):
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
-                    summary_results.append(Backend.site_array(
-                        site_test_data, minimum, maximum, j, units))
-
+                    # Add loop data in analysis report
+                    if 'LOOP' in self.file_path:
+                        summary_results.append(Backend.site_array(
+                            site_test_data, minimum, maximum, j, units) + site_test_data.tolist())
+                    else:
+                        summary_results.append(Backend.site_array(
+                            site_test_data, minimum, maximum, j, units))
             self.progress_bar.setValue(20 + int(i / len(test_list) * 50))
         test_names = []
 
@@ -1370,6 +1374,10 @@ class Application(QMainWindow):  # QWidget):
                     test_names.append(test_list[i][1])
 
             self.progress_bar.setValue(70 + int(i / len(test_list) * 10))
+
+        if 'LOOP' in self.file_path:
+            for i in range(0, len(summary_results[1]) - 15):
+                parameters += ['LOOP' + str(i)]
 
         table = pd.DataFrame(
             summary_results, columns=parameters, index=test_names)
