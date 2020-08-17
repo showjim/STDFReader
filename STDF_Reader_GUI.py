@@ -836,8 +836,11 @@ class Application(QMainWindow):  # QWidget):
         # Won't perform action unless there's actually a file
         if self.file_selected:
             self.progress_bar.setValue(0)
+            print_data_flag = False
+            if '_LOOP' in self.file_path.upper():
+                print_data_flag = True
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers, True, True)
+                                           self.list_of_test_numbers, True, True, print_data_flag)
             self.progress_bar.setValue(80)
         else:
             self.status_text.setText('Please select a file')
@@ -1005,7 +1008,7 @@ class Application(QMainWindow):  # QWidget):
             for file_name in file_list:
                 tmp_df = self.df_csv[self.df_csv.FILE_NAM == file_name]
                 table_list.append(self.get_summary_table(tmp_df, self.test_info_list, self.number_of_sites,
-                                                         self.list_of_test_numbers, False, True))
+                                                         self.list_of_test_numbers, False, True, False))
             hiLimit_df = table_list[0].HiLimit.replace('n/a', 0).astype(float)
             lowlimit_df = table_list[0].LowLimit.replace('n/a', 0).astype(float)
 
@@ -1158,7 +1161,7 @@ class Application(QMainWindow):  # QWidget):
         correlation_df = pd.DataFrame()
         if self.file_selected:
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
-                                           self.list_of_test_numbers, False, False)
+                                           self.list_of_test_numbers, False, False, False)
             site_list = table.Site.unique()
             if len(site_list) > 1:
                 # Initial table with Hi/Low Limit
@@ -1309,7 +1312,7 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(0)
 
     # Get the summary results for all sites/each site in each test
-    def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both):
+    def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both, print_data):
 
         parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
                       'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
@@ -1356,7 +1359,7 @@ class Application(QMainWindow):  # QWidget):
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
                     # Add loop data in analysis report
-                    if '_LOOP' in self.file_path.upper():
+                    if print_data: #'_LOOP' in self.file_path.upper():
                         summary_results.append(Backend.site_array(
                             site_test_data, minimum, maximum, j, units) + site_test_data.tolist())
                     else:
@@ -1375,7 +1378,7 @@ class Application(QMainWindow):  # QWidget):
 
             self.progress_bar.setValue(70 + int(i / len(test_list) * 10))
 
-        if '_LOOP' in self.file_path.upper():
+        if print_data: #'_LOOP' in self.file_path.upper():
             for i in range(0, len(summary_results[1]) - 15):
                 parameters += ['LOOP' + str(i)]
 
