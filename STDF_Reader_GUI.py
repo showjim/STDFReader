@@ -1356,7 +1356,7 @@ class Application(QMainWindow):  # QWidget):
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
                     # Add loop data in analysis report
-                    if 'LOOP' in self.file_path:
+                    if '_LOOP' in self.file_path.upper():
                         summary_results.append(Backend.site_array(
                             site_test_data, minimum, maximum, j, units) + site_test_data.tolist())
                     else:
@@ -1375,7 +1375,7 @@ class Application(QMainWindow):  # QWidget):
 
             self.progress_bar.setValue(70 + int(i / len(test_list) * 10))
 
-        if 'LOOP' in self.file_path:
+        if '_LOOP' in self.file_path.upper():
             for i in range(0, len(summary_results[1]) - 15):
                 parameters += ['LOOP' + str(i)]
 
