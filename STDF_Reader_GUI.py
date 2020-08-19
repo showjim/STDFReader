@@ -1458,11 +1458,12 @@ class Application(QMainWindow):  # QWidget):
             # Plots each site one at a time
             for i in range(0, len(all_data_array)):
                 Backend.plot_single_site_trend(all_data_array[i], False, label_list, i)
-        plt.legend()
+        plt.legend(loc=3, bbox_to_anchor=(1.05, 0))
         plt.xlabel("Trials")
         plt.ylabel(units)
         plt.title("Trendline")
         plt.grid(color='0.9', linestyle='--', linewidth=1)
+        plt.tight_layout()
         plt.show()
 
     def restore_menu(self):
