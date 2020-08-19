@@ -180,6 +180,11 @@ class Application(QMainWindow):  # QWidget):
         self.group_toggle.stateChanged.connect(self.group_by_file)
         self.group_toggled = False
 
+        self.plot_tests_button = QPushButton(qta.icon('mdi.trending-up', color='red', color_active='orange'),
+                                               'Plot Selected Tests')
+        self.plot_tests_button.setToolTip('Plot Selected Tests\' Trendency')
+        self.plot_tests_button.clicked.connect(self.plot_list_of_tests_on_one_figure)
+
         # Generates a correlation report for all sites of the loaded data
         self.generate_correlation_button = QPushButton(
             qta.icon('mdi.file-compare', color='black', color_active='black'),
@@ -264,6 +269,7 @@ class Application(QMainWindow):  # QWidget):
         self.generate_summary_button.setEnabled(False)
         self.limit_toggle.setEnabled(False)
         self.group_toggle.setEnabled(False)
+        self.plot_tests_button.setEnabled(False)
 
         self.generate_correlation_button.setEnabled(False)
         self.generate_correlation_button_s2s.setEnabled(False)
@@ -278,11 +284,12 @@ class Application(QMainWindow):  # QWidget):
     # Tab for data analysis
     def tab_data_analysis(self):
         layout = QGridLayout()
-        layout.addWidget(self.generate_summary_button, 0, 0, 1, 3)
-        layout.addWidget(self.select_test_menu, 1, 0, 1, 3)
+        layout.addWidget(self.generate_summary_button, 0, 0, 1, 4)
+        layout.addWidget(self.select_test_menu, 1, 0, 1, 4)
         layout.addWidget(self.generate_pdf_button, 2, 0)
         layout.addWidget(self.limit_toggle, 2, 1)
         layout.addWidget(self.group_toggle, 2, 2)
+        layout.addWidget(self.plot_tests_button, 2, 3)
         self.data_analysis_tab.setLayout(layout)
 
     # Tab for data correlation
@@ -584,6 +591,7 @@ class Application(QMainWindow):  # QWidget):
             self.generate_summary_button.setEnabled(True)
             self.limit_toggle.setEnabled(True)
             self.group_toggle.setEnabled(True)
+            self.plot_tests_button.setEnabled(True)
 
             self.generate_correlation_button.setEnabled(True)
             self.generate_correlation_button_s2s.setEnabled(True)
@@ -1420,6 +1428,42 @@ class Application(QMainWindow):  # QWidget):
         else:
 
             self.status_text.setText('Please select a file')
+
+    def plot_list_of_tests_on_one_figure(self):
+        matplotlib.use('qt5Agg')
+        # self.number_of_sites
+        # self.sdr_parse
+        self.selected_tests = self.select_test_menu.Selectlist()
+        # self.test_info_list
+
+        site_test_data_dic = {}
+        for i in self.sdr_parse:
+            site_test_data_dic[str(i)] = self.df_csv[self.df_csv.SITE_NUM == i]
+        plt.figure()
+        for i in range(len(self.selected_tests)):
+            site_test_data_list = []
+            label_list = []
+            for j in self.sdr_parse:
+                site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
+                ## Ignore fail value
+                # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
+                #                                errors='coerce').dropna().values.tolist()
+                site_test_data_list.append(tmp_site_test_data_list)
+                label_list.append(str(j)+ ' - ' + self.selected_tests[i].split(' - ')[-1])
+            all_data_array = site_test_data_list
+
+            units = Backend.get_units(self.test_info_list, self.selected_tests[i].split(' - '), self.number_of_sites)
+
+            # Plots each site one at a time
+            for i in range(0, len(all_data_array)):
+                Backend.plot_single_site_trend(all_data_array[i], False, label_list, i)
+        plt.legend()
+        plt.xlabel("Trials")
+        plt.ylabel(units)
+        plt.title("Trendline")
+        plt.grid(color='0.9', linestyle='--', linewidth=1)
+        plt.show()
 
     def restore_menu(self):
         self.generate_pdf_button.setEnabled(True)
