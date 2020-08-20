@@ -1439,7 +1439,7 @@ class Application(QMainWindow):  # QWidget):
         site_test_data_dic = {}
         for i in self.sdr_parse:
             site_test_data_dic[str(i)] = self.df_csv[self.df_csv.SITE_NUM == i]
-        plt.figure()
+        fig = plt.figure(1)
         for i in range(len(self.selected_tests)):
             site_test_data_list = []
             label_list = []
@@ -1458,7 +1458,7 @@ class Application(QMainWindow):  # QWidget):
             # Plots each site one at a time
             for i in range(0, len(all_data_array)):
                 Backend.plot_single_site_trend(all_data_array[i], False, label_list, i)
-        plt.legend(loc=3, bbox_to_anchor=(1.05, 0))
+        plt.legend(loc=3, bbox_to_anchor=(0, 1.05))
         plt.xlabel("Trials")
         plt.ylabel(units)
         plt.title("Trendline")
