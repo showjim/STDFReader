@@ -575,11 +575,12 @@ class Backend(ABC):
         # plt.hist(site_data, bins=binboi, edgecolor='white', linewidth=0.5, label='site ' + str(site_num))
         hist, bins = np.histogram(site_data, bins=binboi)
         xs = (bins[:-1] + bins[1:]) / 2
-        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8, width=np.diff(binboi).mean()) # , label='site ' + str(site_num))
         X, Y = np.meshgrid(minimum, np.linspace(0, np.max(hist), 10))
-        ax.plot(xs=X, ys=Y, zs=site_num, zdir='y', color='red', linestyle='--')
+        ax.bar(xs, hist, zs=site_num, zdir='y', alpha=0.8,
+               width=np.diff(binboi).mean())  # , label='site ' + str(site_num))
+        ax.plot(xs=X.reshape(10), ys=Y.reshape(10), zs=site_num, zdir='y', color='red', linestyle='--')
         X, Y = np.meshgrid(maximum, np.linspace(0, np.max(hist), 10))
-        ax.plot(xs=X, ys=Y, zs=site_num, zdir='y', color='red', linestyle='--')
+        ax.plot(xs=X.reshape(10), ys=Y.reshape(10), zs=site_num, zdir='y', color='red', linestyle='--')
         # except ValueError:
         #     print(binboi)
         #     print(type(minimum))
