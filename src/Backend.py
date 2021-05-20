@@ -531,7 +531,8 @@ class Backend(ABC):
                 # ax.axvline(x=minimum, linestyle="--")
                 # ax.axvline(x=maximum, linestyle="--")
             ax.set_xlim(new_minimum - abs(0.05 * expand), new_maximum + abs(0.05 * expand))
-        ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1.2, 1, 1, 1]))
+        # Nop this command for the figure may shift out of sight when the values too close
+        #ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1.2, 1, 1, 1]))
 
         # ax.set_zlim(0,len(test_data[0]))
 

@@ -271,10 +271,17 @@ class MyTestResultProfiler:
         if rectype == V4.bps:
             self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
-            tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
+            # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
+            tname = fields[V4.ptr.TEST_TXT]
+            tname_list = tname.split(' ')
+            if len(tname_list) == 5:
+                tname_list.pop(2) #remove channel number
+            tname = ' '.join(tname_list)
+
+            tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + tname #fields[V4.ptr.TEST_TXT]
             if not (tname_tnumber in self.tname_tnumber_dict):
                 self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.ptr.TEST_NUM]) + '|' + \
-                                                         str(fields[V4.ptr.TEST_TXT]) + '|' + \
+                                                         str(tname) + '|' + \
                                                          str(fields[V4.ptr.HI_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.LO_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.UNITS])
@@ -282,7 +289,7 @@ class MyTestResultProfiler:
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
             #                 str(fields[V4.ptr.UNITS])
-            current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT]
+            current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + tname #fields[V4.ptr.TEST_TXT]
             full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
             if not (full_tname_tnumber in self.test_result_dict):
                 self.test_result_dict[full_tname_tnumber] = [None] * self.site_count
