@@ -200,11 +200,13 @@ class MyTestResultProfiler:
         self.lot_id = ''
         self.wafer_id = ''
         self.job_nam = ''
+        self.exec_type = '' #IG-XL or 93000
 
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
         self.DIE_ID = []
         self.lastrectype = None
+        self.pmr_dict = {}
 
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
@@ -234,11 +236,13 @@ class MyTestResultProfiler:
         self.lot_id = ''
         self.wafer_id = ''
         self.job_nam = ''
+        self.exec_type = ''
 
         self.tname_tnumber_dict = {}
         self.sbin_description = {}
         self.DIE_ID = []
         self.lastrectype = None
+        self.pmr_dict = {}
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -249,9 +253,15 @@ class MyTestResultProfiler:
             self.start_t = str(time.strftime("%Y/%m/%d-%H:%M:%S", start_t))
             self.job_nam = str(fields[V4.mir.JOB_NAM])
             self.lot_id = str(fields[V4.mir.LOT_ID])
+            self.exec_type = str(fields[V4.mir.EXEC_TYP])
         if rectype == V4.wir:
             self.wafer_id = str(fields[V4.wir.WAFER_ID])
             self.DIE_ID = []
+        if rectype == V4.pmr:
+            if self.exec_type == '93000':
+                self.pmr_dict[str(fields[V4.pmr.PMR_INDX])] = str(fields[V4.pmr.CHAN_NAM])
+            else:
+                self.pmr_dict[str(fields[V4.pmr.PMR_INDX])] = str(fields[V4.pmr.LOG_NAM])
         # Then, yummy parametric results
         if rectype == V4.pir:
             # Found BPS and EPS in sample stdf, add 'lastrectype' to overcome it
@@ -277,14 +287,40 @@ class MyTestResultProfiler:
             if len(tname_list) == 5:
                 tname_list.pop(2) #remove channel number
             tname = ' '.join(tname_list)
-
             tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + tname #fields[V4.ptr.TEST_TXT]
+
+            # Process the scale unit, but meanless in IG-XL STDF, comment it
+            unit = str(fields[V4.ptr.UNITS])
+            val_scal = fields[V4.ptr.RES_SCAL]
+            # if val_scal == 0:
+            #     unit = unit
+            # elif val_scal == 2:
+            #     unit = '%' + unit
+            # elif val_scal == 3:
+            #     unit = 'm' + unit
+            # elif val_scal == 6:
+            #     unit = 'u' + unit
+            # elif val_scal == 9:
+            #     unit = 'n' + unit
+            # elif val_scal == 12:
+            #     unit = 'p' + unit
+            # elif val_scal == 15:
+            #     unit = 'f' + unit
+            # elif val_scal == -3:
+            #     unit = 'K' + unit
+            # elif val_scal == -6:
+            #     unit = 'M' + unit
+            # elif val_scal == -9:
+            #     unit = 'G' + unit
+            # elif val_scal == -12:
+            #     unit = 'T' + unit
+
             if not (tname_tnumber in self.tname_tnumber_dict):
                 self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.ptr.TEST_NUM]) + '|' + \
-                                                         str(tname) + '|' + \
+                                                         tname + '|' + \
                                                          str(fields[V4.ptr.HI_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.LO_LIMIT]) + '|' + \
-                                                         str(fields[V4.ptr.UNITS])
+                                                         unit #str(fields[V4.ptr.UNITS])
             # Be careful here, Hi/Low limit only stored in first PTR
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
@@ -306,6 +342,66 @@ class MyTestResultProfiler:
                     else:
                         ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
                     self.test_result_dict[full_tname_tnumber][i] = ptr_result
+
+        # This is multiple-result parametric record for a single limit for all the multiple test results
+        if rectype == V4.mpr:
+            # process tset name and pin name
+            tmp_pin_list = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
+            tmp_RSLT_list = fields[V4.mpr.RTN_RSLT]
+            tname = fields[V4.mpr.TEST_TXT]
+
+            # Process the scale unit, but meanless in IG-XL STDF, comment it
+            unit = str(fields[V4.mpr.UNITS])
+            # val_scal = fields[V4.mpr.RES_SCAL]
+            # if val_scal == 0:
+            #     unit = unit
+            # elif val_scal == 2:
+            #     unit = '%' + unit
+            # elif val_scal == 3:
+            #     unit = 'm' + unit
+            # elif val_scal == 6:
+            #     unit = 'u' + unit
+            # elif val_scal == 9:
+            #     unit = 'n' + unit
+            # elif val_scal == 12:
+            #     unit = 'p' + unit
+            # elif val_scal == 15:
+            #     unit = 'f' + unit
+            # elif val_scal == -3:
+            #     unit = 'K' + unit
+            # elif val_scal == -6:
+            #     unit = 'M' + unit
+            # elif val_scal == -9:
+            #     unit = 'G' + unit
+            # elif val_scal == -12:
+            #     unit = 'T' + unit
+
+            for i in range(len(tmp_pin_list)):
+                tname_pinname = tname + '--' + tmp_pin_list[i]
+                tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
+                if not (tname_tnumber in self.tname_tnumber_dict):
+                    self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.mpr.TEST_NUM]) + '|' + \
+                                                             tname_pinname + '|' + \
+                                                             str(fields[V4.mpr.HI_LIMIT]) + '|' + \
+                                                             str(fields[V4.mpr.LO_LIMIT]) + '|' + \
+                                                             unit
+                current_tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
+                full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
+                if not (full_tname_tnumber in self.test_result_dict):
+                    self.test_result_dict[full_tname_tnumber] = [None] * self.site_count
+                else:
+                    pass
+                    # if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
+                    #     # print('Duplicate test number found for test: ', tname_tnumber)
+                    #     return
+
+                for j in range(self.site_count):
+                    if fields[V4.mpr.SITE_NUM] == self.test_result_dict['SITE_NUM'][j]:
+                        if fields[V4.mpr.TEST_FLG] == 0:
+                            mpr_result = str(tmp_RSLT_list[i])
+                        else:
+                            mpr_result = str(tmp_RSLT_list[i]) + '(F)'
+                        self.test_result_dict[full_tname_tnumber][j] = mpr_result
 
         # This is the functional test results
         if rectype == V4.ftr:
@@ -526,7 +622,7 @@ class My_STDF_V4_2007_1_Profiler:
                 if fields[V4.str.SITE_NUM] == self.site_array[i]:
                     self.cont_flag = fields[V4.str.CONT_FLG]
                     self.cyc_ofst = self.cyc_ofst + fields[V4.str.CYC_OFST]
-                    self.fail_pin = self.fail_pin + [self.pmr_dict[str(number)]  for number in fields[V4.str.PMR_INDX]] # fields[V4.str.PMR_INDX]
+                    self.fail_pin = self.fail_pin + [self.pmr_dict[str(number)] for number in fields[V4.str.PMR_INDX]] # fields[V4.str.PMR_INDX]
                     self.exp_data = self.exp_data + [chr(number) for number in fields[V4.str.EXP_DATA]] # fields[V4.str.EXP_DATA]
                     self.cap_data = self.cap_data + [chr(number) for number in fields[V4.str.CAP_DATA]] # fields[V4.str.CAP_DATA]
 

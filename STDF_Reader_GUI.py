@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 ###################################################
 # STDF Reader Tool                                #
-# Version: Beta 0.5                               #
+# Version: Beta 0.6                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A light STDF reader and analysis tool           #
@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.6'
+Version = 'Beta 0.6.7'
 
 
 ###################################################
