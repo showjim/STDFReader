@@ -377,7 +377,7 @@ class MyTestResultProfiler:
             #     unit = 'T' + unit
 
             for i in range(len(tmp_pin_list)):
-                tname_pinname = tname + '--' + tmp_pin_list[i]
+                tname_pinname = tname + '@' + tmp_pin_list[i]
                 tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
                 if not (tname_tnumber in self.tname_tnumber_dict):
                     self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.mpr.TEST_NUM]) + '|' + \
