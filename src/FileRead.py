@@ -208,6 +208,9 @@ class MyTestResultProfiler:
         self.lastrectype = None
         self.pmr_dict = {}
 
+        #for MPR
+        self.mpr_pin_list = []
+
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
 
@@ -243,6 +246,9 @@ class MyTestResultProfiler:
         self.DIE_ID = []
         self.lastrectype = None
         self.pmr_dict = {}
+
+        #for MPR
+        self.mpr_pin_list = []
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -346,7 +352,12 @@ class MyTestResultProfiler:
         # This is multiple-result parametric record for a single limit for all the multiple test results
         if rectype == V4.mpr:
             # process tset name and pin name
-            tmp_pin_list = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
+            if fields[V4.mpr.RTN_INDX] is None:
+                tmp_pin_list = self.mpr_pin_list
+            else:
+                self.mpr_pin_list = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
+                tmp_pin_list = self.mpr_pin_list
+
             tmp_RSLT_list = fields[V4.mpr.RTN_RSLT]
             tname = fields[V4.mpr.TEST_TXT]
 
