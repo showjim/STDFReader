@@ -209,7 +209,7 @@ class MyTestResultProfiler:
         self.pmr_dict = {}
 
         #for MPR
-        self.mpr_pin_list = []
+        self.mpr_pin_dict = {}
 
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
@@ -248,7 +248,7 @@ class MyTestResultProfiler:
         self.pmr_dict = {}
 
         #for MPR
-        self.mpr_pin_list = []
+        self.mpr_pin_dict = {}
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -352,14 +352,16 @@ class MyTestResultProfiler:
         # This is multiple-result parametric record for a single limit for all the multiple test results
         if rectype == V4.mpr:
             # process tset name and pin name
-            if fields[V4.mpr.RTN_INDX] is None:
-                tmp_pin_list = self.mpr_pin_list
-            else:
-                self.mpr_pin_list = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
-                tmp_pin_list = self.mpr_pin_list
-
             tmp_RSLT_list = fields[V4.mpr.RTN_RSLT]
             tname = fields[V4.mpr.TEST_TXT]
+
+            key = str(fields[V4.mpr.TEST_NUM]) + "_" + tname
+            if fields[V4.mpr.RTN_INDX] is None:
+                tmp_pin_list = self.mpr_pin_dict[key]
+
+            else:
+                self.mpr_pin_dict[key] = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
+                tmp_pin_list = self.mpr_pin_dict[key]
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
             unit = str(fields[V4.mpr.UNITS])
@@ -409,7 +411,10 @@ class MyTestResultProfiler:
                 for j in range(self.site_count):
                     if fields[V4.mpr.SITE_NUM] == self.test_result_dict['SITE_NUM'][j]:
                         if fields[V4.mpr.TEST_FLG] == 0:
-                            mpr_result = str(tmp_RSLT_list[i])
+                            try:
+                                mpr_result = str(tmp_RSLT_list[i])
+                            except:
+                                print("OK")
                         else:
                             mpr_result = str(tmp_RSLT_list[i]) + '(F)'
                         self.test_result_dict[full_tname_tnumber][j] = mpr_result
