@@ -391,11 +391,11 @@ class Backend(ABC):
         site_results.append(
             str(Backend.calculate_fails(site_data, minimum, maximum)))
         # try:
-        if low_limit == None or low_limit == float('inf') or low_limit == float('-inf'):
+        if low_limit == None or low_limit == float('inf') or low_limit == float('-inf') or low_limit == 'n/a':
             site_results.append(str(low_limit))
         else:
             site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
-        if high_limit == None or high_limit == float('inf') or high_limit == float('-inf'):
+        if high_limit == None or high_limit == float('inf') or high_limit == float('-inf') or low_limit == 'n/a':
             site_results.append(str(high_limit))
         else:
             site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
@@ -442,7 +442,7 @@ class Backend(ABC):
     @staticmethod
     def calculate_fails(site_data, minimum, maximum):
         fails_count = 0
-        if minimum != float('-inf') or maximum != float('inf'):
+        if (minimum != float('-inf') or maximum != float('inf')) and (minimum != 'n/a' and maximum != 'n/a'):
             # Increase a fails counter for every data point that exceeds an extreme
             for i in range(0, len(site_data)):
                 if site_data[i] > float(maximum) or site_data[i] < float(minimum):
