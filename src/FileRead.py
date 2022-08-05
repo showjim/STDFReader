@@ -51,9 +51,9 @@ class FileReaders(ABC):
         data_summary_all = pd.DataFrame()
         for filename in file_names:
             # Open std file/s
-            if filename.endswith(".std") or filename.endswith(".stdf"):
+            if filename.endswith(".std") or filename.endswith(".STD") or filename.endswith(".stdf"):
                 f = open(filename, 'rb')
-            elif filename.endswith(".gz"):
+            elif filename.endswith(".gz") or filename.endswith(".GZ"):
                 f = gzip.open(filename, 'rb')
             reopen_fn = None
             # I guess I'm making a parsing object here, but again I didn't write this part
