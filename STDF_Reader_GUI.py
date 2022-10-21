@@ -1179,8 +1179,15 @@ class Application(QMainWindow):  # QWidget):
 
                 # Add mean value from each site
                 for site in site_list:
-                    correlation_df = pd.concat([correlation_df, table[table.Site == site].Mean.astype('float')], axis=1)
-                    columns = columns + ['Mean(site' + site + ')']
+                    if site != None:
+                        tmp = table[table.Site == site].Mean.astype('float')
+                        #tmp = tmp.reset_index()
+                        tmp = tmp[~tmp.index.duplicated()]
+                        correlation_df = correlation_df[~correlation_df.index.duplicated()]
+                        correlation_df = pd.concat([correlation_df, tmp], axis=1)
+                        #correlation_df = correlation_df.append(tmp, sort=False)
+
+                        columns = columns + ['Mean(site' + site + ')']
 
                 # Add mean delta column
                 mean_delta = correlation_df.iloc[:, 2:].max(axis=1) - correlation_df.iloc[:, 2:].min(axis=1)

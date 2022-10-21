@@ -49,6 +49,7 @@ class FileReaders(ABC):
     @staticmethod
     def to_csv(file_names, output_file_name, notify_progress_bar):
         data_summary_all = pd.DataFrame()
+        i=0
         for filename in file_names:
             # Open std file/s
             if filename.endswith(".std") or filename.endswith(".STD") or filename.endswith(".stdf"):
@@ -71,12 +72,27 @@ class FileReaders(ABC):
             print('STDF处理时间：', endt - startt)
             # data_summary_all = data_summary_all.append(data_summary.frame)
             # data_summary_all = pd.concat([data_summary_all,data_summary.frame],sort=False,join='outer')
-            if data_summary_all.empty:
-                data_summary_all = data_summary.frame
+            if True:
+                if data_summary_all.empty:
+                    data_summary_all = data_summary.frame
+                else:
+                    # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
+                    data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
+                                                 join='outer', ignore_index=True)
             else:
-                # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
-                data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
-                                             join='outer', ignore_index=True)
+                single_site_df = pd.DataFrame()
+                site_index_list = [0,1,2,3,4,5,6,7,8]
+                site_index = site_index_list[i]
+                i+=1
+                single_site_df = data_summary.frame[data_summary.frame['SITE_NUM'].isin([site_index])]
+                if data_summary_all.empty:
+                    data_summary_all = single_site_df
+                else:
+                    # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
+                    data_summary_all = pd.concat([data_summary_all, single_site_df], sort=False,
+                                                 join='outer', ignore_index=True)
+
+
         # Set multiple level columns for csv table
         tname_list = []
         tnumber_list = []
