@@ -170,10 +170,11 @@ class CsvParseThread(QThread):
     notify_status_text = pyqtSignal(str)
     notify_progress_bar = pyqtSignal(int)
 
-    def __init__(self, file_path, parent=None):
+    def __init__(self, file_path, is_cherry_pick=False, parent=None):
 
         QThread.__init__(self, parent)
         self.filepath = file_path
+        self.is_cherry_pick = is_cherry_pick
 
     # Opens and reads a file to parse the data
     def run(self):
@@ -190,7 +191,7 @@ class CsvParseThread(QThread):
                 t = time.localtime()
                 current_time = str(time.strftime("%Y%m%d%H%M%S", t))
                 output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'  # + current_time
-            FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar)
+            FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.is_cherry_pick)
             self.notify_status_text.emit(
                 str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
 

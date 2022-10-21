@@ -144,6 +144,13 @@ class Application(QMainWindow):  # QWidget):
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
         self.stdf_upload_button.clicked.connect(self.open_parsing_dialog_csv)
 
+        # Button to parse to .csv for specified sites from multiple STDFs
+        self.stdf_upload_cherry_pick_button = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
+                                              'Parse STD/STDF to .csv log')
+        self.stdf_upload_cherry_pick_button.setToolTip(
+            'Browse for stdf to create .csv file, specified sites from multiple STDFs')
+        self.stdf_upload_cherry_pick_button.clicked.connect(self.open_parsing_dialog_csv_cherry_pick)
+
         # Button to upload the .txt file to work with
         self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='blue', color_active='black'),
                                              'Upload parsed .csv file')
@@ -256,6 +263,10 @@ class Application(QMainWindow):  # QWidget):
 
         self.threaded_csv_parser = CsvParseThread(file_path=self.file_path)
         self.threaded_csv_parser.notify_status_text.connect(
+            self.on_update_text)
+
+        self.threaded_csv_parser_cherry_pick = CsvParseThread(file_path=self.file_path)
+        self.threaded_csv_parser_cherry_pick.notify_status_text.connect(
             self.on_update_text)
 
         self.threaded_xlsx_parser = XlsxParseThread(file_path=self.file_path)
@@ -449,6 +460,26 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_csv_parser.start()
         self.stdf_upload_button.setEnabled(True)
         # self.main_window()
+
+    def open_parsing_dialog_csv_cherry_pick(self):
+        # I can not figure out the process when parsing STDF, so...
+        self.progress_bar.setMinimum(0)
+
+        # Move QFileDialog out of QThread, in case of error under win 7
+        self.status_text.setText('Parsing to .csv file, please wait...')
+        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
+        filepath = QFileDialog.getOpenFileNames(
+            caption='Open STDF or GZ File', filter=filterboi)
+
+        self.status_text.update()
+        self.stdf_upload_cherry_pick_button.setEnabled(False)
+        # self.progress_bar.setMaximum(0)
+        self.threaded_csv_parser_cherry_pick = CsvParseThread(filepath, True)
+        self.threaded_csv_parser_cherry_pick.notify_progress_bar.connect(self.on_progress)
+        self.threaded_csv_parser_cherry_pick.notify_status_text.connect(self.on_update_text)
+        self.threaded_csv_parser_cherry_pick.finished.connect(self.set_progress_bar_max)
+        self.threaded_csv_parser_cherry_pick.start()
+        self.stdf_upload_cherry_pick_button.setEnabled(True)
 
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
