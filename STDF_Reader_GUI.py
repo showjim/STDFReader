@@ -201,6 +201,7 @@ class Application(QMainWindow):  # QWidget):
         # Input the selected site list, split by comma
         self.selected_site_line_edit = QLineEdit()
         self.selected_site_line_edit.setText("Input selected site list here")
+        self.selected_site_line_edit.setToolTip("Input the selected site list for each file, split by comma, one site per file")
 
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
