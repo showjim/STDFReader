@@ -76,7 +76,7 @@ class FileReaders(ABC):
                 # extract specified site data from different STDF files
                 single_site_df = pd.DataFrame()
                 #site_index_list = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-                site_index = site_index_list[i]
+                site_index = int(site_index_list[i])
                 i += 1
                 single_site_df = data_summary.frame[data_summary.frame['SITE_NUM'].isin([site_index])]
                 if data_summary_all.empty:
