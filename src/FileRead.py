@@ -498,7 +498,8 @@ class MyTestResultProfiler:
                 # tmp_pd = pd.DataFrame(self.test_result_dict)
                 tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
                 # tmp_pd.transpose()
-                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
+                # self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
+                self.all_test_result_pd = pd.concat([self.all_test_result_pd, tmp_pd], sort=False, ignore_index=True)
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
