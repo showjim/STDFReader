@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.8'
+Version = 'Beta 0.6.9'
 
 
 ###################################################
@@ -456,8 +456,10 @@ class Application(QMainWindow):  # QWidget):
         # Move QFileDialog out of QThread, in case of error under win 7
         self.status_text.setText('Parsing to .csv file, please wait...')
         filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
+        # the native file-dialog automatically sorts the selected files (which may not be the case on all platforms).
+        # However, Qt's built-in file-dialog doesn't have this behaviour
         filepath = QFileDialog.getOpenFileNames(
-            caption='Open STDF or GZ File', filter=filterboi)
+            caption='Open STDF or GZ File', filter=filterboi, options=QFileDialog.DontUseNativeDialog)
 
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
