@@ -144,13 +144,6 @@ class Application(QMainWindow):  # QWidget):
             'Browse for stdf to create .csv file. This is helpful when doing data analysis')
         self.stdf_upload_button.clicked.connect(self.open_parsing_dialog_csv)
 
-        # Button to parse to .csv for specified sites from multiple STDFs
-        self.stdf_upload_cherry_pick_button = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
-                                              'Parse STD/STDF to .csv log')
-        self.stdf_upload_cherry_pick_button.setToolTip(
-            'Browse for stdf to create .csv file, specified sites from multiple STDFs')
-        self.stdf_upload_cherry_pick_button.clicked.connect(self.open_parsing_dialog_csv_cherry_pick)
-
         # Button to upload the .txt file to work with
         self.txt_upload_button = QPushButton(qta.icon('fa5s.file-upload', color='blue', color_active='black'),
                                              'Upload parsed .csv file')
@@ -200,6 +193,15 @@ class Application(QMainWindow):  # QWidget):
             'Generate a .xlsx correlation report of 2 stdf files for the uploaded parsed .csv')
         self.generate_correlation_button.clicked.connect(self.generate_correlation_report)
 
+        # toggle for enable cherry pick of site data
+        self.cherry_pick_toggle = QCheckBox('Enable Cherry-Pick', self)
+        self.cherry_pick_toggle.setChecked(False)
+        self.cherry_pick_toggle.stateChanged.connect(self.enable_cherry_pick_flag)
+        self.cherry_pick_toggled = False
+        # Input the selected site list, split by comma
+        self.selected_site_line_edit = QLineEdit()
+        self.selected_site_line_edit.setText("Input selected site list here")
+
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
             qta.icon('mdi.sitemap', color='yellow', color_active='black'),
@@ -240,7 +242,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 300)
+        self.WINDOW_SIZE = (700, 350)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -265,10 +267,6 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_csv_parser.notify_status_text.connect(
             self.on_update_text)
 
-        self.threaded_csv_parser_cherry_pick = CsvParseThread(file_path=self.file_path)
-        self.threaded_csv_parser_cherry_pick.notify_status_text.connect(
-            self.on_update_text)
-
         self.threaded_xlsx_parser = XlsxParseThread(file_path=self.file_path)
         self.threaded_xlsx_parser.notify_status_text.connect(self.on_update_text)
 
@@ -289,6 +287,8 @@ class Application(QMainWindow):  # QWidget):
 
         self.select_test_for_subcsv_menu.setEnabled(False)
         self.extract_subcsv.setEnabled(False)
+
+        self.selected_site_line_edit.setEnabled(False)
 
         self.main_window()
 
@@ -343,10 +343,19 @@ class Application(QMainWindow):  # QWidget):
         # layout.addWidget(self.stdf_upload_button_xlsx, 2, 0, 1, 16)
         # layout.addWidget(self.test_frame, 2, 0, 2, 16)
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.stdf_upload_button)
+        # vbox = QVBoxLayout()
+        # vbox.addWidget(self.stdf_upload_button)
+        # vbox.addWidget(self.cherry_pick_toggle)
+        # vbox.addWidget(self.selected_site_line_edit)
+        # self.step_1.setLayout(vbox)
+        # layout.addWidget(self.step_1, 2, 0, 4, 16)
+        vbox = QGridLayout()
+        vbox.addWidget(self.stdf_upload_button,2,0,1,16)
+        vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
+        vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
         self.step_1.setLayout(vbox)
         layout.addWidget(self.step_1, 2, 0, 2, 16)
+
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.txt_upload_button)
@@ -453,33 +462,18 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
         # self.progress_bar.setMaximum(0)
-        self.threaded_csv_parser = CsvParseThread(filepath)
+        # process specified site list
+        site_list = []
+        text = self.selected_site_line_edit.text()
+        if self.cherry_pick_toggled and text != "Input selected site list here":
+            site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
+        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, site_list)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_csv_parser.start()
         self.stdf_upload_button.setEnabled(True)
         # self.main_window()
-
-    def open_parsing_dialog_csv_cherry_pick(self):
-        # I can not figure out the process when parsing STDF, so...
-        self.progress_bar.setMinimum(0)
-
-        # Move QFileDialog out of QThread, in case of error under win 7
-        self.status_text.setText('Parsing to .csv file, please wait...')
-        filterboi = 'STDF (*.stdf *.std);;GZ (*.stdf.gz *.std.gz)'
-        filepath = QFileDialog.getOpenFileNames(
-            caption='Open STDF or GZ File', filter=filterboi)
-
-        self.status_text.update()
-        self.stdf_upload_cherry_pick_button.setEnabled(False)
-        # self.progress_bar.setMaximum(0)
-        self.threaded_csv_parser_cherry_pick = CsvParseThread(filepath, True)
-        self.threaded_csv_parser_cherry_pick.notify_progress_bar.connect(self.on_progress)
-        self.threaded_csv_parser_cherry_pick.notify_status_text.connect(self.on_update_text)
-        self.threaded_csv_parser_cherry_pick.finished.connect(self.set_progress_bar_max)
-        self.threaded_csv_parser_cherry_pick.start()
-        self.stdf_upload_cherry_pick_button.setEnabled(True)
 
     # Opens and reads a file to parse the data to an xlsx
     def open_parsing_dialog_xlsx(self):
@@ -537,6 +531,15 @@ class Application(QMainWindow):  # QWidget):
             self.group_toggled = True
         else:
             self.group_toggled = False
+
+    def enable_cherry_pick_flag(self, state):
+
+        if state == Qt.Checked:
+            self.cherry_pick_toggled = True
+            self.selected_site_line_edit.setEnabled(True)
+        else:
+            self.cherry_pick_toggled = False
+            self.selected_site_line_edit.setEnabled(False)
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
