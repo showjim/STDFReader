@@ -543,7 +543,7 @@ class Backend(ABC):
         if group_by_file:
             plt.scatter(range(0, len(site_data)), site_data, marker=marker_list[i], alpha=0.6, label=label_list[i])
         else:
-            plt.plot(range(0, len(site_data)), site_data, marker=marker_list[i], alpha=0.6, label='site ' + str(label_list[i]))
+            plt.plot(range(0, len(site_data)), site_data, marker=marker_list[i % 12], alpha=0.6, label='site ' + str(label_list[i]))
 
     # Plots a single site's results as a histogram
     @staticmethod
