@@ -85,6 +85,7 @@ class FileReaders(ABC):
                     # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
                     data_summary_all = pd.concat([data_summary_all, single_site_df], sort=False,
                                                  join='outer', ignore_index=True)
+                FileReaders.write_to_csv(data_summary_all, output_file_name)
             else:
                 if data_summary_all.empty:
                     data_summary_all = data_summary.frame
@@ -92,8 +93,10 @@ class FileReaders(ABC):
                     # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
                     data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
                                                  join='outer', ignore_index=True)
+                FileReaders.write_to_csv(data_summary_all, output_file_name)
 
-
+    @staticmethod
+    def write_to_csv(data_summary_all, output_file_name):
         # Set multiple level columns for csv table
         tname_list = []
         tnumber_list = []
@@ -306,11 +309,13 @@ class MyTestResultProfiler:
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
             tname = fields[V4.ptr.TEST_TXT]
+            tnumber = str(fields[V4.ptr.TEST_NUM])
+            # tnumber = "0"
             tname_list = tname.split(' ')
             if len(tname_list) == 5:
                 tname_list.pop(2) #remove channel number
             tname = ' '.join(tname_list)
-            tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + tname #fields[V4.ptr.TEST_TXT]
+            tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
             unit = str(fields[V4.ptr.UNITS])
@@ -339,7 +344,7 @@ class MyTestResultProfiler:
             #     unit = 'T' + unit
 
             if not (tname_tnumber in self.tname_tnumber_dict):
-                self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.ptr.TEST_NUM]) + '|' + \
+                self.tname_tnumber_dict[tname_tnumber] = tnumber + '|' + \
                                                          tname + '|' + \
                                                          str(fields[V4.ptr.HI_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.LO_LIMIT]) + '|' + \
@@ -348,7 +353,7 @@ class MyTestResultProfiler:
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
             #                 str(fields[V4.ptr.UNITS])
-            current_tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + tname #fields[V4.ptr.TEST_TXT]
+            current_tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
             full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
             if not (full_tname_tnumber in self.test_result_dict):
                 self.test_result_dict[full_tname_tnumber] = [None] * self.site_count
