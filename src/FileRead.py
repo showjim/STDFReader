@@ -85,7 +85,7 @@ class FileReaders(ABC):
                     # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
                     data_summary_all = pd.concat([data_summary_all, single_site_df], sort=False,
                                                  join='outer', ignore_index=True)
-                FileReaders.write_to_csv(data_summary_all, output_file_name)
+                # FileReaders.write_to_csv(data_summary_all, output_file_name)
             else:
                 if data_summary_all.empty:
                     data_summary_all = data_summary.frame
