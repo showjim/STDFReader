@@ -93,7 +93,7 @@ class FileReaders(ABC):
                     # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
                     data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
                                                  join='outer', ignore_index=True)
-                FileReaders.write_to_csv(data_summary_all, output_file_name)
+        FileReaders.write_to_csv(data_summary_all, output_file_name)
 
     @staticmethod
     def write_to_csv(data_summary_all, output_file_name):
