@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.9'
+Version = 'Beta 0.6.10'
 
 
 ###################################################
@@ -1387,6 +1387,11 @@ class Application(QMainWindow):  # QWidget):
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
+            if float('-inf') in all_data_array or float('inf') in all_data_array:
+                logging.warning("Found inf/-inf in data log!!!")
+                print("Warning: Found inf/-inf in data log!!!")
+                # all_data_array = np.nan_to_num(all_data_array)
+                all_data_array = all_data_array[~np.isinf(all_data_array)]
 
             ## Get rid of (F) and conver to float on series
             # all_data_array = df_csv.iloc[:, i + 12].str.replace(r'\(F\)', '').astype(float).to_numpy()
@@ -1409,6 +1414,7 @@ class Application(QMainWindow):  # QWidget):
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
+                    site_test_data = site_test_data[~np.isinf(site_test_data)]
                     # Add loop data in analysis report
                     if print_data: #'_LOOP' in self.file_path.upper():
                         summary_results.append(Backend.site_array(
