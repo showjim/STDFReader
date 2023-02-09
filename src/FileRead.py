@@ -238,6 +238,11 @@ class MyTestResultProfiler:
         self.filezise = filezise
         self.notify_progress_bar = notify_progress_bar
 
+        # in order to distinguish same name inst in flow
+        self.same_name_inst_cnt_dict = {}
+        self.cur_inst_name = ""
+        self.pre_inst_name = ""
+
     def after_begin(self, dataSource):
         self.reset_flag = False
         self.total = 0
@@ -269,6 +274,11 @@ class MyTestResultProfiler:
 
         #for MPR
         self.mpr_pin_dict = {}
+
+        # in order to distinguish same name inst in flow
+        self.same_name_inst_cnt_dict = {}
+        self.cur_inst_name = ""
+        self.pre_inst_name = ""
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -306,16 +316,28 @@ class MyTestResultProfiler:
             self.test_result_dict['SITE_NUM'] = self.site_array
         if rectype == V4.bps:
             self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
+            self.same_name_inst_cnt_dict = {}
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
             tname = fields[V4.ptr.TEST_TXT]
             tnumber = str(fields[V4.ptr.TEST_NUM])
             # tnumber = "0"
+
             tname_list = tname.split(' ')
             if len(tname_list) == 5:
                 tname_list.pop(2) #remove channel number
             tname = ' '.join(tname_list)
             tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
+
+            # to distinguish same name inst in flow
+            self.pre_inst_name = self.cur_inst_name
+            self.cur_inst_name = tname_tnumber
+            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != ""):
+                if self.cur_inst_name in self.same_name_inst_cnt_dict.keys():
+                    self.same_name_inst_cnt_dict[self.cur_inst_name] += 1
+                    tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
+                else:
+                    self.same_name_inst_cnt_dict[self.cur_inst_name] = 1
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
             unit = str(fields[V4.ptr.UNITS])
@@ -344,8 +366,7 @@ class MyTestResultProfiler:
             #     unit = 'T' + unit
 
             if not (tname_tnumber in self.tname_tnumber_dict):
-                self.tname_tnumber_dict[tname_tnumber] = tnumber + '|' + \
-                                                         tname + '|' + \
+                self.tname_tnumber_dict[tname_tnumber] = tname_tnumber + '|' + \
                                                          str(fields[V4.ptr.HI_LIMIT]) + '|' + \
                                                          str(fields[V4.ptr.LO_LIMIT]) + '|' + \
                                                          unit #str(fields[V4.ptr.UNITS])
@@ -353,7 +374,7 @@ class MyTestResultProfiler:
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
             #                 str(fields[V4.ptr.UNITS])
-            current_tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
+            current_tname_tnumber = tname_tnumber # tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
             full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
             if not (full_tname_tnumber in self.test_result_dict):
                 self.test_result_dict[full_tname_tnumber] = [None] * self.site_count
