@@ -876,7 +876,7 @@ class Application(QMainWindow):  # QWidget):
 
     # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_report(self):
-
+        table = pd.DataFrame()
         # Won't perform action unless there's actually a file
         if self.file_selected:
             self.progress_bar.setValue(0)

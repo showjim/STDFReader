@@ -202,7 +202,8 @@ class Backend(ABC):
             #     units = (data[temp].split("|")[15])
             #     not_found = False
 
-            if data[temp][4] == test_tuple[0]:
+            # Check data out with TNUM&TNAME
+            if data[temp][4] == test_tuple[0] and data[temp][0] == test_tuple[1]:
                 minimum_test = data[temp][2]
                 maximum_test = data[temp][1]
                 units = data[temp][3]
