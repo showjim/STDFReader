@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.11'
+Version = 'Beta 0.6.12'
 
 
 ###################################################
@@ -201,6 +201,12 @@ class Application(QMainWindow):  # QWidget):
         # Input the selected site list, split by comma
         self.selected_site_line_edit = QLineEdit()
         self.selected_site_line_edit.setText("Input selected site list here")
+
+        # toggle for enable analyse log with setting "Ignore Test Number"
+        self.ignore_TNUM_toggle = QCheckBox('Ignore Test Number', self)
+        self.ignore_TNUM_toggle.setChecked(False)
+        self.ignore_TNUM_toggle.stateChanged.connect(self.enable_ignore_tnum_flag)
+        self.ignore_TNUM_toggled = False
 
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
@@ -353,14 +359,15 @@ class Application(QMainWindow):  # QWidget):
         vbox.addWidget(self.stdf_upload_button,2,0,1,16)
         vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
         vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
+        vbox.addWidget(self.ignore_TNUM_toggle,4,0,1,0)
         self.step_1.setLayout(vbox)
-        layout.addWidget(self.step_1, 2, 0, 2, 16)
+        layout.addWidget(self.step_1, 2, 0, 3, 16)
 
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.txt_upload_button)
         self.step_2.setLayout(vbox2)
-        layout.addWidget(self.step_2, 2, 16, 2, 16)
+        layout.addWidget(self.step_2, 2, 16, 3, 16)
         # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
 
         tabs = QTabWidget(self)
@@ -373,8 +380,8 @@ class Application(QMainWindow):  # QWidget):
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         tabs.addTab(self.tools_tab, 'Some Tools')
-        layout.addWidget(tabs, 5, 0, 4, 32)
-        layout.addWidget(self.progress_bar, 10, 0, 1, 32)
+        layout.addWidget(tabs, 6, 0, 4, 32)
+        layout.addWidget(self.progress_bar, 11, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
         widget = QWidget()
@@ -469,7 +476,7 @@ class Application(QMainWindow):  # QWidget):
         text = self.selected_site_line_edit.text()
         if self.cherry_pick_toggled and text != "Input selected site list here":
             site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
-        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, site_list)
+        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, self.ignore_TNUM_toggled, site_list)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
@@ -542,6 +549,13 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.cherry_pick_toggled = False
             self.selected_site_line_edit.setEnabled(False)
+
+    def enable_ignore_tnum_flag(self, state):
+
+        if state == Qt.Checked:
+            self.ignore_TNUM_toggled = True
+        else:
+            self.ignore_TNUM_toggled = False
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):

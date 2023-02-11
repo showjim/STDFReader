@@ -47,7 +47,7 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_csv(file_names, output_file_name, notify_progress_bar, is_cherry_pick=False, site_index_list=[]):
+    def to_csv(file_names, output_file_name, notify_progress_bar, is_cherry_pick=False, ignore_TNUM=False, site_index_list=[]):
         data_summary_all = pd.DataFrame()
         i=0
         for filename in file_names:
@@ -64,7 +64,7 @@ class FileReaders(ABC):
             startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
             # Writing to a text file instead of vomiting it to the console
-            data_summary = MyTestResultProfiler(filename=fname,file=f, filezise = fsize, notify_progress_bar=notify_progress_bar)
+            data_summary = MyTestResultProfiler(filename=fname,file=f, filezise = fsize, notify_progress_bar=notify_progress_bar, ignore_tnum=ignore_TNUM)
             p.addSink(data_summary)
             p.parse()
 
@@ -204,7 +204,7 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self, filename, file, filezise, notify_progress_bar):
+    def __init__(self, filename, file, filezise, notify_progress_bar, ignore_tnum):
         self.filename = filename
         self.reset_flag = False
         self.total = 0
@@ -237,6 +237,7 @@ class MyTestResultProfiler:
         self.file = file #io.BytesIO(b'')
         self.filezise = filezise
         self.notify_progress_bar = notify_progress_bar
+        self.ignore_tnum = ignore_tnum
 
         # in order to distinguish same name inst in flow
         self.same_name_inst_cnt_dict = {}
@@ -321,7 +322,8 @@ class MyTestResultProfiler:
             # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
             tname = fields[V4.ptr.TEST_TXT]
             tnumber = str(fields[V4.ptr.TEST_NUM])
-            # tnumber = "0"
+            if self.ignore_tnum:
+                tnumber = "0"
 
             tname_list = tname.split(' ')
             if len(tname_list) == 5:
