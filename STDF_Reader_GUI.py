@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
 
-Version = 'Beta 0.6.9'
+Version = 'Beta 0.6.12'
 
 
 ###################################################
@@ -203,6 +203,12 @@ class Application(QMainWindow):  # QWidget):
         self.selected_site_line_edit.setText("Input selected site list here")
         self.selected_site_line_edit.setToolTip("Input the selected site list for each file, split by comma, one site per file")
 
+        # toggle for enable analyse log with setting "Ignore Test Number"
+        self.ignore_TNUM_toggle = QCheckBox('Ignore Test Number', self)
+        self.ignore_TNUM_toggle.setChecked(False)
+        self.ignore_TNUM_toggle.stateChanged.connect(self.enable_ignore_tnum_flag)
+        self.ignore_TNUM_toggled = False
+
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
             qta.icon('mdi.sitemap', color='yellow', color_active='black'),
@@ -354,14 +360,15 @@ class Application(QMainWindow):  # QWidget):
         vbox.addWidget(self.stdf_upload_button,2,0,1,16)
         vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
         vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
+        vbox.addWidget(self.ignore_TNUM_toggle,4,0,1,0)
         self.step_1.setLayout(vbox)
-        layout.addWidget(self.step_1, 2, 0, 2, 16)
+        layout.addWidget(self.step_1, 2, 0, 3, 16)
 
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.txt_upload_button)
         self.step_2.setLayout(vbox2)
-        layout.addWidget(self.step_2, 2, 16, 2, 16)
+        layout.addWidget(self.step_2, 2, 16, 3, 16)
         # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
 
         tabs = QTabWidget(self)
@@ -374,8 +381,8 @@ class Application(QMainWindow):  # QWidget):
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
         tabs.addTab(self.tools_tab, 'Some Tools')
-        layout.addWidget(tabs, 5, 0, 4, 32)
-        layout.addWidget(self.progress_bar, 10, 0, 1, 32)
+        layout.addWidget(tabs, 6, 0, 4, 32)
+        layout.addWidget(self.progress_bar, 11, 0, 1, 32)
 
         # Create an QWidget, and use layout_grid
         widget = QWidget()
@@ -470,7 +477,7 @@ class Application(QMainWindow):  # QWidget):
         text = self.selected_site_line_edit.text()
         if self.cherry_pick_toggled and text != "Input selected site list here":
             site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
-        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, site_list)
+        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, self.ignore_TNUM_toggled, site_list)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
@@ -543,6 +550,13 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.cherry_pick_toggled = False
             self.selected_site_line_edit.setEnabled(False)
+
+    def enable_ignore_tnum_flag(self, state):
+
+        if state == Qt.Checked:
+            self.ignore_TNUM_toggled = True
+        else:
+            self.ignore_TNUM_toggled = False
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
@@ -877,7 +891,7 @@ class Application(QMainWindow):  # QWidget):
 
     # Handler for the summary button to generate a csv table results file for all data
     def make_data_summary_report(self):
-
+        table = pd.DataFrame()
         # Won't perform action unless there's actually a file
         if self.file_selected:
             self.progress_bar.setValue(0)
@@ -1388,6 +1402,11 @@ class Application(QMainWindow):  # QWidget):
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
             all_data_array = all_data_array[~np.isnan(all_data_array)]
+            if float('-inf') in all_data_array or float('inf') in all_data_array:
+                logging.warning("Found inf/-inf in data log!!!")
+                print("Warning: Found inf/-inf in data log!!!")
+                # all_data_array = np.nan_to_num(all_data_array)
+                all_data_array = all_data_array[~np.isinf(all_data_array)]
 
             ## Get rid of (F) and conver to float on series
             # all_data_array = df_csv.iloc[:, i + 12].str.replace(r'\(F\)', '').astype(float).to_numpy()
@@ -1410,6 +1429,7 @@ class Application(QMainWindow):  # QWidget):
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
                     # Series.dropna() can remove NaN, but slower than numpy.isnan
                     site_test_data = site_test_data[~np.isnan(site_test_data)]
+                    site_test_data = site_test_data[~np.isinf(site_test_data)]
                     # Add loop data in analysis report
                     if print_data: #'_LOOP' in self.file_path.upper():
                         summary_results.append(Backend.site_array(

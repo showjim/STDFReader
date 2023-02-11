@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 from decimal import Decimal
-
+import os
 
 # IMPORTANT DOCUMENTATION I NEED TO FILL OUT TO MAKE SURE PEOPLE KNOW WHAT THE HELL IS GOING ON
 
@@ -202,7 +202,8 @@ class Backend(ABC):
             #     units = (data[temp].split("|")[15])
             #     not_found = False
 
-            if data[temp][4] == test_tuple[0]:
+            # Check data out with TNUM&TNAME
+            if data[temp][4] == test_tuple[0] and data[temp][0] == test_tuple[1]:
                 minimum_test = data[temp][2]
                 maximum_test = data[temp][1]
                 units = data[temp][3]
@@ -399,10 +400,14 @@ class Backend(ABC):
             site_results.append(str(high_limit))
         else:
             site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
-        site_results.append(
-            str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
-        # except TypeError:
-        #     os.system('pause')
+
+
+        try:
+            site_results.append(
+                str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+        except Exception as e:
+            print(e)
+            os.system('pause')
         site_results.append(
             str(Decimal(mean_result).quantize(Decimal('0.000001'))))
         site_results.append(
