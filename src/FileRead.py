@@ -315,6 +315,10 @@ class MyTestResultProfiler:
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
+
+            self.same_name_inst_cnt_dict = {}
+            self.cur_inst_name = ""
+            self.pre_inst_name = ""
         if rectype == V4.bps:
             self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
             self.same_name_inst_cnt_dict = {}
