@@ -2334,15 +2334,15 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('NEW_DATA','k45U1'),
     # I do not know the U*f, use U1 instead, Jeremy
     ('PAT_CNT','U2'),
-    ('PAT_NUM','k47U1'),
+    ('PAT_NUM','k47U4'),
     ('BPOS_CNT','U2'),
-    ('BIT_POS','k49U1'),
+    ('BIT_POS','k49U4'),
     ('USR1_CNT','U2'),
-    ('USR1','k51U1'),
+    ('USR1','k51U8'),
     ('USR2_CNT','U2'),
-    ('USR2','k53U1'),
+    ('USR2','k53U8'),
     ('USR3_CNT','U2'),
-    ('USR3','k55U1'),
+    ('USR3','k55U8'),
     ('TXT_CNT','U2'),
     ('USER_TXT','k57U1')
   )
