@@ -322,9 +322,13 @@ class MyTestResultProfiler:
         if rectype == V4.bps:
             self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
             self.same_name_inst_cnt_dict = {}
+            self.cur_inst_name = ""
+            self.pre_inst_name = ""
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
             tname = fields[V4.ptr.TEST_TXT]
+            # if tname == "IDDQ_top_AA_Scan_iddq_sub0_Debug VDDCORE_Min":
+            #     print("OK")
             tnumber = str(fields[V4.ptr.TEST_NUM])
             if self.ignore_tnum:
                 tnumber = "0"
@@ -336,14 +340,23 @@ class MyTestResultProfiler:
             tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
 
             # to distinguish same name inst in flow
+            site = str(fields[V4.ptr.SITE_NUM])
             self.pre_inst_name = self.cur_inst_name
-            self.cur_inst_name = tname_tnumber
-            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != ""):
-                if self.cur_inst_name in self.same_name_inst_cnt_dict.keys():
-                    self.same_name_inst_cnt_dict[self.cur_inst_name] += 1
-                    tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
-                else:
-                    self.same_name_inst_cnt_dict[self.cur_inst_name] = 1
+            self.cur_inst_name = site + '|' + tname_tnumber
+
+            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != "") and not(self.cur_inst_name + "_Appeared" in self.pre_inst_name):
+                # pure_inst_pre = self.pre_inst_name.split("|")[1].split()[0]
+                # pure_inst_cur = self.cur_inst_name.split("|")[1].split()[0]
+                # if pure_inst_pre != pure_inst_cur:
+                    if self.cur_inst_name in self.same_name_inst_cnt_dict.keys():
+                        self.same_name_inst_cnt_dict[self.cur_inst_name] += 1
+                        tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
+                        self.cur_inst_name = site + "|" + tname_tnumber
+                    else:
+                        self.same_name_inst_cnt_dict[self.cur_inst_name] = 1
+            elif self.cur_inst_name + "_Appeared" in self.pre_inst_name:
+                tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
+                self.cur_inst_name = site + "|" + tname_tnumber
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
             unit = str(fields[V4.ptr.UNITS])
@@ -372,10 +385,13 @@ class MyTestResultProfiler:
             #     unit = 'T' + unit
 
             if not (tname_tnumber in self.tname_tnumber_dict):
-                self.tname_tnumber_dict[tname_tnumber] = tname_tnumber + '|' + \
-                                                         str(fields[V4.ptr.HI_LIMIT]) + '|' + \
-                                                         str(fields[V4.ptr.LO_LIMIT]) + '|' + \
-                                                         unit #str(fields[V4.ptr.UNITS])
+                if (tnumber + '|' + tname) in self.tname_tnumber_dict:
+                    self.tname_tnumber_dict[tname_tnumber] = self.tname_tnumber_dict[tnumber + '|' + tname].replace(tnumber + '|' + tname, tname_tnumber)
+                else:
+                    self.tname_tnumber_dict[tname_tnumber] = tname_tnumber + '|' + \
+                                                             str(fields[V4.ptr.HI_LIMIT]) + '|' + \
+                                                             str(fields[V4.ptr.LO_LIMIT]) + '|' + \
+                                                             unit #str(fields[V4.ptr.UNITS])
             # Be careful here, Hi/Low limit only stored in first PTR
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \
