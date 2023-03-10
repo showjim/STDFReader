@@ -193,7 +193,8 @@ class CsvParseThread(QThread):
                 t = time.localtime()
                 current_time = str(time.strftime("%Y%m%d%H%M%S", t))
                 output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'  # + current_time
-            FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.is_cherry_pick, self.ignore_TNUM, self.site_list)
+            FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.is_cherry_pick,
+                               self.ignore_TNUM, self.site_list)
             self.notify_status_text.emit(
                 str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
 
@@ -219,6 +220,27 @@ class XlsxParseThread(QThread):
             FileReaders.to_excel(self.filepath)
             self.notify_status_text.emit(
                 str(self.filepath.split('/')[-1] + '_excel.xlsx created!'))
+
+
+class SingleRecParseThread(QThread):
+    notify_status_text = pyqtSignal(str)
+
+    def __init__(self, file_path, rec_name, parent=None):
+        QThread.__init__(self, parent)
+        self.filepath = file_path
+        self.rec_name = rec_name
+
+    def run(self):
+
+        if self.filepath == '':
+
+            self.notify_status_text.emit('Please select a file')
+            pass
+
+        else:
+
+            FileReaders.rec_to_csv(self.filepath, self.rec_name)
+            self.notify_status_text.emit(str(self.filepath.split('/')[-1] + "_" + self.rec_name + "_Rec.csv created!"))
 
 
 class DiagParseThread(QThread):

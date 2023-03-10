@@ -8,7 +8,7 @@ import os
 from pystdf.IO import Parser
 import pystdf.V4 as V4
 from pystdf.Writers import *
-from pystdf.Importer import STDF2DataFrame
+from pystdf.Importer import STDF2DataFrame, ImportSTDF
 
 ############################
 # FILE READING AND PARSING #
@@ -153,6 +153,29 @@ class FileReaders(ABC):
 
         writer.save()
 
+    # this function to extract only 1 type of record, in case STDF file is too large
+    @staticmethod
+    def rec_to_csv(filename, RecName:str):
+
+        # Converts the stdf to a dataframe
+        table = FileReaders.STDFRec2DataFrame(filename, RecName)
+
+        # The name of the new file, preserving the directory of the previous
+        fname = filename + "_" + RecName + "_Rec.csv"
+
+        # Make sure the order of columns complies the specs
+        record = [r for r in V4.records if r.__class__.__name__.upper() == RecName]
+        if len(record) == 0:
+            print("Ignore exporting table %s: No such record type exists." % RecName)
+        else:
+            columns = [field[0] for field in record[0].fieldMap]
+            if len(record[0].fieldMap) > 0:
+                # try:
+                table.to_csv(fname, columns=columns, index=False, na_rep="N/A")
+            # except BaseException:
+            #     os.system('pause')
+
+    # to extract PSR/STR record and convert to ASCII
     @staticmethod
     def to_ASCII(filename):
         # Open std file/s
@@ -177,6 +200,27 @@ class FileReaders(ABC):
         print('STDF处理时间：', endt - startt)
 
         stdf_df.all_test_result_pd.to_csv(filename + "_diag_log.csv", index=False)
+
+    def STDFRec2DataFrame(fname, RecName:str):
+        """ Convert selected STDF record to a DataFrame objects
+        """
+        RecName = RecName.upper()
+        data = ImportSTDF(fname)
+        Rec = {}
+        BigTable = pd.DataFrame()
+        for datum in data:
+            RecType = datum[0].__class__.__name__.upper()
+            if RecName == RecType:
+                if RecType not in BigTable.keys():
+                    BigTable[RecType] = {}
+                Rec = BigTable[RecType]
+                for k,v in zip(datum[0].fieldMap,datum[1]):
+                    if k[0] not in Rec.keys():
+                        Rec[k[0]] = []
+                    Rec[k[0]].append(v)
+
+        BigTable = pd.DataFrame(Rec)
+        return BigTable
 
 # Get the test time, small case from pystdf
 class MyTestTimeProfiler:
