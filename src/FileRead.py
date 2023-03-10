@@ -171,7 +171,7 @@ class FileReaders(ABC):
             columns = [field[0] for field in record[0].fieldMap]
             if len(record[0].fieldMap) > 0:
                 # try:
-                table.to_csv(fname, columns=columns, index=False, na_rep="N/A")
+                table.to_csv(fname, index=False)
             # except BaseException:
             #     os.system('pause')
 
@@ -213,7 +213,7 @@ class FileReaders(ABC):
             if RecName == RecType:
                 if RecType not in BigTable.keys():
                     BigTable[RecType] = {}
-                Rec = BigTable[RecType]
+                # Rec = BigTable[RecType]
                 for k,v in zip(datum[0].fieldMap,datum[1]):
                     if k[0] not in Rec.keys():
                         Rec[k[0]] = []
