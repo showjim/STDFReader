@@ -8,7 +8,7 @@ import os
 from pystdf.IO import Parser
 import pystdf.V4 as V4
 from pystdf.Writers import *
-from pystdf.Importer import STDF2DataFrame, ImportSTDF
+from pystdf.Importer import STDF2DataFrame
 
 ############################
 # FILE READING AND PARSING #
@@ -201,11 +201,12 @@ class FileReaders(ABC):
 
         stdf_df.all_test_result_pd.to_csv(filename + "_diag_log.csv", index=False)
 
+    @staticmethod
     def STDFRec2DataFrame(fname, RecName:str):
         """ Convert selected STDF record to a DataFrame objects
         """
         RecName = RecName.upper()
-        data = ImportSTDF(fname)
+        data = FileReaders.SearchSTDF(fname, RecName)
         Rec = {}
         BigTable = pd.DataFrame()
         for datum in data:
@@ -221,6 +222,39 @@ class FileReaders(ABC):
 
         BigTable = pd.DataFrame(Rec)
         return BigTable
+
+    @staticmethod
+    def SearchSTDF(fname, rec_name):
+        with open(fname,'rb') as fin:
+            p = Parser(inp=fin)
+            storage = MyMemoryWriter(rec_name)
+            p.addSink(storage)
+            p.parse()
+        return storage.data
+
+class MyMemoryWriter:
+    def __init__(self, rec_name):
+        self.data = []
+        self.rec_name = rec_name
+        self.typ = V4.dtr
+    def after_send(self, dataSource, data):
+        rectype, fields = data
+        self.get_typ()
+        # First, get lot/wafer ID etc.
+        if rectype == self.typ:
+            self.data.append(data)
+    def get_typ(self):
+        if self.rec_name == "DTR":
+            self.typ = V4.dtr
+        elif self.rec_name == "GDR":
+            self.typ = V4.gdr
+        elif self.rec_name == "TSR":
+            self.typ = V4.tsr
+
+    def write(self,line):
+        pass
+    def flush(self):
+        pass # Do nothing
 
 # Get the test time, small case from pystdf
 class MyTestTimeProfiler:
