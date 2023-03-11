@@ -153,6 +153,29 @@ class FileReaders(ABC):
 
         writer.save()
 
+    # this function to extract only 1 type of record, in case STDF file is too large
+    @staticmethod
+    def rec_to_csv(filename, RecName:str):
+
+        # Converts the stdf to a dataframe
+        table = FileReaders.STDFRec2DataFrame(filename, RecName)
+
+        # The name of the new file, preserving the directory of the previous
+        fname = filename + "_" + RecName + "_Rec.csv"
+
+        # Make sure the order of columns complies the specs
+        record = [r for r in V4.records if r.__class__.__name__.upper() == RecName]
+        if len(record) == 0:
+            print("Ignore exporting table %s: No such record type exists." % RecName)
+        else:
+            columns = [field[0] for field in record[0].fieldMap]
+            if len(record[0].fieldMap) > 0:
+                # try:
+                table.to_csv(fname, index=False)
+            # except BaseException:
+            #     os.system('pause')
+
+    # to extract PSR/STR record and convert to ASCII
     @staticmethod
     def to_ASCII(filename):
         # Open std file/s
@@ -177,6 +200,61 @@ class FileReaders(ABC):
         print('STDF处理时间：', endt - startt)
 
         stdf_df.all_test_result_pd.to_csv(filename + "_diag_log.csv", index=False)
+
+    @staticmethod
+    def STDFRec2DataFrame(fname, RecName:str):
+        """ Convert selected STDF record to a DataFrame objects
+        """
+        RecName = RecName.upper()
+        data = FileReaders.SearchSTDF(fname, RecName)
+        Rec = {}
+        BigTable = pd.DataFrame()
+        for datum in data:
+            RecType = datum[0].__class__.__name__.upper()
+            if RecName == RecType:
+                if RecType not in BigTable.keys():
+                    BigTable[RecType] = {}
+                # Rec = BigTable[RecType]
+                for k,v in zip(datum[0].fieldMap,datum[1]):
+                    if k[0] not in Rec.keys():
+                        Rec[k[0]] = []
+                    Rec[k[0]].append(v)
+
+        BigTable = pd.DataFrame(Rec)
+        return BigTable
+
+    @staticmethod
+    def SearchSTDF(fname, rec_name):
+        with open(fname,'rb') as fin:
+            p = Parser(inp=fin)
+            storage = MyMemoryWriter(rec_name)
+            p.addSink(storage)
+            p.parse()
+        return storage.data
+
+class MyMemoryWriter:
+    def __init__(self, rec_name):
+        self.data = []
+        self.rec_name = rec_name
+        self.typ = V4.dtr
+    def after_send(self, dataSource, data):
+        rectype, fields = data
+        self.get_typ()
+        # First, get lot/wafer ID etc.
+        if rectype == self.typ:
+            self.data.append(data)
+    def get_typ(self):
+        if self.rec_name == "DTR":
+            self.typ = V4.dtr
+        elif self.rec_name == "GDR":
+            self.typ = V4.gdr
+        elif self.rec_name == "TSR":
+            self.typ = V4.tsr
+
+    def write(self,line):
+        pass
+    def flush(self):
+        pass # Do nothing
 
 # Get the test time, small case from pystdf
 class MyTestTimeProfiler:
@@ -315,12 +393,20 @@ class MyTestResultProfiler:
             self.site_count += 1
             self.site_array.append(fields[V4.pir.SITE_NUM])
             self.test_result_dict['SITE_NUM'] = self.site_array
+
+            self.same_name_inst_cnt_dict = {}
+            self.cur_inst_name = ""
+            self.pre_inst_name = ""
         if rectype == V4.bps:
             self.pgm_nam = str(fields[V4.bps.SEQ_NAME])
             self.same_name_inst_cnt_dict = {}
+            self.cur_inst_name = ""
+            self.pre_inst_name = ""
         if rectype == V4.ptr:  # and fields[V4.prr.SITE_NUM]:
             # get rid of channel number in TName, so that the csv file would not split the sites data into different columns
             tname = fields[V4.ptr.TEST_TXT]
+            # if tname == "IDDQ_top_AA_Scan_iddq_sub0_Debug VDDCORE_Min":
+            #     print("OK")
             tnumber = str(fields[V4.ptr.TEST_NUM])
             if self.ignore_tnum:
                 tnumber = "0"
@@ -332,14 +418,23 @@ class MyTestResultProfiler:
             tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
 
             # to distinguish same name inst in flow
+            site = str(fields[V4.ptr.SITE_NUM])
             self.pre_inst_name = self.cur_inst_name
-            self.cur_inst_name = tname_tnumber
-            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != ""):
-                if self.cur_inst_name in self.same_name_inst_cnt_dict.keys():
-                    self.same_name_inst_cnt_dict[self.cur_inst_name] += 1
-                    tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
-                else:
-                    self.same_name_inst_cnt_dict[self.cur_inst_name] = 1
+            self.cur_inst_name = site + '|' + tname_tnumber
+
+            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != "") and not(self.cur_inst_name + "_Appeared" in self.pre_inst_name):
+                # pure_inst_pre = self.pre_inst_name.split("|")[1].split()[0]
+                # pure_inst_cur = self.cur_inst_name.split("|")[1].split()[0]
+                # if pure_inst_pre != pure_inst_cur:
+                    if self.cur_inst_name in self.same_name_inst_cnt_dict.keys():
+                        self.same_name_inst_cnt_dict[self.cur_inst_name] += 1
+                        tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
+                        self.cur_inst_name = site + "|" + tname_tnumber
+                    else:
+                        self.same_name_inst_cnt_dict[self.cur_inst_name] = 1
+            elif self.cur_inst_name + "_Appeared" in self.pre_inst_name:
+                tname_tnumber += "_Appeared" + str(self.same_name_inst_cnt_dict[self.cur_inst_name])
+                self.cur_inst_name = site + "|" + tname_tnumber
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
             unit = str(fields[V4.ptr.UNITS])
@@ -368,10 +463,13 @@ class MyTestResultProfiler:
             #     unit = 'T' + unit
 
             if not (tname_tnumber in self.tname_tnumber_dict):
-                self.tname_tnumber_dict[tname_tnumber] = tname_tnumber + '|' + \
-                                                         str(fields[V4.ptr.HI_LIMIT]) + '|' + \
-                                                         str(fields[V4.ptr.LO_LIMIT]) + '|' + \
-                                                         unit #str(fields[V4.ptr.UNITS])
+                if (tnumber + '|' + tname) in self.tname_tnumber_dict:
+                    self.tname_tnumber_dict[tname_tnumber] = self.tname_tnumber_dict[tnumber + '|' + tname].replace(tnumber + '|' + tname, tname_tnumber)
+                else:
+                    self.tname_tnumber_dict[tname_tnumber] = tname_tnumber + '|' + \
+                                                             str(fields[V4.ptr.HI_LIMIT]) + '|' + \
+                                                             str(fields[V4.ptr.LO_LIMIT]) + '|' + \
+                                                             unit #str(fields[V4.ptr.UNITS])
             # Be careful here, Hi/Low limit only stored in first PTR
             # tname_tnumber = str(fields[V4.ptr.TEST_NUM]) + '|' + fields[V4.ptr.TEST_TXT] + '|' + \
             #                 str(fields[V4.ptr.HI_LIMIT]) + '|' + str(fields[V4.ptr.LO_LIMIT]) + '|' + \

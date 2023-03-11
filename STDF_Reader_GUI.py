@@ -48,9 +48,9 @@ from mpl_toolkits.mplot3d import Axes3D
 # from numba import jit
 from src.Backend import Backend
 from src.FileRead import FileReaders
-from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread
+from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 
-Version = 'Beta 0.6.12'
+Version = 'Beta 0.7'
 
 
 ###################################################
@@ -129,13 +129,6 @@ class Application(QMainWindow):  # QWidget):
 
         self.step_2 = QGroupBox('Step 2: Upload CSV for Analysis')
         # self.step_2.setTitle('Step 2: Upload CSV for Analysis')
-
-        # Button to parse to .txt
-        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
-                                                   'Parse STD/STDF to .xlsx table')
-        self.stdf_upload_button_xlsx.setToolTip(
-            'Browse for a file ending in .std to create a parsed .xlsx file')
-        self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
 
         # Button to parse to .csv
         self.stdf_upload_button = QPushButton(qta.icon('fa5s.file-csv', color='green', color_active='black'),
@@ -231,6 +224,28 @@ class Application(QMainWindow):  # QWidget):
         self.generate_heatmap_button.clicked.connect(
             lambda: self.make_s2s_correlation_heatmap(self.s2s_correlation_report_df))
 
+        # Button to parse to atdf .xlsx
+        self.stdf_upload_button_xlsx = QPushButton(qta.icon('fa5s.file-excel', color='green', color_active='black'),
+                                                   'Parse STD/STDF to .xlsx table')
+        self.stdf_upload_button_xlsx.setToolTip(
+            'Browse for a file ending in .std to create a parsed .xlsx file')
+        self.stdf_upload_button_xlsx.clicked.connect(self.open_parsing_dialog_xlsx)
+
+        # Selects STDF record to extract
+        self.select_stdf_rec_menu = QComboBox()
+        self.select_stdf_rec_menu.setToolTip('Select the single record to extract')
+        self.select_stdf_rec_menu.addItems(['DTR', 'GDR', 'TSR'])
+        self.rec_name = 'DTR'
+        self.select_stdf_rec_menu.currentIndexChanged[str].connect(self.get_rec_name)  # 条目发生改变，发射信号，传递条目内容
+        #self.select_stdf_rec_menu.highlighted[str].connect(self.get_rec_name)  # 在下拉列表中，鼠标移动到某个条目时发出信号，传递条目内容
+        # Button to parse a single record type to atdf .csv
+        self.stdf_upload_button_single_rec = QPushButton(qta.icon('mdi.selection-search', color='green', color_active='black'),
+                                                   'Parse STD/STDF to .csv table')
+        self.stdf_upload_button_single_rec.setToolTip(
+            'Browse for a file ending in .std to create a parsed .csv file')
+        self.stdf_upload_button_single_rec.clicked.connect(self.open_parsing_single_rec)
+
+
         # Selects tests for extracting sub-CSV
         self.select_test_for_subcsv_menu = ComboCheckBox()
         self.select_test_for_subcsv_menu.setToolTip('Select the tests to produce the sub-CSV for analysis')
@@ -277,6 +292,9 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_xlsx_parser = XlsxParseThread(file_path=self.file_path)
         self.threaded_xlsx_parser.notify_status_text.connect(self.on_update_text)
 
+        self.threaded_single_rec_parser = SingleRecParseThread(self.file_path, self.rec_name)
+        self.threaded_single_rec_parser.notify_status_text.connect(self.on_update_text)
+
         self.threaded_diagnosis_parser = DiagParseThread(file_path=self.file_path)
         self.threaded_diagnosis_parser.notify_status_text.connect(self.on_update_text)
 
@@ -319,13 +337,24 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.generate_heatmap_button, 2, 0)
         self.correlation_tab.setLayout(layout)
 
-    # Tab for tools
-    def tab_tools(self):
+    # Tab for ATDF
+    def tab_atdf(self):
         layout = QGridLayout()
         layout.addWidget(self.stdf_upload_button_xlsx, 0, 0)
         layout.addWidget(self.convert_SDTFV42007_to_ASCII, 0, 1)
-        layout.addWidget(self.select_test_for_subcsv_menu, 1, 0, 1, 2)
-        layout.addWidget(self.extract_subcsv, 2, 0)
+        # layout.addWidget(self.select_test_for_subcsv_menu, 1, 0, 1, 2)
+        # layout.addWidget(self.extract_subcsv, 2, 0)
+        layout.addWidget(self.select_stdf_rec_menu, 1, 0, 1, 1)
+        layout.addWidget(self.stdf_upload_button_single_rec, 1, 1, 1, 1)
+        self.to_atdf_tab.setLayout(layout)
+
+    # Tab for tools
+    def tab_tools(self):
+        layout = QGridLayout()
+        # layout.addWidget(self.stdf_upload_button_xlsx, 0, 0)
+        # layout.addWidget(self.convert_SDTFV42007_to_ASCII, 0, 1)
+        layout.addWidget(self.select_test_for_subcsv_menu, 0, 0)
+        layout.addWidget(self.extract_subcsv, 1, 0)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -374,12 +403,15 @@ class Application(QMainWindow):  # QWidget):
         tabs = QTabWidget(self)
         self.data_analysis_tab = QWidget()
         self.correlation_tab = QWidget()
+        self.to_atdf_tab = QWidget()
         self.tools_tab = QWidget()
         self.tab_data_analysis()
         self.tab_data_correlation()
+        self.tab_atdf()
         self.tab_tools()
         tabs.addTab(self.data_analysis_tab, 'Data Analysis')
         tabs.addTab(self.correlation_tab, 'Data Correlation')
+        tabs.addTab(self.to_atdf_tab, 'To ATDF')
         tabs.addTab(self.tools_tab, 'Some Tools')
         layout.addWidget(tabs, 6, 0, 4, 32)
         layout.addWidget(self.progress_bar, 11, 0, 1, 32)
@@ -503,6 +535,24 @@ class Application(QMainWindow):  # QWidget):
         self.threaded_xlsx_parser.finished.connect(self.set_progress_bar_max)
         self.threaded_xlsx_parser.start()
         self.stdf_upload_button_xlsx.setEnabled(True)
+
+    def open_parsing_single_rec(self):
+
+        self.progress_bar.setMinimum(0)
+
+        self.status_text.setText('Parsing to .csv file, please wait...')
+        filterboi = 'STDF (*.stdf *.std)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open STDF File', filter=filterboi)
+        rec_name = self.rec_name
+        self.status_text.update()
+        self.stdf_upload_button_single_rec.setEnabled(False)
+        self.progress_bar.setMaximum(0)
+        self.threaded_single_rec_parser = SingleRecParseThread(filepath[0], rec_name)
+        self.threaded_single_rec_parser.notify_status_text.connect(self.on_update_text)
+        self.threaded_single_rec_parser.finished.connect(self.set_progress_bar_max)
+        self.threaded_single_rec_parser.start()
+        self.stdf_upload_button_single_rec.setEnabled(True)
         # self.main_window()
 
     # Convert STDF V4 2007.1 to Mentor like log
@@ -1541,6 +1591,36 @@ class Application(QMainWindow):  # QWidget):
     def on_update_text(self, txt):
         self.status_text.setText(txt)
 
+    def get_rec_name(self, txt):
+        self.rec_name = txt
+
+class ComboxSTDF(QWidget):
+    def __init__(self):
+        super().__init__()
+        # 设置标题
+        self.setWindowTitle('ComBox例子')
+        # 设置初始界面大小
+        self.resize(300, 200)
+
+        # 实例化QComBox对象
+        self.cb = QComboBox(self)
+        self.cb.move(100, 20)
+
+        # 单个添加条目
+        self.cb.addItem('C')
+        self.cb.addItem('C++')
+        self.cb.addItem('Python')
+        # 多个添加条目
+        self.cb.addItems(['Java', 'C#', 'PHP'])
+
+        # 信号
+        self.cb.currentIndexChanged[str].connect(self.print_value) # 条目发生改变，发射信号，传递条目内容
+        self.cb.currentIndexChanged[int].connect(self.print_value)  # 条目发生改变，发射信号，传递条目索引
+        self.cb.highlighted[str].connect(self.print_value)  # 在下拉列表中，鼠标移动到某个条目时发出信号，传递条目内容
+        self.cb.highlighted[int].connect(self.print_value)  # 在下拉列表中，鼠标移动到某个条目时发出信号，传递条目索引
+
+    def print_value(self, i):
+        print(i)
 
 class ComboCheckBox(QComboBox):
     popupAboutToBeShown = pyqtSignal()
