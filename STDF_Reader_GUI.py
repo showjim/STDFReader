@@ -203,9 +203,9 @@ class Application(QMainWindow):  # QWidget):
         self.ignore_TNUM_toggled = False
 
         # toggle for enable analyse log with setting "output converted csv as one file"
-        self.output_one_file_toggle = QCheckBox('Ignore Test Number', self)
+        self.output_one_file_toggle = QCheckBox('Output as one file', self)
         self.output_one_file_toggle.setChecked(True)
-        self.output_one_file_toggle.stateChanged.connect(self.enable_ignore_tnum_flag)
+        self.output_one_file_toggle.stateChanged.connect(self.enable_output_one_file_flag)
         self.output_one_file_toggled = True
 
         # Generates a correlation report for site2site compare
@@ -392,7 +392,8 @@ class Application(QMainWindow):  # QWidget):
         # self.step_1.setLayout(vbox)
         # layout.addWidget(self.step_1, 2, 0, 4, 16)
         vbox = QGridLayout()
-        vbox.addWidget(self.ignore_TNUM_toggle, 2, 0, 1, 0)
+        vbox.addWidget(self.ignore_TNUM_toggle, 2, 0, 1, 7)
+        vbox.addWidget(self.output_one_file_toggle, 2, 8, 1, 8)
         vbox.addWidget(self.stdf_upload_button,3,0,1,16)
         # vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
         # vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
@@ -517,7 +518,7 @@ class Application(QMainWindow):  # QWidget):
         # text = self.selected_site_line_edit.text()
         # if self.cherry_pick_toggled and text != "Input selected site list here":
         #     site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
-        self.threaded_csv_parser = CsvParseThread(filepath, self.ignore_TNUM_toggled)
+        self.threaded_csv_parser = CsvParseThread(filepath, self.ignore_TNUM_toggled, self.output_one_file_toggled)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
@@ -615,6 +616,13 @@ class Application(QMainWindow):  # QWidget):
             self.ignore_TNUM_toggled = True
         else:
             self.ignore_TNUM_toggled = False
+
+    def enable_output_one_file_flag(self, state):
+
+        if state == Qt.Checked:
+            self.output_one_file_toggled = True
+        else:
+            self.output_one_file_toggled = False
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
