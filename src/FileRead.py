@@ -47,7 +47,7 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_csv(file_names, output_file_name, notify_progress_bar, is_cherry_pick=False, ignore_TNUM=False, site_index_list=[]):
+    def to_csv(file_names, output_file_name, notify_progress_bar, ignore_TNUM=False):
         data_summary_all = pd.DataFrame()
         i=0
         for filename in file_names:
@@ -72,27 +72,13 @@ class FileReaders(ABC):
             print('STDF处理时间：', endt - startt)
             # data_summary_all = data_summary_all.append(data_summary.frame)
             # data_summary_all = pd.concat([data_summary_all,data_summary.frame],sort=False,join='outer')
-            if is_cherry_pick:
-                # extract specified site data from different STDF files
-                single_site_df = pd.DataFrame()
-                #site_index_list = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-                site_index = int(site_index_list[i])
-                i += 1
-                single_site_df = data_summary.frame[data_summary.frame['SITE_NUM'].isin([site_index])]
-                if data_summary_all.empty:
-                    data_summary_all = single_site_df
-                else:
-                    # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
-                    data_summary_all = pd.concat([data_summary_all, single_site_df], sort=False,
-                                                 join='outer', ignore_index=True)
-                # FileReaders.write_to_csv(data_summary_all, output_file_name)
+
+            if data_summary_all.empty:
+                data_summary_all = data_summary.frame
             else:
-                if data_summary_all.empty:
-                    data_summary_all = data_summary.frame
-                else:
-                    # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
-                    data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
-                                                 join='outer', ignore_index=True)
+                # data_summary_all = pd.merge(data_summary_all, data_summary.frame, sort=False, how='outer')
+                data_summary_all = pd.concat([data_summary_all, data_summary.frame], sort=False,
+                                             join='outer', ignore_index=True)
         FileReaders.write_to_csv(data_summary_all, output_file_name)
 
     @staticmethod
