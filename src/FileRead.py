@@ -477,6 +477,7 @@ class MyTestResultProfiler:
                     else:
                         ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
                     self.test_result_dict[full_tname_tnumber][i] = ptr_result
+                    break
 
         # This is multiple-result parametric record for a single limit for all the multiple test results
         if rectype == V4.mpr:

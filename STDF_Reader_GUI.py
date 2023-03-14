@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 
-Version = 'Beta 0.7.1'
+Version = 'Beta 0.7.2'
 
 
 ###################################################
