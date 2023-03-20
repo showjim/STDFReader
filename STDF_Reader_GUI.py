@@ -701,8 +701,8 @@ class Application(QMainWindow):  # QWidget):
                 # self.single_columns = self.single_columns + self.list_of_test_numbers_string
                 # self.df_csv.columns = self.single_columns
 
-                # Data cleaning, get rid of '(F)'
-                self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
+                # Data cleaning, get rid of '(F)' and '(A)'
+                self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
                 self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
                 self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
                 self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)

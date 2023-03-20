@@ -469,13 +469,17 @@ class MyTestResultProfiler:
                 # if len(self.test_result_dict[full_tname_tnumber]) >= self.site_count:
                 #     # print('Duplicate test number found for test: ', tname_tnumber)
                 #     return
-
+            test_flag = 0
             for i in range(self.site_count):
                 if fields[V4.ptr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-                    if fields[V4.ptr.TEST_FLG] == 0:
+                    test_flag = fields[V4.ptr.TEST_FLG]
+                    if test_flag == 0:
                         ptr_result = str(fields[V4.ptr.RESULT])
                     else:
-                        ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
+                        if test_flag & 0b1 == 1:
+                            ptr_result = str(fields[V4.ptr.RESULT]) + '(A)'
+                        else:
+                            ptr_result = str(fields[V4.ptr.RESULT]) + '(F)'
                     self.test_result_dict[full_tname_tnumber][i] = ptr_result
                     break
 
@@ -540,13 +544,17 @@ class MyTestResultProfiler:
 
                 for j in range(self.site_count):
                     if fields[V4.mpr.SITE_NUM] == self.test_result_dict['SITE_NUM'][j]:
-                        if fields[V4.mpr.TEST_FLG] == 0:
+                        test_flag = fields[V4.mpr.TEST_FLG]
+                        if test_flag == 0:
                             try:
                                 mpr_result = str(tmp_RSLT_list[i])
                             except:
                                 print("OK")
                         else:
-                            mpr_result = str(tmp_RSLT_list[i]) + '(F)'
+                            if test_flag & 0b1 == 1:
+                                mpr_result = str(tmp_RSLT_list[i]) + '(A)'
+                            else:
+                                mpr_result = str(tmp_RSLT_list[i]) + '(F)'
                         self.test_result_dict[full_tname_tnumber][j] = mpr_result
 
         # This is the functional test results
@@ -562,10 +570,15 @@ class MyTestResultProfiler:
                 #     return
             for i in range(self.site_count):
                 if fields[V4.ftr.SITE_NUM] == self.test_result_dict['SITE_NUM'][i]:
-                    if fields[V4.ftr.TEST_FLG] == 0:
+                    test_flag = fields[V4.ftr.TEST_FLG]
+                    if test_flag == 0:
                         ftr_result = '-1'
                     else:
-                        ftr_result = '0(F)'
+                        if test_flag & 0b1 == 1:
+                            ftr_result = '0(A)'
+                        else:
+                            ftr_result = '0(F)'
+
                     self.test_result_dict[tname_tnumber][i] = ftr_result
 
         if rectype == V4.eps:
