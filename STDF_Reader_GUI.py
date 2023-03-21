@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 
-Version = 'Beta 0.7.2'
+Version = 'Beta 0.7.3'
 
 
 ###################################################
@@ -703,11 +703,15 @@ class Application(QMainWindow):  # QWidget):
 
                 # Data cleaning, get rid of '(F)' and '(A)'
                 self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
-                self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                # self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
                 self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
                 self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
                 self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
                 self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
+                self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
 
                 # Extract the test name and test number list
                 self.list_of_test_numbers = [x.split(" - ") for x in self.list_of_test_numbers_string] #[list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -1046,6 +1050,7 @@ class Application(QMainWindow):  # QWidget):
                                                              aggfunc='count', margins=True, fill_value=0).copy()
                 # bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
                 bin_summary_pd.index.rename([die_id, 'BIN_DESC'], inplace=True)
+                bin_summary_pd["%Bin"] = (bin_summary_pd['All'] / bin_summary_pd['All'][:-1].sum())*100
                 all_bin_summary_list.append(bin_summary_pd)
         # self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
         # f = open(self.file_path[:-11] + '_bin_summary.csv', 'w')
