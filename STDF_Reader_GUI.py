@@ -35,7 +35,7 @@ from pystdf.Writers import *
 from abc import ABC
 import numpy as np
 import pandas as pd
-import time
+import time, datetime
 import xlsxwriter
 import logging
 import re
@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 
-Version = 'Beta 0.7'
+Version = 'Beta 0.7.3'
 
 
 ###################################################
@@ -75,6 +75,7 @@ class Application(QMainWindow):  # QWidget):
         self.tname_list = []
 
         self.test_info_list = []
+        self.df_csvs = []
         self.df_csv = pd.DataFrame()
         self.sdr_parse = []
         self.list_of_duplicate_test_numbers = []
@@ -201,6 +202,12 @@ class Application(QMainWindow):  # QWidget):
         self.ignore_TNUM_toggle.setChecked(False)
         self.ignore_TNUM_toggle.stateChanged.connect(self.enable_ignore_tnum_flag)
         self.ignore_TNUM_toggled = False
+
+        # toggle for enable analyse log with setting "output converted csv as one file"
+        self.output_one_file_toggle = QCheckBox('Output as one file', self)
+        self.output_one_file_toggle.setChecked(True)
+        self.output_one_file_toggle.stateChanged.connect(self.enable_output_one_file_flag)
+        self.output_one_file_toggled = True
 
         # Generates a correlation report for site2site compare
         self.generate_correlation_button_s2s = QPushButton(
@@ -386,16 +393,19 @@ class Application(QMainWindow):  # QWidget):
         # self.step_1.setLayout(vbox)
         # layout.addWidget(self.step_1, 2, 0, 4, 16)
         vbox = QGridLayout()
-        vbox.addWidget(self.stdf_upload_button,2,0,1,16)
-        vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
-        vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
-        vbox.addWidget(self.ignore_TNUM_toggle,4,0,1,0)
+        vbox.addWidget(self.ignore_TNUM_toggle, 2, 0, 1, 7)
+        vbox.addWidget(self.output_one_file_toggle, 2, 8, 1, 8)
+        vbox.addWidget(self.stdf_upload_button,3,0,1,16)
+        # vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
+        # vbox.addWidget(self.selected_site_line_edit,3,8,1,8)
         self.step_1.setLayout(vbox)
         layout.addWidget(self.step_1, 2, 0, 3, 16)
 
         # layout.addWidget(self.stdf_upload_button, 3, 3, 1, 12)
-        vbox2 = QVBoxLayout()
-        vbox2.addWidget(self.txt_upload_button)
+        vbox2 = QGridLayout()
+        vbox2.addWidget(self.cherry_pick_toggle, 2, 0, 1, 7)
+        vbox2.addWidget(self.selected_site_line_edit, 2, 8, 1, 8)
+        vbox2.addWidget(self.txt_upload_button,3,0,1,16)
         self.step_2.setLayout(vbox2)
         layout.addWidget(self.step_2, 2, 16, 3, 16)
         # layout.addWidget(self.txt_upload_button, 3, 18, 1, 12)
@@ -504,12 +514,12 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.update()
         self.stdf_upload_button.setEnabled(False)
         # self.progress_bar.setMaximum(0)
-        # process specified site list
-        site_list = []
-        text = self.selected_site_line_edit.text()
-        if self.cherry_pick_toggled and text != "Input selected site list here":
-            site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
-        self.threaded_csv_parser = CsvParseThread(filepath, self.cherry_pick_toggled, self.ignore_TNUM_toggled, site_list)
+        # # process specified site list
+        # site_list = []
+        # text = self.selected_site_line_edit.text()
+        # if self.cherry_pick_toggled and text != "Input selected site list here":
+        #     site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
+        self.threaded_csv_parser = CsvParseThread(filepath, self.ignore_TNUM_toggled, self.output_one_file_toggled)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
@@ -608,18 +618,27 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.ignore_TNUM_toggled = False
 
+    def enable_output_one_file_flag(self, state):
+
+        if state == Qt.Checked:
+            self.output_one_file_toggled = True
+        else:
+            self.output_one_file_toggled = False
+
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
         # Only accepts text files
         filterboi = 'CSV Table (*.csv)'
-        filepath = QFileDialog.getOpenFileName(
-            caption='Open .csv File', filter=filterboi)
+        # filepath = QFileDialog.getOpenFileName(
+        #     caption='Open .csv File', filter=filterboi)
+        filepath = QFileDialog.getOpenFileNames(
+            caption='Open .csv File', filter=filterboi, options=QFileDialog.DontUseNativeDialog)
 
-        self.file_path = filepath[0]
+        self.file_paths = filepath[0]
 
         # Because you can open it and select nothing smh
-        if self.file_path != '':
-
+        if len(self.file_paths) > 0:
+            self.file_path = self.file_paths[0]
             self.txt_upload_button.setEnabled(False)
 
             self.progress_bar.setValue(0)
@@ -632,32 +651,71 @@ class Application(QMainWindow):  # QWidget):
             elif self.file_path.endswith(".std"):
                 pass
             elif self.file_path.endswith(".csv"):
-                self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
+                csv_data = pd.DataFrame()
+                self.list_of_test_numbers_string = []
+                self.tnumber_list = []
+                self.tname_list = []
+                self.test_info_list = []
+                test_info_list = []
+                i = 0
+                for filename in self.file_paths:
+                    csv_data = pd.read_csv(filename, header=[0, 1, 2, 3, 4])
+
+                    # Extracts the test name for the selecting
+                    tmp_pd = csv_data.columns
+                    single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
+                    tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
+                    tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
+                    test_info_list = list(set(tmp_pd.values.tolist()[16:]).union(test_info_list))
+                    list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tname_list, tnumber_list)]
+
+                    # Change the multi-level columns to single level columns
+                    single_columns = single_columns + list_of_test_numbers_string
+                    csv_data.columns = single_columns
+
+                    if self.cherry_pick_toggled:
+                        site_list = []
+                        text = self.selected_site_line_edit.text()
+                        if self.cherry_pick_toggled and text != "Input selected site list here":
+                            site_list = text.replace('-', ' ').replace(';', ' ').replace(',', ' ').split()
+                        site_index = int(site_list[i])
+                        csv_data = csv_data[csv_data['SITE_NUM'].isin([site_index])].copy()
+                    i += 1
+
+                    if self.df_csv.empty:
+                        self.df_csv = csv_data.copy()
+                    else:
+                        self.df_csv = pd.concat([self.df_csv, csv_data], sort=False,
+                                                     join='outer', ignore_index=True)
+                # self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
                 # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
                 # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
 
                 # Extracts the test name for the selecting
                 tmp_pd = self.df_csv.columns
-                self.single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
-                self.tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
-                self.tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
-                self.test_info_list = tmp_pd.values.tolist()[16:]
-                self.list_of_test_numbers_string = [j + ' - ' + i for i, j in
-                                                    zip(self.tname_list, self.tnumber_list)]
+                self.single_columns = tmp_pd.values.tolist()[:16]  # Get the part info
+                # self.tnumber_list = tmp_pd.values.tolist()[16:]
+                # self.tname_list = tmp_pd.values.tolist()[16:]
+                self.test_info_list = test_info_list #tmp_pd.values.tolist()[16:]
+                self.list_of_test_numbers_string = tmp_pd.values.tolist()[16:] #[j + ' - ' + i for i, j in zip(self.tname_list, self.tnumber_list)]
                 # Change the multi-level columns to single level columns
-                self.single_columns = self.single_columns + self.list_of_test_numbers_string
-                self.df_csv.columns = self.single_columns
+                # self.single_columns = self.single_columns + self.list_of_test_numbers_string
+                # self.df_csv.columns = self.single_columns
 
-                # Data cleaning, get rid of '(F)'
-                self.df_csv.replace(r'\(F\)', '', regex=True, inplace=True)
-                self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                # Data cleaning, get rid of '(F)' and '(A)'
+                self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
+                # self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
                 self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
                 self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
                 self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
                 self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
+                self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
 
                 # Extract the test name and test number list
-                self.list_of_test_numbers = [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+                self.list_of_test_numbers = [x.split(" - ") for x in self.list_of_test_numbers_string] #[list(z) for z in (zip(self.tnumber_list, self.tname_list))]
 
                 # Get site array
                 self.sdr_parse = self.df_csv['SITE_NUM'].unique()
@@ -726,7 +784,8 @@ class Application(QMainWindow):  # QWidget):
 
     # Create a xlsx report including Data Statistics, Duplicate Test Number and Wafer Map
     def generate_analysis_report(self):
-        analysis_report_name = str(self.file_path[:-11] + "_analysis_report.xlsx")
+        nowTime = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        analysis_report_name = str(self.file_path[:-11] + "_analysis_report_" + nowTime + ".xlsx")
         self.status_text.setText(
             str(analysis_report_name + " is generating..."))
 
@@ -992,6 +1051,7 @@ class Application(QMainWindow):  # QWidget):
                                                              aggfunc='count', margins=True, fill_value=0).copy()
                 # bin_summary_pd = sbin_counts.rename(index=self.sbin_description).copy()
                 bin_summary_pd.index.rename([die_id, 'BIN_DESC'], inplace=True)
+                bin_summary_pd["%Bin"] = (bin_summary_pd['All'] / bin_summary_pd['All'][:-1].sum())*100
                 all_bin_summary_list.append(bin_summary_pd)
         # self.bin_summary_pd.to_csv(self.filename + '_bin_summary.csv')
         # f = open(self.file_path[:-11] + '_bin_summary.csv', 'w')
@@ -1042,7 +1102,8 @@ class Application(QMainWindow):  # QWidget):
         return all_wafer_map_list
 
     def generate_correlation_report(self):
-        correlation_report_name = str(self.file_path[:-11] + "_correlation_report.xlsx")
+        nowTime = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        correlation_report_name = str(self.file_path[:-11] + "_correlation_report_" + nowTime + ".xlsx")
         self.status_text.setText(
             str(correlation_report_name.split('/')[-1] + " is generating..."))
 
@@ -1222,7 +1283,8 @@ class Application(QMainWindow):  # QWidget):
         return cmp_result_list
 
     def generate_s2s_correlation_report(self):
-        s2s_correlation_report_name = str(self.file_path + "_s2s_correlation_table.xlsx")
+        nowTime = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        s2s_correlation_report_name = str(self.file_path + "_s2s_correlation_table" + nowTime + ".xlsx")
         self.status_text.setText(
             str(s2s_correlation_report_name.split('/')[-1] + " is generating..."))
         self.s2s_correlation_report_df = self.make_s2s_correlation_table()

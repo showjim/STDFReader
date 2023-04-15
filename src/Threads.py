@@ -170,13 +170,12 @@ class CsvParseThread(QThread):
     notify_status_text = pyqtSignal(str)
     notify_progress_bar = pyqtSignal(int)
 
-    def __init__(self, file_path, is_cherry_pick=False, ignore_TNUM=False, site_list=[], parent=None):
+    def __init__(self, file_path, ignore_TNUM=False, output_one_file=True, parent=None):
 
         QThread.__init__(self, parent)
         self.filepath = file_path
-        self.is_cherry_pick = is_cherry_pick
         self.ignore_TNUM = ignore_TNUM
-        self.site_list = site_list
+        self.output_one_file = output_one_file
 
     # Opens and reads a file to parse the data
     def run(self):
@@ -189,14 +188,25 @@ class CsvParseThread(QThread):
         else:
             if len(self.filepath[0]) == 1:
                 output_file_name = self.filepath[0][0]
+                FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.ignore_TNUM)
+                self.notify_status_text.emit(
+                    str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
             else:
-                t = time.localtime()
-                current_time = str(time.strftime("%Y%m%d%H%M%S", t))
-                output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary'  # + current_time
-            FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.is_cherry_pick,
-                               self.ignore_TNUM, self.site_list)
-            self.notify_status_text.emit(
-                str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
+                if self.output_one_file:
+                    t = time.localtime()
+                    current_time = str(time.strftime("%Y%m%d%H%M%S", t))
+                    output_file_name = os.path.dirname(self.filepath[0][0]) + '/output_data_summary_' + current_time
+                    FileReaders.to_csv(self.filepath[0], output_file_name, self.notify_progress_bar, self.ignore_TNUM)
+                    self.notify_status_text.emit(
+                        str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
+                else:
+                    for file_name in self.filepath[0]:
+                        output_file_name = file_name
+                        FileReaders.to_csv([file_name], output_file_name, self.notify_progress_bar,
+                                           self.ignore_TNUM)
+                        self.notify_status_text.emit(
+                            str(output_file_name.split('/')[-1] + '_csv_log.csv created!'))
+
 
 
 class XlsxParseThread(QThread):
