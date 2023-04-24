@@ -50,7 +50,7 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 
-Version = 'Beta 0.7.3'
+Version = 'Beta 0.7.4'
 
 
 ###################################################
@@ -641,6 +641,8 @@ class Application(QMainWindow):  # QWidget):
             self.txt_upload_button.setEnabled(False)
 
             self.progress_bar.setValue(0)
+            # initial key data variables
+            self.df_csv = pd.DataFrame()
             self.list_of_test_numbers = []
             self.list_of_duplicate_test_numbers = []
             startt = time.time()
@@ -712,6 +714,7 @@ class Application(QMainWindow):  # QWidget):
                 self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
                 self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
                 self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
 
                 # Extract the test name and test number list
                 self.list_of_test_numbers = [x.split(" - ") for x in self.list_of_test_numbers_string] #[list(z) for z in (zip(self.tnumber_list, self.tname_list))]
