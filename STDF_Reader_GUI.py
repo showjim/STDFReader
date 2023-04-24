@@ -1422,6 +1422,8 @@ class Application(QMainWindow):  # QWidget):
         fig = plt.figure()
         ax_3d = fig.add_subplot(111, projection='3d')
         ax_3d.set_xlabel("Test Index")
+        ax_3d.set_xticks(range(len(df.index.to_list())))
+        ax_3d.set_xticklabels(df.index.to_list())
         ax_3d.set_ylabel("Site")
         ax_3d.set_yticks(range(len(df.columns)))
         ax_3d.set_yticklabels(df.columns)
@@ -1437,6 +1439,7 @@ class Application(QMainWindow):  # QWidget):
         plt.title('Trending of Each Site')
         # Adjust the 3D axes scale
         ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1.2, 1, 1, 1]))
+
         plt.show()
         self.select_s2s_test_menu.setEnabled(True)
         self.generate_heatmap_button.setEnabled(True)
