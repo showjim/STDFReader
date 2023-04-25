@@ -1423,7 +1423,7 @@ class Application(QMainWindow):  # QWidget):
         ax_3d = fig.add_subplot(111, projection='3d')
         ax_3d.set_xlabel("Test Index")
         ax_3d.set_xticks(range(len(df.index.to_list())))
-        ax_3d.set_xticklabels(df.index.to_list())
+        # ax_3d.set_xticklabels(df.index.to_list())
         ax_3d.set_ylabel("Site")
         ax_3d.set_yticks(range(len(df.columns)))
         ax_3d.set_yticklabels(df.columns)
@@ -1435,7 +1435,15 @@ class Application(QMainWindow):  # QWidget):
         X, Z = np.meshgrid(test_index, site_num)
         for i in range(col):
             Y = df.iloc[:, i].to_list()
-            ax_3d.plot(xs=X[i], ys=Y, zs=Z[i], zdir='y')
+            ax_3d.plot(xs=X[i], ys=Y, zs=Z[i], zdir='y', label="test")
+        # ax_3d.legend()
+        tmpList = [str(i) + ":" + v for i,v in enumerate(df.index.to_list())]
+        textstr = '\n'.join(tmpList)
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        ax_3d.text2D(0.05, 0.95, textstr, transform=ax_3d.transAxes, fontsize=10,
+                verticalalignment='top', bbox=props)
         plt.title('Trending of Each Site')
         # Adjust the 3D axes scale
         ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1.2, 1, 1, 1]))
