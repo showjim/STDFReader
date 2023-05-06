@@ -17,8 +17,8 @@ class ChatBot():
         There is a dataframe in pandas (python).
         The name of the dataframe is `self.df`.
         The column name of the dataframe is `self.header_list`.
-        ONLY use the data in 'df', do not make up new data. If there is no relavent data then just print "Cannot found data!"
-        Return the python code (do not import anything) ONLY. 
+        ONLY use the data in 'df', do not make up new data. If there is no relevant data then just print "Cannot found data!"
+        Return the python code with essential library import. 
         If question is not about plot then make sure add print code to output the result.
         For example, the non-plot code should be like:
         print(df.nlargest(3, 'happiness_index')['country'])

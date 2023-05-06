@@ -271,19 +271,21 @@ class Application(QMainWindow):  # QWidget):
         self.convert_SDTFV42007_to_ASCII.clicked.connect(self.open_parsing_diagnosis_ascii)
 
         # input text edit for LLM Chat
-        self.llm_prompt_edit = QTextEdit()
-        self.llm_prompt_edit.setPlaceholderText("Input Your Instruction Here") #.setPlainText("Input Your Instruction Here")
+        self.llm_prompt_edit = QPlainTextEdit()
+        self.llm_prompt_edit.setPlaceholderText("Input Your Instruction Here To Let AI Coding For You To Analyse Data.") #.setPlainText("Input Your Instruction Here")
         self.llm_btn = QPushButton(qta.icon('mdi6.brain', color='green', color_active='black'), 'Go~')
         self.llm_btn.setToolTip('Give order to AI')
         self.llm_btn.clicked.connect(self.llm_chat)
+        # self.llm_prompt_edit.setMaximumHeight(self.llm_btn.height() * 1)
+        self.llm_prompt_edit.setFixedHeight(50) #.resize(100,100)
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 450)
+        self.WINDOW_SIZE = (700, 350)
         self.file_path = None
         self.text_file_location = self.file_path
 
-        self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
+        self.setBaseSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1]) #.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
         self.setWindowTitle('STDF Reader For AP ' + Version)
 
@@ -1673,6 +1675,7 @@ class Application(QMainWindow):  # QWidget):
         matplotlib.use('qt5Agg')
         # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
         # prompt = "Please plot the value trendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
+        # please plot the histogram of 'PART_ID'=1 showing for value of each column '535 - VOH_SYNCN <> vout','536 - VOL_SYNCP <> vout','540 - VOH_DTOP <> vout', '541 - VOH_DTO2P <> vout' as Y-axis with different color for each bar, set 0~3 as bin number
         prompt = self.llm_prompt_edit.toPlainText()# .text()
         header_list = self.df_csv.columns.tolist()
         chat = ChatBot(self.df_csv)
