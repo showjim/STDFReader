@@ -33,14 +33,18 @@ Correct the python code and return a new python code (do not import anything) th
 Make sure to prefix the python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly.
 """
 
-def extract_code(input_str:str):
-    match = re.search(rf"{START_CODE_TAG}(.*){END_CODE_TAG}", input_str, re.DOTALL)
-    if match:
-        code = match.group(1).strip()
-    return code
+class chatbot():
+    def __init__(self, df:pd.DataFrame):
+        super().__init__()
+        self.df = df
+    def extract_code(self, input_str:str):
+        match = re.search(rf"{START_CODE_TAG}(.*){END_CODE_TAG}", input_str, re.DOTALL)
+        if match:
+            code = match.group(1).strip()
+        return code
 
-def run_code(code:str):
-    exec(code)
+    def run_code(self, code:str):
+        exec(code)
 # Sample DataFrame
 df = pd.DataFrame({
     "country": ["United States", "United Kingdom", "France", "Germany", "Italy", "Spain", "Canada", "Australia", "Japan", "China"],
@@ -73,5 +77,7 @@ full_instruction = _task_instruction.format(START_CODE_TAG=START_CODE_TAG,
 resp = llm([HumanMessage(content=full_instruction)])
 print(resp.content)
 
+chat = chatbot(df)
 print("Execution result:")
-run_code(extract_code(resp.content))
+code =chat.extract_code(resp.content)
+chat.run_code(code)
