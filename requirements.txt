@@ -1,0 +1,8 @@
+PyQt5
+numpy
+pandas
+xlsxwriter
+qtawesome
+matplotlib
+PyPDF2
+pyinstaller

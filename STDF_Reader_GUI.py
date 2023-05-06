@@ -49,8 +49,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
+from llm.chat import ChatBot
 
-Version = 'Beta 0.7.3'
+Version = 'Beta 0.8.0'
 
 
 ###################################################
@@ -269,9 +270,16 @@ class Application(QMainWindow):  # QWidget):
         self.convert_SDTFV42007_to_ASCII.setToolTip('Convert STR/PSR to Mentor like ASCII log')
         self.convert_SDTFV42007_to_ASCII.clicked.connect(self.open_parsing_diagnosis_ascii)
 
+        # input text edit for LLM Chat
+        self.llm_prompt_edit = QTextEdit()
+        self.llm_prompt_edit.setPlaceholderText("Input Your Instruction Here") #.setPlainText("Input Your Instruction Here")
+        self.llm_btn = QPushButton(qta.icon('mdi6.brain', color='green', color_active='black'), 'Go~')
+        self.llm_btn.setToolTip('Give order to AI')
+        self.llm_btn.clicked.connect(self.llm_chat)
+
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 350)
+        self.WINDOW_SIZE = (700, 450)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -322,6 +330,9 @@ class Application(QMainWindow):  # QWidget):
 
         self.selected_site_line_edit.setEnabled(False)
 
+        self.llm_prompt_edit.setEnabled(False)
+        self.llm_btn.setEnabled(False)
+
         self.main_window()
 
     # Tab for data analysis
@@ -358,10 +369,10 @@ class Application(QMainWindow):  # QWidget):
     # Tab for tools
     def tab_tools(self):
         layout = QGridLayout()
-        # layout.addWidget(self.stdf_upload_button_xlsx, 0, 0)
-        # layout.addWidget(self.convert_SDTFV42007_to_ASCII, 0, 1)
-        layout.addWidget(self.select_test_for_subcsv_menu, 0, 0)
-        layout.addWidget(self.extract_subcsv, 1, 0)
+        layout.addWidget(self.llm_prompt_edit, 0, 0)
+        layout.addWidget(self.llm_btn, 0, 1)
+        layout.addWidget(self.select_test_for_subcsv_menu, 1, 0)
+        layout.addWidget(self.extract_subcsv, 2, 0)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -642,6 +653,8 @@ class Application(QMainWindow):  # QWidget):
             self.txt_upload_button.setEnabled(False)
 
             self.progress_bar.setValue(0)
+            # initial key data variables
+            self.df_csv = pd.DataFrame()
             self.list_of_test_numbers = []
             self.list_of_duplicate_test_numbers = []
             startt = time.time()
@@ -713,6 +726,7 @@ class Application(QMainWindow):  # QWidget):
                 self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
                 self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
                 self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
+                self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
 
                 # Extract the test name and test number list
                 self.list_of_test_numbers = [x.split(" - ") for x in self.list_of_test_numbers_string] #[list(z) for z in (zip(self.tnumber_list, self.tname_list))]
@@ -759,6 +773,8 @@ class Application(QMainWindow):  # QWidget):
 
             self.select_test_for_subcsv_menu.setEnabled(True)
             self.extract_subcsv.setEnabled(True)
+            self.llm_prompt_edit.setEnabled(True)
+            self.llm_btn.setEnabled(True)
             self.main_window()
 
         else:
@@ -1420,6 +1436,8 @@ class Application(QMainWindow):  # QWidget):
         fig = plt.figure()
         ax_3d = fig.add_subplot(111, projection='3d')
         ax_3d.set_xlabel("Test Index")
+        ax_3d.set_xticks(range(len(df.index.to_list())))
+        # ax_3d.set_xticklabels(df.index.to_list())
         ax_3d.set_ylabel("Site")
         ax_3d.set_yticks(range(len(df.columns)))
         ax_3d.set_yticklabels(df.columns)
@@ -1431,10 +1449,19 @@ class Application(QMainWindow):  # QWidget):
         X, Z = np.meshgrid(test_index, site_num)
         for i in range(col):
             Y = df.iloc[:, i].to_list()
-            ax_3d.plot(xs=X[i], ys=Y, zs=Z[i], zdir='y')
+            ax_3d.plot(xs=X[i], ys=Y, zs=Z[i], zdir='y', label="test")
+        # ax_3d.legend()
+        tmpList = [str(i) + ":" + v for i,v in enumerate(df.index.to_list())]
+        textstr = '\n'.join(tmpList)
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        ax_3d.text2D(0.05, 0.95, textstr, transform=ax_3d.transAxes, fontsize=10,
+                verticalalignment='top', bbox=props)
         plt.title('Trending of Each Site')
         # Adjust the 3D axes scale
         ax_3d.get_proj = lambda: np.dot(Axes3D.get_proj(ax_3d), np.diag([1.2, 1, 1, 1]))
+
         plt.show()
         self.select_s2s_test_menu.setEnabled(True)
         self.generate_heatmap_button.setEnabled(True)
@@ -1641,6 +1668,20 @@ class Application(QMainWindow):  # QWidget):
         plt.grid(color='0.9', linestyle='--', linewidth=1)
         plt.tight_layout()
         plt.show()
+
+    def llm_chat(self):
+        matplotlib.use('qt5Agg')
+        # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
+        # prompt = "Please plot the value trendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
+        prompt = self.llm_prompt_edit.toPlainText()# .text()
+        header_list = self.df_csv.columns.tolist()
+        chat = ChatBot(self.df_csv)
+        full_instruction = chat.merge_instruction(prompt)
+        resp = chat.chat(full_instruction)
+        print(resp)
+        print("Execution result:")
+        code = chat.extract_code(resp)
+        chat.run_code(code)
 
     def restore_menu(self):
         self.generate_pdf_button.setEnabled(True)
