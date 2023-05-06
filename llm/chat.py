@@ -1,10 +1,12 @@
 import os, json, re
 from langchain.schema import HumanMessage, AIMessage
 import pandas as pd
-from llm.llm_setup import llm
+from llm.llm_setup import LLM
 
 START_CODE_TAG = "<CODE_START>"
 END_CODE_TAG = "</CODE_END>"
+model = LLM()
+llm = model.create_chat_model()
 
 class ChatBot():
     def __init__(self, df:pd.DataFrame):

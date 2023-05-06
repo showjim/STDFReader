@@ -50,7 +50,6 @@ from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
-from llm.llm_setup import llm
 
 Version = 'Beta 0.8.0'
 
@@ -270,9 +269,16 @@ class Application(QMainWindow):  # QWidget):
         self.convert_SDTFV42007_to_ASCII.setToolTip('Convert STR/PSR to Mentor like ASCII log')
         self.convert_SDTFV42007_to_ASCII.clicked.connect(self.open_parsing_diagnosis_ascii)
 
+        # input text edit for LLM Chat
+        self.llm_prompt_edit = QTextEdit()
+        self.llm_prompt_edit.setPlaceholderText("Input Your Instruction Here") #.setPlainText("Input Your Instruction Here")
+        self.llm_btn = QPushButton(qta.icon('mdi6.brain', color='green', color_active='black'), 'Go~')
+        self.llm_btn.setToolTip('Give order to AI')
+        self.llm_btn.clicked.connect(self.llm_chat)
+
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 350)
+        self.WINDOW_SIZE = (700, 450)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -323,6 +329,9 @@ class Application(QMainWindow):  # QWidget):
 
         self.selected_site_line_edit.setEnabled(False)
 
+        self.llm_prompt_edit.setEnabled(False)
+        self.llm_btn.setEnabled(False)
+
         self.main_window()
 
     # Tab for data analysis
@@ -359,10 +368,10 @@ class Application(QMainWindow):  # QWidget):
     # Tab for tools
     def tab_tools(self):
         layout = QGridLayout()
-        # layout.addWidget(self.stdf_upload_button_xlsx, 0, 0)
-        # layout.addWidget(self.convert_SDTFV42007_to_ASCII, 0, 1)
-        layout.addWidget(self.select_test_for_subcsv_menu, 0, 0)
-        layout.addWidget(self.extract_subcsv, 1, 0)
+        layout.addWidget(self.llm_prompt_edit, 0, 0)
+        layout.addWidget(self.llm_btn, 0, 1)
+        layout.addWidget(self.select_test_for_subcsv_menu, 1, 0)
+        layout.addWidget(self.extract_subcsv, 2, 0)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -763,6 +772,8 @@ class Application(QMainWindow):  # QWidget):
 
             self.select_test_for_subcsv_menu.setEnabled(True)
             self.extract_subcsv.setEnabled(True)
+            self.llm_prompt_edit.setEnabled(True)
+            self.llm_btn.setEnabled(True)
             self.main_window()
 
         else:
@@ -1660,7 +1671,8 @@ class Application(QMainWindow):  # QWidget):
     def llm_chat(self):
         matplotlib.use('qt5Agg')
         # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
-        prompt = "Please plot the value trendency of column '20050014 - Power_Short AVDD12 <> AVDD12' and '20050004 - Power_Short VDDCPU_BIG2 <> VDDCPU_BIG2' and set as Y-axis, take 'PART_ID' as X-axis'"
+        # prompt = "Please plot the value trendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
+        prompt = self.llm_prompt_edit.toPlainText()# .text()
         header_list = self.df_csv.columns.tolist()
         chat = ChatBot(self.df_csv)
         full_instruction = chat.merge_instruction(prompt)
