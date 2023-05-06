@@ -49,8 +49,10 @@ from mpl_toolkits.mplot3d import Axes3D
 from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
+from llm.chat import ChatBot
+from llm.llm_setup import llm
 
-Version = 'Beta 0.7.4'
+Version = 'Beta 0.8.0'
 
 
 ###################################################
@@ -1654,6 +1656,19 @@ class Application(QMainWindow):  # QWidget):
         plt.grid(color='0.9', linestyle='--', linewidth=1)
         plt.tight_layout()
         plt.show()
+
+    def llm_chat(self):
+        matplotlib.use('qt5Agg')
+        # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
+        prompt = "Please plot the value trendency of column '20050014 - Power_Short AVDD12 <> AVDD12' and '20050004 - Power_Short VDDCPU_BIG2 <> VDDCPU_BIG2' and set as Y-axis, take 'PART_ID' as X-axis'"
+        header_list = self.df_csv.columns.tolist()
+        chat = ChatBot(self.df_csv)
+        full_instruction = chat.merge_instruction(prompt)
+        resp = chat.chat(full_instruction)
+        print(resp)
+        print("Execution result:")
+        code = chat.extract_code(resp)
+        chat.run_code(code)
 
     def restore_menu(self):
         self.generate_pdf_button.setEnabled(True)
