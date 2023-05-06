@@ -1,0 +1,40 @@
+import os, json, re
+import openai
+import shutil
+from dotenv import load_dotenv
+from langchain.llms import AzureOpenAI
+from langchain.chat_models import AzureChatOpenAI
+
+
+
+WORK_ENV_DIR = './'
+ENV_FILE = 'key.txt'
+shutil.copyfile(os.path.join(WORK_ENV_DIR, ENV_FILE), ".env")
+load_dotenv()
+
+# Load config values
+with open(r'config.json') as config_file:
+    config_details = json.load(config_file)
+
+# Setting up the embedding model
+embedding_model_name = config_details['EMBEDDING_MODEL']
+openai.api_type = "azure"
+openai.api_base = config_details['OPENAI_API_BASE']
+openai.api_version = config_details['EMBEDDING_MODEL_VERSION']
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# max LLM token input size
+max_input_size = 3900 #4096
+# set number of output tokens
+num_output = 512#512
+# set maximum chunk overlap
+max_chunk_overlap = 20
+llm = AzureChatOpenAI(deployment_name=config_details['CHATGPT_MODEL'],
+                      openai_api_key=openai.api_key,
+                      openai_api_base=openai.api_base,
+                      openai_api_type =openai.api_type,
+                      openai_api_version=config_details['OPENAI_API_VERSION'],
+                      max_tokens=num_output,
+                      temperature=0.5,
+                      )
+
