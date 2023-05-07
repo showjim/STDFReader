@@ -1,16 +1,19 @@
 import os, json, re
 from langchain.schema import HumanMessage, AIMessage
 import pandas as pd
-from llm.llm_setup import Azure_OpenAI
+from llm.llm_setup import OpenAIAzure
 
 START_CODE_TAG = "<CODE_START>"
 END_CODE_TAG = "</CODE_END>"
-model = Azure_OpenAI()
-llm = model.create_chat_model()
+# model = AzureOpenAI()
+# llm = model.create_chat_model()
 
 class ChatBot():
     def __init__(self, df:pd.DataFrame):
         super().__init__()
+        self.model = OpenAIAzure()
+        self.model.setup_env()
+        self.llm = self.model.create_chat_model()
         self.df = df
         self.header_list = self.df.columns.tolist()
         # Return the python code with essential library import.
@@ -56,7 +59,7 @@ class ChatBot():
                                                     QUESTION=prompt)
         return full_instruction
     def chat(self, full_instruction):
-        resp = llm([HumanMessage(content=full_instruction)])
+        resp = self.llm([HumanMessage(content=full_instruction)])
         return resp.content
     def extract_code(self, input_str:str):
         match = re.search(rf"{START_CODE_TAG}(.*){END_CODE_TAG}", input_str, re.DOTALL)

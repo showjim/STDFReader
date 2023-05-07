@@ -6,3 +6,7 @@ qtawesome
 matplotlib
 PyPDF2
 pyinstaller
+langchain
+scipy
+openai
+python-dotenv

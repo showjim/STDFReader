@@ -6,12 +6,13 @@ from langchain.llms import AzureOpenAI
 from langchain.chat_models import AzureChatOpenAI
 
 
-class Azure_OpenAI():
+class OpenAIAzure():
     def __init__(self):
         super().__init__()
 
         self.WORK_ENV_DIR = './'
         self.ENV_FILE = 'key.txt'
+    def setup_env(self):
         shutil.copyfile(os.path.join(self.WORK_ENV_DIR, self.ENV_FILE), ".env")
         load_dotenv()
 
