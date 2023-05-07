@@ -1,11 +1,11 @@
 import os, json, re
 from langchain.schema import HumanMessage, AIMessage
 import pandas as pd
-from llm.llm_setup import LLM
+from llm.llm_setup import Azure_OpenAI
 
 START_CODE_TAG = "<CODE_START>"
 END_CODE_TAG = "</CODE_END>"
-model = LLM()
+model = Azure_OpenAI()
 llm = model.create_chat_model()
 
 class ChatBot():
@@ -13,13 +13,14 @@ class ChatBot():
         super().__init__()
         self.df = df
         self.header_list = self.df.columns.tolist()
+        # Return the python code with essential library import.
         self.task_instruction: str = """
         You are a data scientist and code python for me.
         There is a dataframe in pandas (python).
         The name of the dataframe is `self.df`.
         The column name of the dataframe is `self.header_list`.
         ONLY use the data in 'df', do not make up new data. If there is no relevant data then just print "Cannot found data!"
-        Return the python code with essential library import. 
+        Return the python code with library like pandas, numpy, pyqt5, pypdf2, xlsxwriter and scipy. DO NOT use other libraries.
         If question is not about plot then make sure add print code to output the result.
         For example, the non-plot code should be like:
         print(df.nlargest(3, 'happiness_index')['country'])

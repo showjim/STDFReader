@@ -6,7 +6,7 @@ from langchain.llms import AzureOpenAI
 from langchain.chat_models import AzureChatOpenAI
 
 
-class LLM():
+class Azure_OpenAI():
     def __init__(self):
         super().__init__()
 
@@ -30,7 +30,7 @@ class LLM():
         # max LLM token input size
         max_input_size = 3900  # 4096
         # set number of output tokens
-        num_output = 512  # 512
+        num_output = 1024  # 512
         # set maximum chunk overlap
         max_chunk_overlap = 20
         return AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],

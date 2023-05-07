@@ -1674,10 +1674,11 @@ class Application(QMainWindow):  # QWidget):
     def llm_chat(self):
         matplotlib.use('qt5Agg')
         # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
-        # prompt = "Please plot the value trendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
+        # prompt = "Please plot the value tendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
         # please plot a histogram of columns showing for their value when 'PART_ID'=1, the columns I need are as below: '535 - VOH_SYNCN <> vout','536 - VOL_SYNCP <> vout','540 - VOH_DTOP <> vout', '541 - VOH_DTO2P <> vout'.
         # please plot the tendency of column '535 - VOH_SYNCN <> vout' showing for each 'PART_ID' as X-axis
         # please calculate the mean of column '535 - VOH_SYNCN <> vout', and send the result in a message window
+        # please plot the histogram of column '535 - VOH_SYNCN <> vout', and save as pdf file
         prompt = self.llm_prompt_edit.toPlainText()# .text()
         # # Sample DataFrame
         # self.df_csv = pd.DataFrame({
