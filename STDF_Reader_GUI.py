@@ -1675,8 +1675,16 @@ class Application(QMainWindow):  # QWidget):
         matplotlib.use('qt5Agg')
         # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
         # prompt = "Please plot the value trendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
-        # please plot the histogram of 'PART_ID'=1 showing for value of each column '535 - VOH_SYNCN <> vout','536 - VOL_SYNCP <> vout','540 - VOH_DTOP <> vout', '541 - VOH_DTO2P <> vout' as Y-axis with different color for each bar, set 0~3 as bin number
+        # please plot a histogram of columns showing for their value when 'PART_ID'=1, the columns I need are as below: '535 - VOH_SYNCN <> vout','536 - VOL_SYNCP <> vout','540 - VOH_DTOP <> vout', '541 - VOH_DTO2P <> vout'.
+        # please plot the tendency of column '535 - VOH_SYNCN <> vout' showing for each 'PART_ID' as X-axis
+        # please calculate the mean of column '535 - VOH_SYNCN <> vout', and send the result in a message window
         prompt = self.llm_prompt_edit.toPlainText()# .text()
+        # # Sample DataFrame
+        # self.df_csv = pd.DataFrame({
+        #     "country": ["United States", "United Kingdom", "France", "Germany", "Italy", "Spain", "Canada", "Australia", "Japan", "China"],
+        #     "gdp": [19294482071552, 2891615567872, 2411255037952, 3435817336832, 1745433788416, 1181205135360, 1607402389504, 1490967855104, 4380756541440, 14631844184064],
+        #     "happiness_index": [6.94, 7.16, 6.66, 7.07, 6.38, 6.4, 7.23, 7.22, 5.87, 5.12]
+        # })
         header_list = self.df_csv.columns.tolist()
         chat = ChatBot(self.df_csv)
         full_instruction = chat.merge_instruction(prompt)

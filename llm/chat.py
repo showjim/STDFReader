@@ -14,6 +14,7 @@ class ChatBot():
         self.df = df
         self.header_list = self.df.columns.tolist()
         self.task_instruction: str = """
+        You are a data scientist and code python for me.
         There is a dataframe in pandas (python).
         The name of the dataframe is `self.df`.
         The column name of the dataframe is `self.header_list`.
@@ -22,6 +23,7 @@ class ChatBot():
         If question is not about plot then make sure add print code to output the result.
         For example, the non-plot code should be like:
         print(df.nlargest(3, 'happiness_index')['country'])
+        If question ask to pop-out a message window, please use QMessageBox from pyqt5.
 
         And make sure to prefix the python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly 
         to get the answer to the following question :
