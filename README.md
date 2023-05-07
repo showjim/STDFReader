@@ -10,7 +10,7 @@ The STDF Reader Tool is a project designed for the AP team to process and analyz
 4. **Export reports**: Generate XLSX and PDF reports containing mean/cp/cpk values, data statistics, wafer maps, and more.
 5. **Correlation**: Upload two parsed CSV files with STDF data to perform correlation analysis.
 6. **Additional features**: Convert STDF files to XLSX tables, extract STR/PSR/PMR from diagnosis logs, and generate sub-CSV files from selected tests.
-7. **CHat with STDF data in Natural language**: Use natural language to perform data analysis tasks, powered by Azure OpenAI.
+7. **Chat with STDF data in Natural language**: Use natural language to perform data analysis tasks, powered by Azure OpenAI.
 
 ![Sample Screenshots](/img/sample_screenshots.png)
 
