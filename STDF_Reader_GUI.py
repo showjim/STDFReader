@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.1'
+Version = 'Beta 0.8.2'
 
 
 ###################################################
@@ -1687,13 +1687,18 @@ class Application(QMainWindow):  # QWidget):
         #     "happiness_index": [6.94, 7.16, 6.66, 7.07, 6.38, 6.4, 7.23, 7.22, 5.87, 5.12]
         # })
         header_list = self.df_csv.columns.tolist()
-        chat = ChatBot(self.df_csv)
-        full_instruction = chat.merge_instruction(prompt)
-        resp = chat.chat(full_instruction)
-        print(resp)
-        print("Execution result:")
-        code = chat.extract_code(resp)
-        chat.run_code(code)
+        try:
+            chat = ChatBot(self.df_csv)
+            full_instruction = chat.merge_instruction(prompt)
+            resp = chat.chat(full_instruction)
+            print(resp)
+            print("Execution result:")
+            code = chat.extract_code(resp)
+            chat.run_code(code)
+        except Exception as e:
+            QMessageBox.information(
+                self, 'Error', e.__str__(),
+                QMessageBox.Ok)
 
     def restore_menu(self):
         self.generate_pdf_button.setEnabled(True)

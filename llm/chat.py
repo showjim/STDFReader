@@ -16,6 +16,7 @@ class ChatBot():
         self.llm = self.model.create_chat_model()
         self.df = df
         self.header_list = self.df.columns.tolist()
+        self.bak_question = ""
         # Return the python code with essential library import.
         self.task_instruction: str = """
         You are a data scientist and code python for me.
@@ -37,26 +38,27 @@ class ChatBot():
         """
 
         self.response_instruction: str = """
-        Question: {question}
-        Answer: {answer}
+        Question: {QUESTION}
+        Answer: {ANSWER}
     
         Rewrite the answer to the question in a conversational way.
         """
 
-        self._error_correct_instruction: str = """
-        For the task defined below:
-        {orig_task}
+        self.error_correct_instruction: str = """
+        The user asked the following question:
+        {QUESTION}
         you generated this python code:
-        {code}
+        {CODE}
         and this fails with the following error:
-        {error_returned}
-        Correct the python code and return a new python code (do not import anything) that fixes the above mentioned error.
+        {ERROR_RETURNED}
+        Correct the python code and return a new python code that fixes the above mentioned error.  Do not generate the same code again.
         Make sure to prefix the python code with {START_CODE_TAG} exactly and suffix the code with {END_CODE_TAG} exactly.
         """
     def merge_instruction(self, prompt):
         full_instruction = self.task_instruction.format(START_CODE_TAG=START_CODE_TAG,
                                                     END_CODE_TAG=END_CODE_TAG,
                                                     QUESTION=prompt)
+        self.bak_question = prompt
         return full_instruction
     def chat(self, full_instruction):
         resp = self.llm([HumanMessage(content=full_instruction)])
@@ -68,7 +70,18 @@ class ChatBot():
         return code
 
     def run_code(self, code:str):
-        exec(code)
+        err_cnt = 0
+        while err_cnt <= 2:
+            try:
+                exec(code)
+                break
+            except Exception as e:
+                err_cnt += 1
+                new_instruction = self.error_correct_instruction.format(QUESTION=self.bak_question,
+                                                                        CODE=code,
+                                                                        ERROR_RETURNED=e,
+                                                                        START_CODE_TAG=START_CODE_TAG,
+                                                                        END_CODE_TAG=END_CODE_TAG)
 #
 # # Sample DataFrame
 # df = pd.DataFrame({
