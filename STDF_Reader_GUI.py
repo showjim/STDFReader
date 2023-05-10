@@ -1690,11 +1690,19 @@ class Application(QMainWindow):  # QWidget):
         try:
             chat = ChatBot(self.df_csv)
             full_instruction = chat.merge_instruction(prompt)
-            resp = chat.chat(full_instruction)
-            print(resp)
-            print("Execution result:")
-            code = chat.extract_code(resp)
-            chat.run_code(code)
+            err_cnt = 0
+            while err_cnt <= 2:
+                resp = chat.chat(full_instruction)
+                print(resp)
+                print("Execution result:")
+                code = chat.extract_code(resp)
+                try:
+                    # code = "print(1/0)"
+                    chat.run_code(code)
+                    break
+                except Exception as e:
+                    err_cnt += 1
+                    full_instruction = chat.merge_error_instruction(prompt, code, e.__str__())
         except Exception as e:
             QMessageBox.information(
                 self, 'Error', e.__str__(),

@@ -45,7 +45,7 @@ class ChatBot():
         """
 
         self.error_correct_instruction: str = """
-        The user asked the following question:
+        Here is the initial instruction and quesiton user asked:
         {QUESTION}
         you generated this python code:
         {CODE}
@@ -58,8 +58,16 @@ class ChatBot():
         full_instruction = self.task_instruction.format(START_CODE_TAG=START_CODE_TAG,
                                                     END_CODE_TAG=END_CODE_TAG,
                                                     QUESTION=prompt)
-        self.bak_question = prompt
+        self.first_instruction = full_instruction
         return full_instruction
+
+    def merge_error_instruction(self, promt:str, code:str, error_msg:str):
+        new_instruction = self.error_correct_instruction.format(QUESTION=self.first_instruction,
+                                                                CODE=code,
+                                                                ERROR_RETURNED=error_msg,
+                                                                START_CODE_TAG=START_CODE_TAG,
+                                                                END_CODE_TAG=END_CODE_TAG)
+        return new_instruction
     def chat(self, full_instruction):
         resp = self.llm([HumanMessage(content=full_instruction)])
         return resp.content
@@ -70,18 +78,7 @@ class ChatBot():
         return code
 
     def run_code(self, code:str):
-        err_cnt = 0
-        while err_cnt <= 2:
-            try:
-                exec(code)
-                break
-            except Exception as e:
-                err_cnt += 1
-                new_instruction = self.error_correct_instruction.format(QUESTION=self.bak_question,
-                                                                        CODE=code,
-                                                                        ERROR_RETURNED=e,
-                                                                        START_CODE_TAG=START_CODE_TAG,
-                                                                        END_CODE_TAG=END_CODE_TAG)
+        exec(code)
 #
 # # Sample DataFrame
 # df = pd.DataFrame({
