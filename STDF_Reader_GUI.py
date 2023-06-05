@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.2'
+Version = 'Beta 0.8.3'
 
 
 ###################################################
@@ -1679,6 +1679,7 @@ class Application(QMainWindow):  # QWidget):
         # please plot the tendency of column '535 - VOH_SYNCN <> vout' showing for each 'PART_ID' as X-axis
         # please calculate the mean of column '535 - VOH_SYNCN <> vout', and send the result in a message window
         # please plot the histogram of column '535 - VOH_SYNCN <> vout', and save as pdf file
+        # 请画出 '535 - VOH_SYNCN <> vout'列的直方图，并指出3 sigma的位置
         prompt = self.llm_prompt_edit.toPlainText()# .text()
         # # Sample DataFrame
         # self.df_csv = pd.DataFrame({

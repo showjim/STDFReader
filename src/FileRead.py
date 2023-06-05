@@ -836,7 +836,8 @@ class My_STDF_V4_2007_1_Profiler:
                 # tmp_pd = pd.DataFrame(self.test_result_dict)
                 tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
                 # tmp_pd.transpose()
-                self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
+                self.all_test_result_pd = pd.concat([self.all_test_result_pd, tmp_pd], sort=False, ignore_index=True)
+                # self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
         self.lastrectype = rectype
 
     def after_complete(self, dataSource):
