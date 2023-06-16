@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.3'
+Version = 'Beta 0.8.4'
 
 
 ###################################################
@@ -719,8 +719,8 @@ class Application(QMainWindow):  # QWidget):
 
                 # Data cleaning, get rid of '(F)' and '(A)'
                 self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
-                # self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
-                self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
+                self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+                # self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
                 self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
                 self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
                 self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
@@ -1539,10 +1539,13 @@ class Application(QMainWindow):  # QWidget):
 
         for i in range(0, len(test_list)):
             # merge all sites data
-            all_data_array = df_csv.iloc[:, i + 16].to_numpy()
+            all_data_array = df_csv.iloc[:, i + 16].to_numpy('float64')
             ## Get rid of all no-string value to NaN, and replace to None
             # all_data_array = pd.to_numeric(df_csv.iloc[:, i + 12], errors='coerce').to_numpy()
-            all_data_array = all_data_array[~np.isnan(all_data_array)]
+            try:
+                all_data_array = all_data_array[~np.isnan(all_data_array)]
+            except Exception as e:
+                print(e)
             if float('-inf') in all_data_array or float('inf') in all_data_array:
                 logging.warning("Found inf/-inf in data log!!!")
                 print("Warning: Found inf/-inf in data log!!!")
@@ -1564,7 +1567,7 @@ class Application(QMainWindow):  # QWidget):
             if (not merge_sites) or output_them_both:
                 for j in sdr_parse:
                     site_test_data_df = site_test_data_dic[str(j)]
-                    site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy()
+                    site_test_data = site_test_data_df.iloc[:, i + 16].to_numpy('float64')
 
                     ## Get rid of (F) and conver to float on series
                     # site_test_data = pd.to_numeric(site_test_data_df.iloc[:, i + 12], errors='coerce').to_numpy()
@@ -1649,7 +1652,7 @@ class Application(QMainWindow):  # QWidget):
             site_test_data_list = []
             label_list = []
             for j in self.sdr_parse:
-                site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy('float64')
                 tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                 ## Ignore fail value
                 # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
