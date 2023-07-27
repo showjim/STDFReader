@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.4'
+Version = 'Beta 0.8.5'
 
 
 ###################################################
@@ -638,6 +638,81 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.output_one_file_toggled = False
 
+    def process_csv_file(self):
+        self.df_csv = pd.DataFrame()
+        csv_data = pd.DataFrame()
+        self.list_of_test_numbers_string = []
+        self.tnumber_list = []
+        self.tname_list = []
+        self.test_info_list = []
+        test_info_list = []
+        i = 0
+        for filename in self.file_paths:
+            csv_data = pd.read_csv(filename, header=[0, 1, 2, 3, 4])
+
+            # Extracts the test name for the selecting
+            tmp_pd = csv_data.columns
+            single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
+            tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
+            tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
+            test_info_list = list(set(tmp_pd.values.tolist()[16:]).union(test_info_list))
+            list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tname_list, tnumber_list)]
+
+            # Change the multi-level columns to single level columns
+            single_columns = single_columns + list_of_test_numbers_string
+            csv_data.columns = single_columns
+
+            if self.cherry_pick_toggled:
+                site_list = []
+                text = self.selected_site_line_edit.text()
+                if self.cherry_pick_toggled and text != "Input selected site list here":
+                    site_list = text.replace('-', ' ').replace(';', ' ').replace(',', ' ').split()
+                site_index = int(site_list[i])
+                csv_data = csv_data[csv_data['SITE_NUM'].isin([site_index])].copy()
+            i += 1
+
+            if self.df_csv.empty:
+                self.df_csv = csv_data.copy()
+            else:
+                self.df_csv = pd.concat([self.df_csv, csv_data], sort=False,
+                                        join='outer', ignore_index=True)
+        # self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
+        # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
+        # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
+
+        # Extracts the test name for the selecting
+        tmp_pd = self.df_csv.columns
+        self.single_columns = tmp_pd.values.tolist()[:16]  # Get the part info
+        # self.tnumber_list = tmp_pd.values.tolist()[16:]
+        # self.tname_list = tmp_pd.values.tolist()[16:]
+        self.test_info_list = test_info_list  # tmp_pd.values.tolist()[16:]
+        self.list_of_test_numbers_string = tmp_pd.values.tolist()[
+                                           16:]  # [j + ' - ' + i for i, j in zip(self.tname_list, self.tnumber_list)]
+        # Change the multi-level columns to single level columns
+        # self.single_columns = self.single_columns + self.list_of_test_numbers_string
+        # self.df_csv.columns = self.single_columns
+
+        # Data cleaning, get rid of '(F)' and '(A)'
+        self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
+        self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+        # self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
+        self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
+        self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
+        self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
+        self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
+        self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
+        self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
+        self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
+        self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
+
+        # Extract the test name and test number list
+        self.list_of_test_numbers = [x.split(" - ") for x in
+                                     self.list_of_test_numbers_string]  # [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+
+        # Get site array
+        self.sdr_parse = self.df_csv['SITE_NUM'].unique()
+        self.number_of_sites = len(self.sdr_parse)
+
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
         # Only accepts text files
@@ -666,76 +741,7 @@ class Application(QMainWindow):  # QWidget):
             elif self.file_path.endswith(".std"):
                 pass
             elif self.file_path.endswith(".csv"):
-                csv_data = pd.DataFrame()
-                self.list_of_test_numbers_string = []
-                self.tnumber_list = []
-                self.tname_list = []
-                self.test_info_list = []
-                test_info_list = []
-                i = 0
-                for filename in self.file_paths:
-                    csv_data = pd.read_csv(filename, header=[0, 1, 2, 3, 4])
-
-                    # Extracts the test name for the selecting
-                    tmp_pd = csv_data.columns
-                    single_columns = tmp_pd.get_level_values(4).values.tolist()[:16]  # Get the part info
-                    tnumber_list = tmp_pd.get_level_values(4).values.tolist()[16:]
-                    tname_list = tmp_pd.get_level_values(0).values.tolist()[16:]
-                    test_info_list = list(set(tmp_pd.values.tolist()[16:]).union(test_info_list))
-                    list_of_test_numbers_string = [j + ' - ' + i for i, j in zip(tname_list, tnumber_list)]
-
-                    # Change the multi-level columns to single level columns
-                    single_columns = single_columns + list_of_test_numbers_string
-                    csv_data.columns = single_columns
-
-                    if self.cherry_pick_toggled:
-                        site_list = []
-                        text = self.selected_site_line_edit.text()
-                        if self.cherry_pick_toggled and text != "Input selected site list here":
-                            site_list = text.replace('-', ' ').replace(';', ' ').replace(',', ' ').split()
-                        site_index = int(site_list[i])
-                        csv_data = csv_data[csv_data['SITE_NUM'].isin([site_index])].copy()
-                    i += 1
-
-                    if self.df_csv.empty:
-                        self.df_csv = csv_data.copy()
-                    else:
-                        self.df_csv = pd.concat([self.df_csv, csv_data], sort=False,
-                                                     join='outer', ignore_index=True)
-                # self.df_csv = pd.read_csv(self.file_path, header=[0, 1, 2, 3, 4])  # , dtype=str)
-                # self.df_csv.replace(r'\(F\)','',regex=True, inplace=True)
-                # self.df_csv.iloc[:,12:] = self.df_csv.iloc[:,12:].astype('float')
-
-                # Extracts the test name for the selecting
-                tmp_pd = self.df_csv.columns
-                self.single_columns = tmp_pd.values.tolist()[:16]  # Get the part info
-                # self.tnumber_list = tmp_pd.values.tolist()[16:]
-                # self.tname_list = tmp_pd.values.tolist()[16:]
-                self.test_info_list = test_info_list #tmp_pd.values.tolist()[16:]
-                self.list_of_test_numbers_string = tmp_pd.values.tolist()[16:] #[j + ' - ' + i for i, j in zip(self.tname_list, self.tnumber_list)]
-                # Change the multi-level columns to single level columns
-                # self.single_columns = self.single_columns + self.list_of_test_numbers_string
-                # self.df_csv.columns = self.single_columns
-
-                # Data cleaning, get rid of '(F)' and '(A)'
-                self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
-                self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
-                # self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
-                self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
-                self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
-                self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
-                self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
-                self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
-                self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
-                self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
-                self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
-
-                # Extract the test name and test number list
-                self.list_of_test_numbers = [x.split(" - ") for x in self.list_of_test_numbers_string] #[list(z) for z in (zip(self.tnumber_list, self.tname_list))]
-
-                # Get site array
-                self.sdr_parse = self.df_csv['SITE_NUM'].unique()
-                self.number_of_sites = len(self.sdr_parse)
+                self.process_csv_file()
 
             endt = time.time()
             print('读取时间：', endt - startt)
@@ -1348,6 +1354,7 @@ class Application(QMainWindow):  # QWidget):
 
     def make_s2s_correlation_table(self):
         correlation_df = pd.DataFrame()
+        self.process_csv_file()
         if self.file_selected:
             table = self.get_summary_table(self.df_csv, self.test_info_list, self.number_of_sites,
                                            self.list_of_test_numbers, False, False, False)
