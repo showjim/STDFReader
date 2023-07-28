@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.5'
+Version = 'Beta 0.8.6'
 
 
 ###################################################
@@ -1058,18 +1058,24 @@ class Application(QMainWindow):  # QWidget):
     def make_bin_summary(self):
         all_bin_summary_list = []
         lot_id_list = self.df_csv['LOT_ID'].unique()
+        coord_x_list = self.df_csv['X_COORD'].unique().tolist()
+        coord_y_list = self.df_csv['Y_COORD'].unique().tolist()
         for lot_id in lot_id_list:
             single_lot_df = self.df_csv[self.df_csv['LOT_ID'].isin([lot_id])]
             wafer_id_list = single_lot_df['WAFER_ID'].unique()
             for wafer_id in wafer_id_list:
                 single_wafer_df = single_lot_df[single_lot_df['WAFER_ID'].isin([wafer_id])]
                 die_id = str(single_wafer_df['LOT_ID'].iloc[0]) + ' - ' + str(single_wafer_df['WAFER_ID'].iloc[0])
-                retest_die_df = single_wafer_df[single_wafer_df['RC'].isin(['Retest'])]
-                retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
-                mask = (single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & \
-                       (single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & \
-                       (single_wafer_df['RC'].isin(['First']).to_numpy())
-                single_wafer_df = single_wafer_df[~mask.any(axis=0)]
+                if (len(coord_x_list) == 1 and coord_x_list[0] == -32768) and \
+                   (len(coord_y_list) == 1 and coord_y_list[0] == -32768):
+                    pass
+                else:
+                    retest_die_df = single_wafer_df[single_wafer_df['RC'].isin(['Retest'])]
+                    retest_die_np = retest_die_df[['X_COORD', 'Y_COORD']].values
+                    mask = (single_wafer_df.X_COORD.values == retest_die_np[:, None, 0]) & \
+                           (single_wafer_df.Y_COORD.values == retest_die_np[:, None, 1]) & \
+                           (single_wafer_df['RC'].isin(['First']).to_numpy())
+                    single_wafer_df = single_wafer_df[~mask.any(axis=0)]
                 bin_summary_pd = single_wafer_df.pivot_table('PART_ID', index=['SOFT_BIN', 'BIN_DESC'],
                                                              columns='SITE_NUM',
                                                              aggfunc='count', margins=True, fill_value=0).copy()
