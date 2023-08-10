@@ -12,7 +12,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from PyPDF2 import PdfFileMerger, PdfFileReader
+from PyPDF2 import PdfFileMerger, PdfFileReader, PdfMerger, PdfReader
 from src.Backend import Backend
 from src.FileRead import FileReaders
 
@@ -40,7 +40,7 @@ class PdfWriterThread(QThread):
         startt = time.time()
         self.notify_progress_bar.emit(0)
 
-        pp = PdfFileMerger()
+        pp = PdfMerger() #PdfFileMerger()
 
         site_test_data_dic = {}
         if self.group_by_file:
@@ -73,7 +73,7 @@ class PdfWriterThread(QThread):
 
                     pdfTemp.close()
 
-                    pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
+                    pp.append(PdfReader(str(self.file_path + "_results_temp")))
 
                     self.notify_status_text.emit(str(str(
                         i) + "/" + str(len(self.selected_tests)) + " test results completed"))
@@ -102,7 +102,7 @@ class PdfWriterThread(QThread):
 
                     pdfTemp.close()
 
-                    pp.append(PdfFileReader(str(self.file_path + "_results_temp")))
+                    pp.append(PdfReader(str(self.file_path + "_results_temp")))
 
                     self.notify_status_text.emit(str(str(
                         i) + "/" + str(len(self.selected_tests)) + " test results completed"))
