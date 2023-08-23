@@ -285,7 +285,7 @@ class Application(QMainWindow):  # QWidget):
         self.file_path = None
         self.text_file_location = self.file_path
 
-        self.setBaseSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1]) #.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
+        self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1]) #.setBaseSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.center()
         self.setWindowTitle('STDF Reader For AP ' + Version)
 
