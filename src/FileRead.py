@@ -137,7 +137,7 @@ class FileReaders(ABC):
                 # except BaseException:
                 #     os.system('pause')
 
-        writer.save()
+        writer.close()
 
     # this function to extract only 1 type of record, in case STDF file is too large
     @staticmethod
