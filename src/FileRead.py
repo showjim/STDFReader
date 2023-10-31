@@ -52,7 +52,7 @@ class FileReaders(ABC):
         i=0
         for filename in file_names:
             # Open std file/s
-            if filename.endswith(".std") or filename.endswith(".STD") or filename.endswith(".stdf"):
+            if filename.endswith(".std") or filename.endswith(".STD") or filename.endswith(".stdf") or filename.endswith(".STDF"):
                 f = open(filename, 'rb')
             elif filename.endswith(".gz") or filename.endswith(".GZ"):
                 f = gzip.open(filename, 'rb')
