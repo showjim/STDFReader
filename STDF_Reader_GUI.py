@@ -381,6 +381,7 @@ class Application(QMainWindow):  # QWidget):
     def main_window(self):
         # self.setGeometry(300, 300, 300, 200)
         # self.resize(900, 700)
+        self.setFixedSize(self.WINDOW_SIZE[0], self.WINDOW_SIZE[1])
         self.setWindowTitle('STDF Reader For AP ' + Version)
 
         # Layout
