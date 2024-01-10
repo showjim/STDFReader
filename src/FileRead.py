@@ -715,6 +715,7 @@ class My_STDF_V4_2007_1_Profiler:
         self.all_test_result_pd = pd.DataFrame()
         self.total_logged_count = 0
         self.row_cnt = 0
+        self.accumulated_fail_cyc_cnt = 0
 
     def after_begin(self, dataSource):
         self.reset_flag = False
@@ -737,6 +738,7 @@ class My_STDF_V4_2007_1_Profiler:
         self.all_test_result_pd = pd.DataFrame()
         self.total_logged_count = 0
         self.row_cnt = 0
+        self.accumulated_fail_cyc_cnt = 0
 
     def after_send(self, dataSource, data):
         rectype, fields = data
@@ -786,13 +788,25 @@ class My_STDF_V4_2007_1_Profiler:
             for i in range(self.site_count):
                 if fields[V4.str.SITE_NUM] == self.site_array[i]:
                     self.cont_flag = fields[V4.str.CONT_FLG]
-                    self.cyc_ofst = self.cyc_ofst + fields[V4.str.CYC_OFST]
-                    self.fail_pin = self.fail_pin + [self.pmr_dict[str(number)] for number in fields[V4.str.PMR_INDX]] # fields[V4.str.PMR_INDX]
-                    self.exp_data = self.exp_data + [chr(number) for number in fields[V4.str.EXP_DATA]] # fields[V4.str.EXP_DATA]
-                    self.cap_data = self.cap_data + [chr(number) for number in fields[V4.str.CAP_DATA]] # fields[V4.str.CAP_DATA]
+                    self.total_logged_count = fields[V4.str.TOTL_CNT]
+                    cycle_offset_cnt = fields[V4.str.CYCO_CNT]
+                    self.accumulated_fail_cyc_cnt += cycle_offset_cnt
+                    if cycle_offset_cnt > 0:
+                        self.cyc_ofst = self.cyc_ofst + fields[V4.str.CYC_OFST]
+                        self.fail_pin = self.fail_pin + [self.pmr_dict[str(number)] for number in fields[V4.str.PMR_INDX]] # fields[V4.str.PMR_INDX]
+                        if len(fields[V4.str.EXP_DATA]) > 0:
+                            self.exp_data = self.exp_data + [chr(number) for number in fields[V4.str.EXP_DATA]] # fields[V4.str.EXP_DATA]
+                        else: # in case no Exp data given
+                            self.exp_data = self.exp_data + ["Not Provided"] * len(fields[V4.str.CYC_OFST])
+                        if len(fields[V4.str.EXP_DATA]) > 0:
+                            self.cap_data = self.cap_data + [chr(number) for number in fields[V4.str.CAP_DATA]] # fields[V4.str.CAP_DATA]
+                        else: # in case no Cap data given
+                            self.cap_data = self.cap_data + ["Not Provided"] * len(fields[V4.str.CYC_OFST])
+                    else:
+                        print("Empty Fail Cycle STR found, skip...")
 
-                    if self.cont_flag == 0:
-                        self.total_logged_count = fields[V4.str.TOTL_CNT]
+                    if self.cont_flag == 0 and self.total_logged_count == self.accumulated_fail_cyc_cnt:
+                        # self.total_logged_count = fields[V4.str.TOTL_CNT]
                         self.row_cnt[i] = self.row_cnt[i] + self.total_logged_count
 
                         self.test_result_dict['SITE_NUM'] = self.test_result_dict['SITE_NUM'] + [fields[V4.str.SITE_NUM]] * self.total_logged_count
@@ -811,6 +825,7 @@ class My_STDF_V4_2007_1_Profiler:
                         self.fail_pin = []
                         self.exp_data = []
                         self.cap_data = []
+                        self.accumulated_fail_cyc_cnt = 0
                         pass
                     else:
                         pass
