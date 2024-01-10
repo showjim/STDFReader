@@ -776,8 +776,12 @@ class My_STDF_V4_2007_1_Profiler:
             self.pmr_dict[str(fields[V4.pmr.PMR_INDX])] = str(fields[V4.pmr.LOG_NAM])
         if rectype == V4.psr:
             psr_nam = str(fields[V4.psr.PSR_NAM])
-            self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[0]
-            self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[1]
+            if ':' in psr_nam:
+                self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[0]
+                self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam.split(':')[1]
+            else:
+                self.pat_nam_dict[str(fields[V4.psr.PSR_INDX])] = psr_nam
+                self.mod_nam_dict[str(fields[V4.psr.PSR_INDX])] = ""
         if rectype == V4.str:
             for i in range(self.site_count):
                 if fields[V4.str.SITE_NUM] == self.site_array[i]:
