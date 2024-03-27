@@ -51,7 +51,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.12'
+Version = 'Beta 0.8.13'
 
 
 ###################################################
@@ -204,6 +204,12 @@ class Application(QMainWindow):  # QWidget):
         self.ignore_TNUM_toggle.stateChanged.connect(self.enable_ignore_tnum_flag)
         self.ignore_TNUM_toggled = False
 
+        # toggle for enable analyse log with setting "Ignore Test Number"
+        self.ignore_chnum_toggle = QCheckBox('Ignore Channel Number', self)
+        self.ignore_chnum_toggle.setChecked(False)
+        self.ignore_chnum_toggle.stateChanged.connect(self.enable_ignore_chnum_flag)
+        self.ignore_chnum_toggled = False
+
         # toggle for enable analyse log with setting "output converted csv as one file"
         self.output_one_file_toggle = QCheckBox('Output as one file', self)
         self.output_one_file_toggle.setChecked(True)
@@ -281,7 +287,7 @@ class Application(QMainWindow):  # QWidget):
 
         self.progress_bar = QProgressBar()
 
-        self.WINDOW_SIZE = (700, 350)
+        self.WINDOW_SIZE = (750, 350)
         self.file_path = None
         self.text_file_location = self.file_path
 
@@ -407,7 +413,8 @@ class Application(QMainWindow):  # QWidget):
         # self.step_1.setLayout(vbox)
         # layout.addWidget(self.step_1, 2, 0, 4, 16)
         vbox = QGridLayout()
-        vbox.addWidget(self.ignore_TNUM_toggle, 2, 0, 1, 7)
+        vbox.addWidget(self.ignore_TNUM_toggle, 2, 0, 1, 3)
+        vbox.addWidget(self.ignore_chnum_toggle, 2, 4, 1, 4)
         vbox.addWidget(self.output_one_file_toggle, 2, 8, 1, 8)
         vbox.addWidget(self.stdf_upload_button,3,0,1,16)
         # vbox.addWidget(self.cherry_pick_toggle,3,0,1,8)
@@ -533,7 +540,7 @@ class Application(QMainWindow):  # QWidget):
         # text = self.selected_site_line_edit.text()
         # if self.cherry_pick_toggled and text != "Input selected site list here":
         #     site_list = text.replace('-',' ').replace(';',' ').replace(',',' ').split()
-        self.threaded_csv_parser = CsvParseThread(filepath, self.ignore_TNUM_toggled, self.output_one_file_toggled)
+        self.threaded_csv_parser = CsvParseThread(filepath, self.ignore_TNUM_toggled, self.output_one_file_toggled, self.ignore_chnum_toggled)
         self.threaded_csv_parser.notify_progress_bar.connect(self.on_progress)
         self.threaded_csv_parser.notify_status_text.connect(self.on_update_text)
         self.threaded_csv_parser.finished.connect(self.set_progress_bar_max)
@@ -631,6 +638,13 @@ class Application(QMainWindow):  # QWidget):
             self.ignore_TNUM_toggled = True
         else:
             self.ignore_TNUM_toggled = False
+
+    def enable_ignore_chnum_flag(self, state):
+
+        if state == Qt.Checked:
+            self.ignore_chnum_toggled = True
+        else:
+            self.ignore_chnum_toggled = False
 
     def enable_output_one_file_flag(self, state):
 

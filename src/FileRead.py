@@ -47,7 +47,7 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_csv(file_names, output_file_name, notify_progress_bar, ignore_TNUM=False):
+    def to_csv(file_names, output_file_name, notify_progress_bar, ignore_TNUM=False, ignore_chnum=False):
         data_summary_all = pd.DataFrame()
         i=0
         for filename in file_names:
@@ -64,7 +64,9 @@ class FileReaders(ABC):
             startt = time.time()  # 9.7s --> TextWriter; 7.15s --> MyTestResultProfiler
 
             # Writing to a text file instead of vomiting it to the console
-            data_summary = MyTestResultProfiler(filename=fname,file=f, filezise = fsize, notify_progress_bar=notify_progress_bar, ignore_tnum=ignore_TNUM)
+            data_summary = MyTestResultProfiler(filename=fname,file=f, filezise = fsize,
+                                                notify_progress_bar=notify_progress_bar,
+                                                ignore_tnum=ignore_TNUM, ignore_chnum=ignore_chnum)
             p.addSink(data_summary)
             p.parse()
 
@@ -269,7 +271,7 @@ class MyTestTimeProfiler:
 
 # Get all PTR,PIR,FTR result
 class MyTestResultProfiler:
-    def __init__(self, filename, file, filezise, notify_progress_bar, ignore_tnum):
+    def __init__(self, filename, file, filezise, notify_progress_bar, ignore_tnum, ignore_chnum):
         self.filename = filename
         self.reset_flag = False
         self.total = 0
@@ -303,6 +305,7 @@ class MyTestResultProfiler:
         self.filezise = filezise
         self.notify_progress_bar = notify_progress_bar
         self.ignore_tnum = ignore_tnum
+        self.ignore_chnum = ignore_chnum
 
         # in order to distinguish same name inst in flow
         self.same_name_inst_cnt_dict = {}
@@ -399,8 +402,12 @@ class MyTestResultProfiler:
                 tnumber = "0"
 
             tname_list = tname.split(' ')
-            if len(tname_list) == 5:
-                tname_list.pop(2) #remove channel number
+            if self.ignore_chnum:
+                tname_list.pop(2)  # remove channel number
+            # if len(tname_list) == 5:
+            #     tname_list.pop(2) #remove channel number
+            # elif len(tname_list) == 3 :
+            #     tname_list.pop(2)  # remove channel number
             tname = ' '.join(tname_list)
             tname_tnumber = tnumber + '|' + tname #fields[V4.ptr.TEST_TXT]
 
