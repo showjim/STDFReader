@@ -812,16 +812,16 @@ class My_STDF_V4_2007_1_Profiler:
                     else:
                         print("Empty Fail Cycle STR found, skip...")
 
-                    if self.cont_flag == 0 and self.total_logged_count == self.accumulated_fail_cyc_cnt:
+                    if self.cont_flag == 0: # and self.total_logged_count == self.accumulated_fail_cyc_cnt:
                         # self.total_logged_count = fields[V4.str.TOTL_CNT]
-                        self.row_cnt[i] = self.row_cnt[i] + self.total_logged_count
+                        self.row_cnt[i] = self.row_cnt[i] + self.accumulated_fail_cyc_cnt
 
-                        self.test_result_dict['SITE_NUM'] = self.test_result_dict['SITE_NUM'] + [fields[V4.str.SITE_NUM]] * self.total_logged_count
-                        self.test_result_dict['FAIL_CNT'] = self.test_result_dict['FAIL_CNT'] + [fields[V4.str.TOTF_CNT]] * self.total_logged_count
-                        self.test_result_dict['LOGGED_FAIL_CNT'] = self.test_result_dict['LOGGED_FAIL_CNT'] + [fields[V4.str.TOTL_CNT]] * self.total_logged_count
-                        self.test_result_dict['TEST_NAME'] = self.test_result_dict['TEST_NAME'] + [fields[V4.str.TEST_TXT]] * self.total_logged_count
-                        self.test_result_dict['PAT_NAME'] = self.test_result_dict['PAT_NAME'] + [self.pat_nam_dict[str(fields[V4.str.PSR_REF])]] * self.total_logged_count
-                        self.test_result_dict['MOD_NAME'] = self.test_result_dict['MOD_NAME'] + [self.mod_nam_dict[str(fields[V4.str.PSR_REF])]] * self.total_logged_count
+                        self.test_result_dict['SITE_NUM'] = self.test_result_dict['SITE_NUM'] + [fields[V4.str.SITE_NUM]] * self.accumulated_fail_cyc_cnt
+                        self.test_result_dict['FAIL_CNT'] = self.test_result_dict['FAIL_CNT'] + [fields[V4.str.TOTF_CNT]] * self.accumulated_fail_cyc_cnt
+                        self.test_result_dict['LOGGED_FAIL_CNT'] = self.test_result_dict['LOGGED_FAIL_CNT'] + [fields[V4.str.TOTL_CNT]] * self.accumulated_fail_cyc_cnt
+                        self.test_result_dict['TEST_NAME'] = self.test_result_dict['TEST_NAME'] + [fields[V4.str.TEST_TXT]] * self.accumulated_fail_cyc_cnt
+                        self.test_result_dict['PAT_NAME'] = self.test_result_dict['PAT_NAME'] + [self.pat_nam_dict[str(fields[V4.str.PSR_REF])]] * self.accumulated_fail_cyc_cnt
+                        self.test_result_dict['MOD_NAME'] = self.test_result_dict['MOD_NAME'] + [self.mod_nam_dict[str(fields[V4.str.PSR_REF])]] * self.accumulated_fail_cyc_cnt
 
                         self.test_result_dict['FAIL_CYCLE'] = self.test_result_dict['FAIL_CYCLE'] + self.cyc_ofst
                         self.test_result_dict['FAIL_PIN'] = self.test_result_dict['FAIL_PIN'] + self.fail_pin
