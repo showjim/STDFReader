@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 ###################################################
 # STDF Reader Tool                                #
-# Version: Beta 0.6                               #
+# Version: Beta 0.8                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A light STDF reader and analysis tool           #
@@ -35,10 +35,8 @@ from pystdf.Writers import *
 from abc import ABC
 import numpy as np
 import pandas as pd
-import time, datetime
+import time, datetime, logging, re, csv
 import xlsxwriter
-import logging
-import re
 import qtawesome as qta
 
 import matplotlib
@@ -51,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.14'
+Version = 'Beta 0.8.15'
 
 
 ###################################################
@@ -285,6 +283,12 @@ class Application(QMainWindow):  # QWidget):
         # self.llm_prompt_edit.setMaximumHeight(self.llm_btn.height() * 1)
         self.llm_prompt_edit.setFixedHeight(50) #.resize(100,100)
 
+        # Transpose CSV log
+        self.transpose_csv_btn = QPushButton(qta.icon('mdi6.table-column-width', color='green', color_active='black'),
+                                          'Convert table rows to columns')
+        self.transpose_csv_btn.setToolTip('Convert table rows to columns')
+        self.transpose_csv_btn.clicked.connect(self.make_csv_transpose)
+
         self.progress_bar = QProgressBar()
 
         self.WINDOW_SIZE = (750, 350)
@@ -381,6 +385,7 @@ class Application(QMainWindow):  # QWidget):
         layout.addWidget(self.llm_btn, 0, 1)
         layout.addWidget(self.select_test_for_subcsv_menu, 1, 0)
         layout.addWidget(self.extract_subcsv, 2, 0)
+        layout.addWidget(self.transpose_csv_btn, 2, 1)
         self.tools_tab.setLayout(layout)
 
     # Main interface method
@@ -1545,6 +1550,28 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.status_text.setText('Please select one or more tests and try again!')
             self.progress_bar.setValue(0)
+
+    def make_csv_transpose(self):
+        self.progress_bar.setMinimum(0)
+
+        self.status_text.setText('Transposing CSV file, please wait...')
+        filterboi = 'CSV (*.csv)'
+        filepath = QFileDialog.getOpenFileName(
+            caption='Open CSV File', filter=filterboi)
+
+        self.status_text.update()
+        self.transpose_csv_btn.setEnabled(False)
+        # self.progress_bar.setMaximum(0)
+        if len(filepath) >= 1:
+            a = zip(*csv.reader(open(filepath[0], "rt")))
+            csv.writer(open(filepath[0] + "_transposed.csv", "wt"),
+                       lineterminator="\n").writerows(a)
+            self.status_text.setText('Transposing CSV file, done.')
+            self.progress_bar.setValue(100)
+        else:
+            self.status_text.setText('Please select one csv file and try again!')
+            self.progress_bar.setValue(0)
+        self.transpose_csv_btn.setEnabled(True)
 
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both, print_data):
