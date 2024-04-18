@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.16'
+Version = 'Beta 0.8.17'
 
 
 ###################################################
@@ -687,6 +687,11 @@ class Application(QMainWindow):  # QWidget):
                 text = self.selected_site_line_edit.text()
                 if self.cherry_pick_toggled and text != "Input selected site list here":
                     site_list = text.replace('-', ' ').replace(';', ' ').replace(',', ' ').split()
+                    if len(self.file_paths) != len(site_list):
+                        QMessageBox.information(
+                            self, 'Error', "File count mismatch with input site list!",
+                            QMessageBox.Ok)
+                        break
                 site_index = int(site_list[i])
                 csv_data = csv_data[csv_data['SITE_NUM'].isin([site_index])].copy()
             i += 1
@@ -712,28 +717,33 @@ class Application(QMainWindow):  # QWidget):
         # self.single_columns = self.single_columns + self.list_of_test_numbers_string
         # self.df_csv.columns = self.single_columns
 
-        # Data cleaning, get rid of '(F)' and '(A)'
-        self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
-        self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
-        # self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
-        self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
-        self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
-        self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
-        self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
-        self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
-        self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
-        self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
-        self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
+        if self.df_csv.shape[0] > 0:
+            # Data cleaning, get rid of '(F)' and '(A)'
+            self.df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
+            self.df_csv.iloc[:, 16:] = self.df_csv.iloc[:, 16:].astype('float')
+            # self.df_csv[self.df_csv.columns[16:]] = self.df_csv[self.df_csv.columns[16:]].astype('float')
+            self.df_csv['X_COORD'] = self.df_csv['X_COORD'].astype(int)
+            self.df_csv['Y_COORD'] = self.df_csv['Y_COORD'].astype(int)
+            self.df_csv['SOFT_BIN'] = self.df_csv['SOFT_BIN'].astype(int)
+            self.df_csv['HARD_BIN'] = self.df_csv['HARD_BIN'].astype(int)
+            self.df_csv['LOT_ID'].fillna(value=9999, inplace=True)
+            self.df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
+            self.df_csv['PART_ID'].fillna(value=9999, inplace=True)
+            self.df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
 
-        # Extract the test name and test number list
-        self.list_of_test_numbers = [x.split(" - ") for x in
-                                     self.list_of_test_numbers_string]  # [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
-        self.tnumber_list = [x[0] for x in self.list_of_test_numbers]
-        self.tname_list = [x[1] for x in self.list_of_test_numbers]
+            # Extract the test name and test number list
+            self.list_of_test_numbers = [x.split(" - ") for x in
+                                         self.list_of_test_numbers_string]  # [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+            self.tnumber_list = [x[0] for x in self.list_of_test_numbers]
+            self.tname_list = [x[1] for x in self.list_of_test_numbers]
 
-        # Get site array
-        self.sdr_parse = self.df_csv['SITE_NUM'].unique()
-        self.number_of_sites = len(self.sdr_parse)
+            # Get site array
+            self.sdr_parse = self.df_csv['SITE_NUM'].unique()
+            self.number_of_sites = len(self.sdr_parse)
+        else:
+            QMessageBox.information(
+                self, 'Warning', "Empty line in loaded file!",
+                QMessageBox.Ok)
 
     # Opens and reads a file to parse the data. Much of this is what was done in main() from the text version
     def open_text(self):
