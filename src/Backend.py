@@ -161,7 +161,7 @@ class Backend(ABC):
 
         except ValueError:
 
-            smallboi = 'n/a'
+            smallboi = float('-inf') #'n/a'
 
         return smallboi
 
@@ -177,7 +177,7 @@ class Backend(ABC):
 
         except ValueError:
 
-            bigboi = 'n/a'
+            bigboi = float('inf') #'n/a'
 
         return bigboi
 
@@ -378,7 +378,7 @@ class Backend(ABC):
                 Decimal(Backend.cpu(site_data, maximum)).quantize(Decimal('0.001')))
             cpk_result = float(
                 Decimal(Backend.cpk(site_data, minimum, maximum)).quantize(Decimal('0.001')))
-            # except decimal.InvalidOperation:
+            # except Exception as e:
             #     print(type(minimum))
             #     print(minimum)
             #     print(maximum)

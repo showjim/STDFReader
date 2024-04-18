@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.15'
+Version = 'Beta 0.8.16'
 
 
 ###################################################
@@ -728,6 +728,8 @@ class Application(QMainWindow):  # QWidget):
         # Extract the test name and test number list
         self.list_of_test_numbers = [x.split(" - ") for x in
                                      self.list_of_test_numbers_string]  # [list(z) for z in (zip(self.tnumber_list, self.tname_list))]
+        self.tnumber_list = [x[0] for x in self.list_of_test_numbers]
+        self.tname_list = [x[1] for x in self.list_of_test_numbers]
 
         # Get site array
         self.sdr_parse = self.df_csv['SITE_NUM'].unique()
