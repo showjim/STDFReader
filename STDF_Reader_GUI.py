@@ -13,7 +13,7 @@
 # numpy                                           #
 # matplotlib                                      #
 # countrymarmot (cp + cpk)                        #
-# PyPDF2                                          #
+# PyPDF                                          #
 # ZetCode + sentdex (PyQt tutorials)              #
 # My crying soul because there's no documentation #
 ###################################################
@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.17'
+Version = 'Beta 0.8.18'
 
 
 ###################################################

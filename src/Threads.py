@@ -4,6 +4,7 @@
 import os
 import time
 import numpy as np
+import pandas as pd
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
@@ -12,7 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from PyPDF2 import PdfFileMerger, PdfFileReader, PdfMerger, PdfReader
+from pypdf import PdfMerger, PdfReader
 from src.Backend import Backend
 from src.FileRead import FileReaders
 
@@ -57,7 +58,7 @@ class PdfWriterThread(QThread):
                 for i in range(len(self.selected_tests)):
                     site_test_data_list = []
                     for j in file_list:
-                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy('float64')
                         tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                         ## Ignore fail value
                         # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
@@ -86,7 +87,7 @@ class PdfWriterThread(QThread):
                 for i in range(len(self.selected_tests)):
                     site_test_data_list = []
                     for j in self.sdr_parse:
-                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy()
+                        site_test_data = site_test_data_dic[str(j)][self.selected_tests[i]].to_numpy('float64')
                         tmp_site_test_data_list = site_test_data[~np.isnan(site_test_data)].tolist()
                         ## Ignore fail value
                         # site_test_data = pd.to_numeric(site_test_data_dic[str(j)].iloc[:, i - 1 + 12],
