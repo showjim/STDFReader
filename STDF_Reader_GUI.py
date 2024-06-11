@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.18'
+Version = 'Beta 0.8.19'
 
 
 ###################################################
@@ -1662,7 +1662,9 @@ class Application(QMainWindow):  # QWidget):
             self.progress_bar.setValue(70 + int(i / len(test_list) * 10))
 
         if print_data: #'_LOOP' in self.file_path.upper():
-            for i in range(0, len(summary_results[1]) - 15):
+            # 获取最大子列表的长度
+            max_length = max(len(sublist) for sublist in summary_results)
+            for i in range(0, max_length - 15):
                 parameters += ['LOOP' + str(i)]
 
         table = pd.DataFrame(
