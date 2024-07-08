@@ -10,3 +10,4 @@ langchain~=0.1.16
 scipy~=1.10.1
 openai~=1.19.0
 python-dotenv~=1.0.0
+chardet~=5.2.0

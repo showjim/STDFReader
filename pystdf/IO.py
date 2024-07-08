@@ -21,6 +21,7 @@ import sys
 
 import struct
 import re
+import chardet
 
 from pystdf.Types import *
 from pystdf import V4
@@ -87,7 +88,18 @@ class Parser(DataSource):
             raise EofException()
         header.len -= len(buf)
         val,=struct.unpack(str(slen) + "s", buf)
-        return val.decode("ascii")
+        try:
+            return val.decode("ascii")
+        except Exception as e:
+            # to process when UnicodeDecodeError
+            print(e)
+            result = chardet.detect(val)
+            encoding = result['encoding']
+            print("The unknow format is: " + encoding)
+            try:
+                return val.decode(encoding)
+            except UnicodeDecodeError:
+                return val.decode("utf-8", errors="replace when UnicodeDecodeError")
 
     def readBn(self, header):
         blen = self.readField(header, "U1")
