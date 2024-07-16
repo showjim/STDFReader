@@ -402,14 +402,16 @@ class Backend(ABC):
             site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
 
 
+        site_results.append(
+            str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+
         try:
             site_results.append(
-                str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+                str(Decimal(mean_result).quantize(Decimal('0.000001'))))
         except Exception as e:
+            site_results.append(str(mean_result))
             print(e)
-            os.system('pause')
-        site_results.append(
-            str(Decimal(mean_result).quantize(Decimal('0.000001'))))
+            #os.system('pause')
         site_results.append(
             str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
         site_results.append(
