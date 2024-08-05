@@ -5,8 +5,21 @@ from dotenv import load_dotenv
 from langchain_community.llms import AzureOpenAI
 from langchain_community.chat_models import AzureChatOpenAI, ChatOllama
 
+class AIBase():
+    def __init__(self):
+        super().__init__()
 
-class OpenAIAzure():
+    def setup_env(self):
+        """
+        Load API keys and other configs
+        Returns:
+
+        """
+
+    def create_chat_model(self):
+        """Set up the model"""
+
+class OpenAIAzure(AIBase):
     def __init__(self):
         super().__init__()
 
@@ -50,6 +63,18 @@ class OpenAIAzure():
                                max_tokens=num_output,
                                temperature=0.5,
                                )
+
+class ollamaAI(AIBase):
+    def __init__(self):
+        super().__init__()
+    def setup_env(self):
+        pass
+
+    def create_chat_model(self, model="gemma2:2b"):
+        return ChatOllama(model=model)
+
+
+
 
 
 class APIKeyNotFoundError(Exception):
