@@ -64,13 +64,13 @@ class OpenAIAzure(AIBase):
                                temperature=0.5,
                                )
 
-class ollamaAI(AIBase):
+class OllamaAI(AIBase):
     def __init__(self):
         super().__init__()
     def setup_env(self):
         pass
 
-    def create_chat_model(self, model="gemma2:2b"):
+    def create_chat_model(self, model="qwen2:0.5b"): #qwen2:0.5b gemma2:2b
         return ChatOllama(model=model)
 
 

@@ -1,7 +1,7 @@
 import os, json, re
 from langchain.schema import HumanMessage, AIMessage
 import pandas as pd
-from llm.llm_setup import OpenAIAzure
+from llm.llm_setup import OpenAIAzure, OllamaAI
 
 START_CODE_TAG = "<CODE_START>"
 END_CODE_TAG = "</CODE_END>"
@@ -11,7 +11,7 @@ END_CODE_TAG = "</CODE_END>"
 class ChatBot():
     def __init__(self, df:pd.DataFrame):
         super().__init__()
-        self.model = OpenAIAzure()
+        self.model = OllamaAI() #OpenAIAzure()
         self.model.setup_env()
         self.llm = self.model.create_chat_model()
         self.df = df
@@ -23,7 +23,8 @@ class ChatBot():
         There is a dataframe in pandas (python).
         The name of the dataframe is `self.df`.
         The column name of the dataframe is `self.header_list`.
-        ONLY use the data in 'df', do not make up new data. If there is no relevant data then just print "Cannot found data!"
+        These 2 variables are in a class, so DO NOT use locals() to check them.
+        ONLY use the data in 'self.df', do not make up new data. If there is no relevant data then just print "Cannot found data!"
         Return the python code with library like pandas, numpy, pyqt5, pypdf2, xlsxwriter and scipy. DO NOT use other libraries.
         If question is not about plot then make sure add print code to output the result.
         For example, the non-plot code should be like:
@@ -69,7 +70,7 @@ class ChatBot():
                                                                 END_CODE_TAG=END_CODE_TAG)
         return new_instruction
     def chat(self, full_instruction):
-        resp = self.llm([HumanMessage(content=full_instruction)])
+        resp = self.llm.invoke([HumanMessage(content=full_instruction)])
         return resp.content
     def extract_code(self, input_str:str):
         match = re.search(rf"{START_CODE_TAG}(.*){END_CODE_TAG}", input_str, re.DOTALL)
