@@ -35,7 +35,7 @@ from pystdf.Writers import *
 from abc import ABC
 import numpy as np
 import pandas as pd
-import time, datetime, logging, re, csv
+import time, datetime, logging, re, csv, traceback
 import xlsxwriter
 import qtawesome as qta
 
@@ -1774,8 +1774,9 @@ class Application(QMainWindow):  # QWidget):
                     chat.run_code(code)
                     break
                 except Exception as e:
+                    error_message = traceback.format_exc()
                     err_cnt += 1
-                    full_instruction = chat.merge_error_instruction(prompt, code, e.__str__())
+                    full_instruction = chat.merge_error_instruction(prompt, code, error_message) #e.__str__())
         except Exception as e:
             QMessageBox.information(
                 self, 'Error', e.__str__(),

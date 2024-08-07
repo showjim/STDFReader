@@ -57,11 +57,11 @@ class OpenAIAzure(AIBase):
         max_chunk_overlap = 20
         return AzureChatOpenAI(deployment_name=self.config_details['CHATGPT_MODEL'],
                                openai_api_key=openai.api_key,
-                               openai_api_base=openai.api_base,
+                               azure_endpoint=openai.api_base,
                                openai_api_type=openai.api_type,
                                openai_api_version=self.config_details['OPENAI_API_VERSION'],
                                max_tokens=num_output,
-                               temperature=0.5,
+                               temperature=0.2,
                                )
 
 class OllamaAI(AIBase):
@@ -70,7 +70,7 @@ class OllamaAI(AIBase):
     def setup_env(self):
         pass
 
-    def create_chat_model(self, model="qwen2:0.5b"): #qwen2:0.5b gemma2:2b
+    def create_chat_model(self, model="gemma2:2b"): #qwen2:0.5b gemma2:2b
         return ChatOllama(model=model)
 
 
