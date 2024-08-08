@@ -11,7 +11,7 @@ END_CODE_TAG = "</CODE_END>"
 class ChatBot():
     def __init__(self, df:pd.DataFrame):
         super().__init__()
-        self.model = OpenAIAzure() #OllamaAI() #OpenAIAzure()
+        self.model = OllamaAI() #OpenAIAzure()
         self.model.setup_env()
         self.llm = self.model.create_chat_model()
         self.df = df
