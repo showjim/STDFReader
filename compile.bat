@@ -1,0 +1,1 @@
+pyinstaller --icon=img\icon.ico -w --name=STDF_Reader STDF_Reader_GUI.py
