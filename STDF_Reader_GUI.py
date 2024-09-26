@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.21'
+Version = 'Beta 0.8.22'
 
 
 ###################################################
@@ -903,16 +903,16 @@ class Application(QMainWindow):  # QWidget):
                 # Set the width and align
                 worksheet.set_column('A:A', 25, format1)
 
-                worksheet.conditional_format(1, 12, row_table, 12,
-                                             {'type': 'cell', 'criteria': '<',
-                                              'value': 3.3, 'format': format_4XXX})
                 worksheet.conditional_format(1, 13, row_table, 13,
                                              {'type': 'cell', 'criteria': '<',
-                                              'value': 1.33, 'format': format_4XXX})
+                                              'value': 3.3, 'format': format_4XXX})
                 worksheet.conditional_format(1, 14, row_table, 14,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
                 worksheet.conditional_format(1, 15, row_table, 15,
+                                             {'type': 'cell', 'criteria': '<',
+                                              'value': 1.33, 'format': format_4XXX})
+                worksheet.conditional_format(1, 16, row_table, 16,
                                              {'type': 'cell', 'criteria': '<',
                                               'value': 1.33, 'format': format_4XXX})
                 worksheet.autofilter(0, 0, row_table, column_table)
@@ -1588,7 +1588,7 @@ class Application(QMainWindow):  # QWidget):
     # Get the summary results for all sites/each site in each test
     def get_summary_table(self, all_test_data, test_info_list, num_of_sites, test_list, merge_sites, output_them_both, print_data):
 
-        parameters = ['Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
+        parameters = ['TNum', 'Site', 'Units', 'Runs', 'Fails', 'LowLimit', 'HiLimit',
                       'Min', 'Mean', 'Max', 'Range', 'STD', 'Cp', 'Cpl', 'Cpu', 'Cpk']
 
         summary_results = []
@@ -1629,7 +1629,7 @@ class Application(QMainWindow):  # QWidget):
             maximum = Backend.get_plot_max(test_info_list, test_list[i], num_of_sites)
 
             if merge_sites or output_them_both:
-                summary_results.append(Backend.site_array(
+                summary_results.append([test_list[i][0]] + Backend.site_array(
                     all_data_array, minimum, maximum, 'ALL', units))
             if (not merge_sites) or output_them_both:
                 for j in sdr_parse:
@@ -1643,10 +1643,10 @@ class Application(QMainWindow):  # QWidget):
                     site_test_data = site_test_data[~np.isinf(site_test_data)]
                     # Add loop data in analysis report
                     if print_data: #'_LOOP' in self.file_path.upper():
-                        summary_results.append(Backend.site_array(
+                        summary_results.append([test_list[i][0]] + Backend.site_array(
                             site_test_data, minimum, maximum, j, units) + site_test_data.tolist())
                     else:
-                        summary_results.append(Backend.site_array(
+                        summary_results.append([test_list[i][0]] + Backend.site_array(
                             site_test_data, minimum, maximum, j, units))
             self.progress_bar.setValue(20 + int(i / len(test_list) * 50))
         test_names = []
@@ -1664,7 +1664,7 @@ class Application(QMainWindow):  # QWidget):
         if print_data: #'_LOOP' in self.file_path.upper():
             # 获取最大子列表的长度
             max_length = max(len(sublist) for sublist in summary_results)
-            for i in range(0, max_length - 15):
+            for i in range(0, max_length - 16):
                 parameters += ['LOOP' + str(i)]
 
         table = pd.DataFrame(
