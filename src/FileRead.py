@@ -68,7 +68,7 @@ class FileReaders(ABC):
                                                 notify_progress_bar=notify_progress_bar,
                                                 ignore_tnum=ignore_TNUM, ignore_chnum=ignore_chnum)
             p.addSink(data_summary)
-            p.parse()
+            p.parse(skipType="pystdf.V4.Str")
 
             endt = time.time()
             print('STDF处理时间：', endt - startt)

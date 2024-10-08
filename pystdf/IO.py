@@ -160,7 +160,7 @@ class Parser(DataSource):
 
     def header(self, header): pass
 
-    def parse_records(self, count=0):
+    def parse_records(self, count=0, skipType=""):
         i = 0
         self.eof = 0
         fields = None
@@ -168,13 +168,18 @@ class Parser(DataSource):
             while self.eof==0:
                 header = self.readHeader()
                 self.header(header)
-                bakup = self.inp
-                self.inp = io.BytesIO(self.inp.read(header.len))
+                bakup = self.inp # backup current position
+                self.inp = io.BytesIO(self.inp.read(header.len)) # make current position to the beginning of type
 
                 if (header.typ, header.sub) in self.recordMap:
 
                     recType = self.recordMap[(header.typ, header.sub)]
                     recParser = self.recordParsers[(header.typ, header.sub)]
+                    # add skipType to bypass parse some certain recType
+                    if recType.name == skipType:
+                        self.inp = bakup # restore file position
+                        continue
+
                     fields = recParser(self, header, [])
                     if len(fields) < len(recType.columnNames):
                         fields += [None] * (len(recType.columnNames) - len(fields))
@@ -182,7 +187,7 @@ class Parser(DataSource):
 
                 else:
                     self.inp.read(header.len)
-                self.inp = bakup
+                self.inp = bakup # restore file position
                 if count:
                     i += 1
                     if i >= count: break
@@ -193,12 +198,12 @@ class Parser(DataSource):
             self.endian = '@'
             self.endian = self.__detectEndian()
 
-    def parse(self, count=0):
+    def parse(self, count=0, skipType=""):
         self.begin()
 
         try:
             self.auto_detect_endian()
-            self.parse_records(count)
+            self.parse_records(count, skipType)
             self.complete()
         except Exception as exception:
             self.cancel(exception)
