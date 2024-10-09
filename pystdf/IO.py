@@ -184,7 +184,13 @@ class Parser(DataSource):
                     if len(fields) < len(recType.columnNames):
                         fields += [None] * (len(recType.columnNames) - len(fields))
                     self.send((recType, fields))
-
+                    if header.len > 0:
+                        print(
+			              "Warning: Broken header. Unprocessed data left in record of type '%s'. Working around it." % recType.__class__.__name__,
+			              file=sys.stderr,
+			            )
+                        self.inp.read(header.len)
+                        header.len = 0
                 else:
                     self.inp.read(header.len)
                 self.inp = bakup # restore file position

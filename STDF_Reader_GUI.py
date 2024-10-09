@@ -38,7 +38,7 @@ import pandas as pd
 import time, datetime, logging, re, csv
 import xlsxwriter
 import qtawesome as qta
-
+import os
 import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.23'
+Version = 'Beta 0.8.24'
 
 
 ###################################################
