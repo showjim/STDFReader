@@ -168,11 +168,11 @@ class Parser(DataSource):
             while self.eof==0:
                 header = self.readHeader()
                 self.header(header)
+                curRec = self.inp.read(header.len)
                 bakup = self.inp # backup current position
-                self.inp = io.BytesIO(self.inp.read(header.len)) # make current position to the beginning of type
+                self.inp = io.BytesIO(curRec) # make current position to the beginning of type
 
                 if (header.typ, header.sub) in self.recordMap:
-
                     recType = self.recordMap[(header.typ, header.sub)]
                     recParser = self.recordParsers[(header.typ, header.sub)]
                     # add skipType to bypass parse some certain recType
