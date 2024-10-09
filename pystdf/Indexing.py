@@ -78,7 +78,7 @@ class MaterialIndexer:
       headSite = (fields[V4.Pir.HEAD_NUM], fields[V4.Pir.SITE_NUM])
       self.onPir(headSite)
     elif isinstance(recType, V4.Wir):
-      headSite = (fields[V4.Pir.HEAD_NUM], fields[V4.Pir.SITE_NUM])
+      headSite = (fields[V4.Wir.HEAD_NUM], None) # fields[V4.Wir.SITE_NUM] Does not exist
       self.onWir(headSite)
   
   def after_send(self, dataSource, data):
@@ -86,8 +86,8 @@ class MaterialIndexer:
     if isinstance(recType, V4.Prr):
       headSite = (fields[V4.Prr.HEAD_NUM], fields[V4.Prr.SITE_NUM])
       self.onPrr(headSite)
-    elif isinstance(recType, V4.Prr):
-      headSite = (fields[V4.Prr.HEAD_NUM], fields[V4.Prr.SITE_NUM])
+    elif isinstance(recType, V4.Wrr):
+      headSite = (fields[V4.Wrr.HEAD_NUM], None) # fields[V4.Wrr.SITE_NUM] Does not exist
       self.onWrr(headSite)
       
   def onPir(self, headSite):
@@ -109,6 +109,6 @@ class MaterialIndexer:
       self.lastWafer += 1
       self.currentWafer[headSite[0]] = self.lastWafer
   
-  def onWrr(self, fields):
+  def onWrr(self, headSite):
     self.currentWafer[headSite[0]]
   
