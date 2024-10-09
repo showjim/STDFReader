@@ -24,23 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy
-        pip install pandas
-        pip install pypdf2
-        pip install xlsxwriter
-        pip install pyinstaller
-        pip install pyqt5
-        pip install qtawesome
-        pip install matplotlib
-        # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Install self-build pystdf
-      run: |
-        mkdir package
-        cd package
-        git clone --depth=1 https://github.com/showjim/pystdf.git
-        cd pystdf
-        python setup.py install
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Run a multi-line script
       run: |
