@@ -33,3 +33,9 @@ Create a `config.json` file with the following configuration:
     "EMBEDDING_MODEL": "xxxxx",
     "EMBEDDING_MODEL_VERSION": "xxxxx"
 }
+```
+
+## Acknowledgments
+
+- The Python community for the excellent libraries used in this project
+- Thanks to Casey, all I have done are based on this repo [cmars/pystdf](https://github.com/cmars/pystdf)
