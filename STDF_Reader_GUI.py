@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.24'
+Version = 'Beta 0.8.25'
 
 
 ###################################################
@@ -1171,6 +1171,7 @@ class Application(QMainWindow):  # QWidget):
 
         correlation_table, file_list = self.make_correlation_table()
         wafer_map_cmp_list = self.make_wafer_map_cmp()
+        meanShiftPivot_df = correlation_table.pivot_table(values='Mean Diff(max - min)', index=correlation_table.index, columns='Site',aggfunc='mean')
         self.progress_bar.setValue(95)
 
         # In case someone has the file open
@@ -1219,6 +1220,29 @@ class Application(QMainWindow):  # QWidget):
                 worksheet.conditional_format(1, 1, row_table, column_table,
                                              {'type': 'text', 'criteria': 'containing',
                                               'value': '-->', 'format': format_4XXX})
+
+                # Write mean shift pivot table
+                row_table, column_table = meanShiftPivot_df.shape
+                meanShiftPivot_df.to_excel(writer, sheet_name='3 STDF mean shift')
+                worksheet = writer.sheets['3 STDF mean shift']
+                for i in range(column_table):
+                    worksheet.conditional_format(1, 1+i, row_table, 1+i,
+                                                 {'type': 'data_bar', 'data_bar_2010': True})
+                ## insert the line chart
+                chart = workbook.add_chart({'type': 'line'})
+                chart.set_title({'name': 'Mean shift'})
+                chart.set_x_axis({'name': 'Test Instance', 'position_axis': 'on_tick'})
+                chart.set_y_axis({'name': 'Mean shift', 'position_axis': 'on_tick'})
+                chart.set_style(10)
+                for i in range(column_table):
+                    chart.add_series({
+                        'name': ["3 STDF mean shift", 0, 1 + i],
+                        'categories': ["3 STDF mean shift", 1, 0, row_table, 0],
+                        'values': ["3 STDF mean shift", 1, 1 + i, row_table, 1 + i],
+                    })
+                worksheet.insert_chart("D2", chart, {"x_offset": 25, "y_offset": 10})
+                worksheet.set_column(0, column_table, 12)
+
             self.progress_bar.setValue(100)
             self.status_text.setText(
                 str(correlation_report_name.split('/')[-1] + " written successfully!"))
@@ -1253,8 +1277,9 @@ class Application(QMainWindow):  # QWidget):
             correlation_df.columns = parameters
             parameters = parameters + ['Mean Diff(max - min)', 'Mean Diff Over Limit(dif/delta limit)',
                                        'Mean Diff Over Base(dif/first file data)']
-            # Add mean delta column
-            mean_delta = correlation_df.iloc[:, 4:].max(axis=1) - correlation_df.iloc[:, 4:].min(axis=1)
+            # Add mean delta column, change to cmp - base
+            ## mean_delta = correlation_df.iloc[:, 4:].max(axis=1) - correlation_df.iloc[:, 4:].min(axis=1)
+            mean_delta = correlation_df.iloc[:, 5] - correlation_df.iloc[:, 4]
             mean_delta_over_limit = mean_delta / (hiLimit_df - lowlimit_df)
             # Assume table 0 is the base one
             mean_delta_over_base = mean_delta / table_list[0].Mean.astype(float)
