@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+import base64
+
 import pandas as pd
 from abc import ABC
 import time
@@ -9,6 +11,7 @@ from pystdf.IO import Parser
 import pystdf.V4 as V4
 from pystdf.Writers import *
 from pystdf.Importer import STDF2DataFrame
+from pathlib import Path
 
 ############################
 # FILE READING AND PARSING #
@@ -149,6 +152,9 @@ class FileReaders(ABC):
         # Converts the stdf to a dataframe
         table = FileReaders.STDFRec2DataFrame(filename, RecName)
 
+        ## Extract zip file from DTR
+        # FileReaders.extract_zips(table)
+
         # The name of the new file, preserving the directory of the previous
         fname = filename + "_" + RecName + "_Rec.csv"
 
@@ -163,6 +169,33 @@ class FileReaders(ABC):
                 table.to_csv(fname, index=False)
             # except BaseException:
             #     os.system('pause')
+
+    @staticmethod
+    def extract_zips(df):
+        zip_files = [] # 存储所有ZIP文件的bytes数据
+        current_zip = [] # 当前正在收集的ZIP文件数据
+
+        for _, row in df.iterrows():
+            cell = row["GEN_DATA"]
+            content = cell[0]
+            if 'Everyone is awesome beginning' in content:
+                current_zip = []
+            elif 'Write GDR is done' in content:
+                if current_zip:  # 确保有数据
+                    # 展平所有二维列表并转为bytes
+                    # flat_data = [num for sublist in current_zip for num in sublist]
+                    # zip_files.append(bytes(flat_data))
+                    flat_data = ''.join(current_zip)
+                    zip_files.append(base64.b64decode(flat_data))
+            else:
+                current_zip.extend(cell)  # 收集ZIP文件的一部分
+
+        # 写入 ZIP
+        for i, zip_data  in enumerate(zip_files):
+            output_path = Path(f"recovered_zip_{i}.zip")
+            with open(output_path, "wb") as f:
+                f.write(zip_data)
+            print(f"成功恢复: {output_path}")
 
     # to extract PSR/STR record and convert to ASCII
     @staticmethod
