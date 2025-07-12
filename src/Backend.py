@@ -402,20 +402,24 @@ class Backend(ABC):
             site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
 
 
-        site_results.append(
-            str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+        # site_results.append(
+        #     str(Decimal(float(min(site_data))).quantize(Decimal('0.000001'))))
+        site_results.append(Backend.format_large_number(np.min(site_data)))
 
-        try:
-            site_results.append(
-                str(Decimal(mean_result).quantize(Decimal('0.000001'))))
-        except Exception as e:
-            site_results.append(str(mean_result))
-            print(e)
-            #os.system('pause')
-        site_results.append(
-            str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
-        site_results.append(
-            str(Decimal(float(max(site_data) - min(site_data))).quantize(Decimal('0.000001'))))
+        # try:
+        #     site_results.append(
+        #         str(Decimal(mean_result).quantize(Decimal('0.000001'))))
+        # except Exception as e:
+        #     site_results.append(str(mean_result))
+        #     print(e)
+        #     #os.system('pause')
+        site_results.append(Backend.format_large_number(mean_result))
+        # site_results.append(
+        #     str(Decimal(float(max(site_data))).quantize(Decimal('0.000001'))))
+        site_results.append(Backend.format_large_number(np.max(site_data)))
+        # site_results.append(
+        #     str(Decimal(float(np.max(site_data) - np.min(site_data))).quantize(Decimal('0.000001'))))
+        site_results.append(Backend.format_large_number(np.max(site_data) - np.min(site_data)))
 
         site_results.append(std_string)
         site_results.append(cp_result)
@@ -424,6 +428,16 @@ class Backend(ABC):
         site_results.append(cpk_result)
 
         return site_results
+
+    @staticmethod
+    def format_large_number(value):
+        try:
+            if abs(value) > 1e6:
+                return "{:.6e}".format(float(value))  # 科学计数法
+            else:
+                return "{:.6f}".format(float(value))  # 普通小数
+        except (TypeError, ValueError):
+            return str(value)  # 保底处理
 
     # Converts to decibels
     @staticmethod
