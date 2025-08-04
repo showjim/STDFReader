@@ -330,6 +330,7 @@ class MyTestResultProfiler:
 
         #for MPR
         self.mpr_pin_dict = {}
+        self.mpr_first_field = None
 
         self.all_test_result_pd = pd.DataFrame()
         self.frame = pd.DataFrame()
@@ -376,6 +377,7 @@ class MyTestResultProfiler:
 
         #for MPR
         self.mpr_pin_dict = {}
+        self.mpr_first_field = None
 
         # in order to distinguish same name inst in flow
         self.same_name_inst_cnt_dict = {}
@@ -532,14 +534,21 @@ class MyTestResultProfiler:
 
             key = str(fields[V4.mpr.TEST_NUM]) + "_" + tname
             if fields[V4.mpr.RTN_INDX] is None:
-                tmp_pin_list = self.mpr_pin_dict[key]
+                # Thanks to Wade Song to figure out this bug in process MPR
+                for keyTemp in self.mpr_pin_dict.keys():
+                    if tname.split(':')[1] in keyTemp:
+                        tmp_pin_list = self.mpr_pin_dict[keyTemp]
+                        break
 
             else:
                 self.mpr_pin_dict[key] = [self.pmr_dict[str(number)] for number in fields[V4.mpr.RTN_INDX]]
+                self.mpr_first_field = fields # This is because All data beginning with the OPT_FLAG field has a special
+                                              # function in the STDF file. The first MPR for each test will have these
+                                              # fields filled in. like UNITS/RTN_INDX/HI_LIMIT/LO_LIMIT
                 tmp_pin_list = self.mpr_pin_dict[key]
 
             # Process the scale unit, but meanless in IG-XL STDF, comment it
-            unit = str(fields[V4.mpr.UNITS])
+            unit = str(self.mpr_first_field[V4.mpr.UNITS]) #str(fields[V4.mpr.UNITS])
             # val_scal = fields[V4.mpr.RES_SCAL]
             # if val_scal == 0:
             #     unit = unit
@@ -568,10 +577,10 @@ class MyTestResultProfiler:
                 tname_pinname = tname + '@' + tmp_pin_list[i]
                 tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
                 if not (tname_tnumber in self.tname_tnumber_dict):
-                    self.tname_tnumber_dict[tname_tnumber] = str(fields[V4.mpr.TEST_NUM]) + '|' + \
+                    self.tname_tnumber_dict[tname_tnumber] = str(self.fields[V4.mpr.TEST_NUM]) + '|' + \
                                                              tname_pinname + '|' + \
-                                                             str(fields[V4.mpr.HI_LIMIT]) + '|' + \
-                                                             str(fields[V4.mpr.LO_LIMIT]) + '|' + \
+                                                             str(self.mpr_first_field[V4.mpr.HI_LIMIT]) + '|' + \
+                                                             str(self.mpr_first_field[V4.mpr.LO_LIMIT]) + '|' + \
                                                              unit
                 current_tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
                 full_tname_tnumber = self.tname_tnumber_dict[current_tname_tnumber]
