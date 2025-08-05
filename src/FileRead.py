@@ -646,7 +646,7 @@ class MyTestResultProfiler:
                     # To judge the device is retested or not
                     die_id = self.pgm_nam + '-' + self.job_nam + '-' + self.lot_id + '-' + str(
                         self.wafer_id) + '-' + str(die_x) + '-' + str(die_y)
-                    if (part_flg & 0x1) ^ (part_flg & 0x2) == 1 or (die_id in self.DIE_ID):
+                    if (part_flg & 0x1) ^ ((part_flg & 0x2)>>1) == 1 or (die_id in self.DIE_ID): # part_flg method cannot cover ENG mode
                         rc = 'Retest'
                     else:
                         rc = 'First'
