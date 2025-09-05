@@ -246,8 +246,7 @@ class Application(QMainWindow):  # QWidget):
         # Selects STDF record to extract
         self.select_stdf_rec_menu = QComboBox()
         self.select_stdf_rec_menu.setToolTip('Select the single record to extract')
-        self.select_stdf_rec_menu.addItems(['DTR', 'GDR', 'TSR'])
-        self.rec_name = 'DTR'
+        self.select_stdf_rec_menu.addItems(['DTR', 'GDR', 'TSR', 'DTR_ZIP'])
         self.select_stdf_rec_menu.currentIndexChanged[str].connect(self.get_rec_name)  # 条目发生改变，发射信号，传递条目内容
         #self.select_stdf_rec_menu.highlighted[str].connect(self.get_rec_name)  # 在下拉列表中，鼠标移动到某个条目时发出信号，传递条目内容
         # Button to parse a single record type to atdf .csv

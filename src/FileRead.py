@@ -147,13 +147,14 @@ class FileReaders(ABC):
 
     # this function to extract only 1 type of record, in case STDF file is too large
     @staticmethod
-    def rec_to_csv(filename, RecName:str):
+    def rec_to_csv(filename, RecName:str, extract_zip:bool=False):
 
         # Converts the stdf to a dataframe
         table = FileReaders.STDFRec2DataFrame(filename, RecName)
 
-        ## Extract zip file from DTR
-        # FileReaders.extract_zips(table)
+        # Extract zip file from DTR
+        if extract_zip:
+            FileReaders.extract_zips_binary(table)
 
         # The name of the new file, preserving the directory of the previous
         fname = filename + "_" + RecName + "_Rec.csv"
@@ -171,7 +172,32 @@ class FileReaders(ABC):
             #     os.system('pause')
 
     @staticmethod
-    def extract_zips(df):
+    def extract_zips_binary(df):
+        zip_files = []  # 存储所有ZIP文件的bytes数据
+        current_zip = []  # 当前正在收集的ZIP文件数据
+
+        for _, row in df.iterrows():
+            cell = row["GEN_DATA"]
+            content = cell[0]
+            if 'Everyone is awesome beginning' in content:
+                current_zip = []
+            elif 'Write GDR is done' in content:
+                if current_zip:  # 确保有数据
+                    # 展平所有二维列表并转为bytes
+                    flat_data = [num for sublist in current_zip for num in sublist]
+                    zip_files.append(bytes(flat_data))
+            else:
+                current_zip.extend(cell)  # 收集ZIP文件的一部分
+
+        # 写入 ZIP
+        for i, zip_data in enumerate(zip_files):
+            output_path = Path(f"recovered_zip_{i}.zip")
+            with open(output_path, "wb") as f:
+                f.write(zip_data)
+            print(f"成功恢复: {output_path}")
+
+    @staticmethod
+    def extract_zips_base64(df):
         zip_files = [] # 存储所有ZIP文件的bytes数据
         current_zip = [] # 当前正在收集的ZIP文件数据
 

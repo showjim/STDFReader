@@ -241,6 +241,7 @@ class SingleRecParseThread(QThread):
         QThread.__init__(self, parent)
         self.filepath = file_path
         self.rec_name = rec_name
+        self.isExtract = False
 
     def run(self):
 
@@ -250,8 +251,10 @@ class SingleRecParseThread(QThread):
             pass
 
         else:
-
-            FileReaders.rec_to_csv(self.filepath, self.rec_name)
+            if "_" in self.rec_name:
+                self.rec_name = self.rec_name.split("_")[0]
+                self.isExtract = True
+            FileReaders.rec_to_csv(self.filepath, self.rec_name, self.isExtract)
             self.notify_status_text.emit(str(self.filepath.split('/')[-1] + "_" + self.rec_name + "_Rec.csv created!"))
 
 
