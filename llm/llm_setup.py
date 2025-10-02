@@ -2,8 +2,7 @@ import os, json, re
 import openai
 import shutil
 from dotenv import load_dotenv
-from langchain_community.llms import AzureOpenAI
-from langchain_community.chat_models import AzureChatOpenAI, ChatOllama
+from langchain_community.chat_models import AzureChatOpenAI
 
 
 class OpenAIAzure():
