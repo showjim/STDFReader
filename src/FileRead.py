@@ -173,8 +173,8 @@ class FileReaders(ABC):
 
     @staticmethod
     def extract_zips_binary(df):
-        zip_files = []  # 存储所有ZIP文件的bytes数据
-        current_zip = []  # 当前正在收集的ZIP文件数据
+        zip_files = []  # for all ZIP files in byte
+        current_zip = []  # for single ZIP file
 
         for _, row in df.iterrows():
             cell = row["GEN_DATA"]
@@ -182,14 +182,14 @@ class FileReaders(ABC):
             if 'Everyone is awesome beginning' in content:
                 current_zip = []
             elif 'Write GDR is done' in content:
-                if current_zip:  # 确保有数据
-                    # 展平所有二维列表并转为bytes
+                if current_zip:  # ensure the data is existing
+                    # flatten the data in bytes array
                     flat_data = [num for sublist in current_zip for num in sublist]
                     zip_files.append(bytes(flat_data))
             else:
-                current_zip.extend(cell)  # 收集ZIP文件的一部分
+                current_zip.extend(cell)  # combine ZIP file data
 
-        # 写入 ZIP
+        # Write ZIP
         for i, zip_data in enumerate(zip_files):
             output_path = Path(f"recovered_zip_{i}.zip")
             with open(output_path, "wb") as f:
