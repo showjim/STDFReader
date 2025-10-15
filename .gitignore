@@ -17,3 +17,6 @@
 .idea
 build
 dist
+llm/__pycache__
+pystdf/__pycache__
+src/__pycache__
