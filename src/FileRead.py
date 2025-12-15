@@ -277,7 +277,7 @@ class FileReaders(ABC):
             p = Parser(inp=fin)
             storage = MyMemoryWriter(rec_name)
             p.addSink(storage)
-            p.parse()
+            p.parse(skipType="pystdf.V4.Str")
         return storage.data
 
 class MyMemoryWriter:
