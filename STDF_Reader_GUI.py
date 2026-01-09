@@ -93,7 +93,7 @@ class Application(QMainWindow):  # QWidget):
         # helpMenu.addAction(aboutAct)
 
         # Set icon for window, the img path should be full absolute path for compiling
-        self.pix = QPixmap(pathname + r'\img\icon.ico')
+        self.pix = QPixmap(os.path.join(pathname, 'img', 'icon.ico'))
         icon = QIcon()
         icon.addPixmap(self.pix, QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
@@ -1997,10 +1997,15 @@ class MyExceptHook(ABC):
 if __name__ == '__main__':
     # initialize the log settings
     if getattr(sys, 'frozen', False):
-        pathname = os.path.dirname(sys.executable)
+        # For PyInstaller, use _MEIPASS for bundled data files
+        # This handles both onedir and onefile modes
+        if hasattr(sys, '_MEIPASS'):
+            pathname = sys._MEIPASS
+        else:
+            pathname = os.path.dirname(sys.executable)
     else:
         pathname = os.path.dirname(__file__)
-    logging.basicConfig(filename=pathname + '\\app.log', level=logging.INFO,
+    logging.basicConfig(filename=os.path.join(pathname, 'app.log'), level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
     sys.excepthook = MyExceptHook.handle_exception
     app = QApplication(sys.argv)
