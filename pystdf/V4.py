@@ -2344,7 +2344,7 @@ class Str(RecordType, metaclass=StdfRecordMeta):
     ('USR3_CNT','U2'),
     ('USR3','k55U8'),
     ('TXT_CNT','U2'),
-    ('USER_TXT','k57U1')
+    ('USER_TXT','k57C1')
   )
 
 class Bps(RecordType, metaclass=StdfRecordMeta):
