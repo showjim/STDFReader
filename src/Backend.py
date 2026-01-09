@@ -395,11 +395,11 @@ class Backend(ABC):
         if low_limit == None or low_limit == float('inf') or low_limit == float('-inf') or low_limit == 'n/a':
             site_results.append(str(low_limit))
         else:
-            site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000001'))))
+            site_results.append(str(Decimal(low_limit).quantize(Decimal('0.000000001'))))
         if high_limit == None or high_limit == float('inf') or high_limit == float('-inf') or low_limit == 'n/a':
             site_results.append(str(high_limit))
         else:
-            site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000001'))))
+            site_results.append(str(Decimal(high_limit).quantize(Decimal('0.000000001'))))
 
 
         # site_results.append(
@@ -435,7 +435,7 @@ class Backend(ABC):
             if abs(value) > 1e6:
                 return "{:.6e}".format(float(value))  # 科学计数法
             else:
-                return "{:.6f}".format(float(value))  # 普通小数
+                return "{:.9f}".format(float(value))  # 普通小数
         except (TypeError, ValueError):
             return str(value)  # 保底处理
 

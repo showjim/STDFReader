@@ -49,7 +49,7 @@ from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from llm.chat import ChatBot
 
-Version = 'Beta 0.8.29'
+Version = 'Beta 0.8.30'
 
 
 ###################################################
@@ -815,7 +815,6 @@ class Application(QMainWindow):  # QWidget):
             self.extract_subcsv.setEnabled(True)
             self.llm_prompt_edit.setEnabled(True)
             self.llm_btn.setEnabled(True)
-            self.main_window()
 
         else:
 
