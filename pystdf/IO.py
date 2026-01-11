@@ -232,10 +232,103 @@ class Parser(DataSource):
             return lambda self, header, fields: parseFn(header, fieldType)
 
     def createRecordParser(self, recType):
+        # Special handling for STR record with conditional fields
+        if hasattr(recType, 'typ') and hasattr(recType, 'sub') and recType.typ == 15 and recType.sub == 30:
+            return self.createStrRecordParser(recType)
+
         fn = lambda self, header, fields: fields
         for stdfType in recType.fieldStdfTypes:
             fn = appendFieldParser(fn, self.getFieldParser(stdfType))
         return fn
+
+    def createStrRecordParser(self, recType):
+        """
+        Custom parser for STR (Scan Test Record) that handles conditional fields.
+        MASK_MAP and FAL_MAP fields are only present when FMU_FLG > 0.
+        """
+        def strParser(self, header, fields):
+            # Field indices for STR record (from V4.py)
+            # 0-12: Fixed fields up to FMU_FLG
+            fixed_field_indices = [
+                0,   # CONT_FLG
+                1,   # TEST_NUM
+                2,   # HEAD_NUM
+                3,   # SITE_NUM
+                4,   # PSR_REF
+                5,   # TEST_FLG
+                6,   # LOG_TYP
+                7,   # TEST_TXT
+                8,   # ALARM_ID
+                9,   # PROG_TXT
+                10,  # RSLT_TXT
+                11,  # Z_VAL
+                12   # FMU_FLG
+            ]
+
+            # Read fixed fields (0-12)
+            for i in fixed_field_indices:
+                try:
+                    field_value = self.unpackMap[recType.fieldStdfTypes[i]](header, recType.fieldStdfTypes[i])
+                    fields.append(field_value)
+                except EndOfRecordException:
+                    break
+
+            # Check FMU_FLG value (field 12)
+            fmu_flg = fields[12] if len(fields) > 12 else 0
+
+            # Fields 13-14: MASK_MAP and FAL_MAP (conditional, only if FMU_FLG > 0)
+            if fmu_flg > 0:
+                # Read MASK_MAP (field 13)
+                try:
+                    mask_map = self.readDn(header)
+                    fields.append(mask_map)
+                except EndOfRecordException:
+                    fields.append(None)
+
+                # Read FAL_MAP (field 14)
+                try:
+                    fal_map = self.readDn(header)
+                    fields.append(fal_map)
+                except EndOfRecordException:
+                    fields.append(None)
+            else:
+                # FMU_FLG = 0, these fields don't exist in data
+                # Insert None placeholders to maintain field positions
+                fields.append(None)  # MASK_MAP
+                fields.append(None)  # FAL_MAP
+
+            # Read remaining fields (15 onwards)
+            # These are fixed fields, need to handle array fields specially
+            for i in range(15, len(recType.fieldStdfTypes)):
+                try:
+                    field_type = recType.fieldStdfTypes[i]
+
+                    # Check if it's an array field (starts with 'k')
+                    if field_type.startswith('k'):
+                        match = re.match('k(\d+)([A-Z][a-z0-9]+)', field_type)
+                        if match:
+                            field_index = int(match.group(1))
+                            array_fmt = match.group(2)
+
+                            # For array fields, the index refers to the field position
+                            # When FMU_FLG = 0, fields 13-14 are None, but indices are preserved
+                            # So we can directly access fields[field_index]
+                            try:
+                                array_value = self.readArray(header, fields[field_index], array_fmt)
+                                fields.append(array_value)
+                            except (IndexError, EndOfRecordException):
+                                fields.append(None)
+                    else:
+                        # Regular field
+                        field_value = self.unpackMap[field_type](header, field_type)
+                        fields.append(field_value)
+                except EndOfRecordException:
+                    # If we run out of data, append None for remaining fields
+                    fields.append(None)
+
+            return fields
+
+        return strParser
 
     def __init__(self, recTypes=V4.records, inp=sys.stdin, reopen_fn=None, endian=None):
         DataSource.__init__(self, ['header']);
