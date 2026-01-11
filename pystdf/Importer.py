@@ -67,18 +67,10 @@ def STDF2Dict(fname):
         data_out.append(datum_out)
     return data_out
 
-def STDF2DataFrame(fname, data=None):
+def STDF2DataFrame(fname):
     """ Convert STDF to a dictionary of DataFrame objects
-
-    Args:
-        fname: STDF file path
-        data: Optional pre-parsed data from ImportSTDF() to avoid re-parsing
-
-    Returns:
-        Dictionary mapping record type names to pandas DataFrames
     """
-    if data is None:
-        data = ImportSTDF(fname)
+    data = ImportSTDF(fname)
     BigTable = {}
     for datum in data:
         RecType = datum[0].__class__.__name__.upper()

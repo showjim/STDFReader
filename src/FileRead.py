@@ -115,12 +115,11 @@ class FileReaders(ABC):
 
     # Parses that big boi but this time in Excel format (slow, don't use unless you wish to look at how it's organized)
     @staticmethod
-    def to_excel(filename, data=None):
+    def to_excel(filename):
 
         # Converts the stdf to a data frame... somehow
         # (i do not ever intend on looking how he managed to parse this gross file format)
-        # OPTIMIZATION: Accept pre-parsed data to avoid re-parsing
-        tables = STDF2DataFrame(filename, data=data)
+        tables = STDF2DataFrame(filename)
 
         # The name of the new file, preserving the directory of the previous
         fname = filename + "_excel.xlsx"
@@ -128,22 +127,16 @@ class FileReaders(ABC):
         # Writing object to work with excel documents
         writer = pd.ExcelWriter(fname, engine='xlsxwriter')
 
-        # OPTIMIZATION: Create lookup dict once instead of scanning V4.records for each sheet
-        # Before: O(n²) - scanned 29 records for each of 20 sheets = 580 iterations
-        # After: O(n) - single scan of 29 records
-        record_lookup = {r.__class__.__name__.upper(): r for r in V4.records}
-
         # Not mine and I don't really know what's going on here, but it works, so I won't question him.
         # It actually write the data frame as an excel document
         for k, v in tables.items():
             # Make sure the order of columns complies the specs
-            # OPTIMIZED: Use O(1) dict lookup instead of O(n) list comprehension
-            record = record_lookup.get(k)
-            if record is None:
+            record = [r for r in V4.records if r.__class__.__name__.upper() == k]
+            if len(record) == 0:
                 print("Ignore exporting table %s: No such record type exists." % k)
             else:
-                columns = [field[0] for field in record.fieldMap]
-                if len(record.fieldMap) > 0:
+                columns = [field[0] for field in record[0].fieldMap]
+                if len(record[0].fieldMap) > 0:
                     # try:
                     v.to_excel(writer, sheet_name=k, columns=columns,
                                index=False, na_rep="N/A")
@@ -262,20 +255,21 @@ class FileReaders(ABC):
         """
         RecName = RecName.upper()
         data = FileReaders.SearchSTDF(fname, RecName)
-
-        # BUG FIX: Use defaultdict to avoid key existence checks
-        # OLD CODE had bugs: BigTable = pd.DataFrame() then trying BigTable[RecType] = {}
-        from collections import defaultdict
-        Rec = defaultdict(list)
-
+        Rec = {}
+        BigTable = pd.DataFrame()
         for datum in data:
             RecType = datum[0].__class__.__name__.upper()
             if RecName == RecType:
-                for k, v in zip(datum[0].fieldMap, datum[1]):
-                    Rec[k[0]].append(v)  # O(1) operation with defaultdict
+                if RecType not in BigTable.keys():
+                    BigTable[RecType] = {}
+                # Rec = BigTable[RecType]
+                for k,v in zip(datum[0].fieldMap,datum[1]):
+                    if k[0] not in Rec.keys():
+                        Rec[k[0]] = []
+                    Rec[k[0]].append(v)
 
-        # Convert to DataFrame
-        return pd.DataFrame(Rec)
+        BigTable = pd.DataFrame(Rec)
+        return BigTable
 
     @staticmethod
     def SearchSTDF(fname, rec_name):
