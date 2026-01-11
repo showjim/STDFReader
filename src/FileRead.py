@@ -273,11 +273,39 @@ class FileReaders(ABC):
 
     @staticmethod
     def SearchSTDF(fname, rec_name):
+        # Build a list of all STDF record type names that should be skipped
+        # We want to skip everything EXCEPT the target record type
+        all_record_types = [
+            "pystdf.V4.Far", "pystdf.V4.Mir", "pystdf.V4.Mrr", "pystdf.V4.Pcr",
+            "pystdf.V4.Hbr", "pystdf.V4.Sbr", "pystdf.V4.Pmr", "pystdf.V4.Pgr",
+            "pystdf.V4.Plr", "pystdf.V4.Rdr", "pystdf.V4.Sdr", "pystdf.V4.Wir",
+            "pystdf.V4.Wrr", "pystdf.V4.Wcr", "pystdf.V4.Pir", "pystdf.V4.Ptr",
+            "pystdf.V4.Mpr", "pystdf.V4.Ftr", "pystdf.V4.Eps", "pystdf.V4.Atr",
+            "pystdf.V4.Vur", "pystdf.V4.Bps", "pystdf.V4.Psr", "pystdf.V4.Nmr"
+        ]
+
+        # Map rec_name to proper full module path
+        rec_name_map = {
+            "DTR": "pystdf.V4.Dtr",
+            "GDR": "pystdf.V4.Gdr",
+            "TSR": "pystdf.V4.Tsr"
+        }
+
+        target_rec = rec_name_map.get(rec_name.upper())
+
+        if not target_rec:
+            # If not in map, assume it's already a full path
+            target_rec = rec_name
+
+        # Build skip list (all records except target)
+        skip_types = [rt for rt in all_record_types if rt != target_rec]
+
         with open(fname,'rb') as fin:
             p = Parser(inp=fin)
             storage = MyMemoryWriter(rec_name)
             p.addSink(storage)
-            p.parse(skipType="pystdf.V4.Str")
+            # Skip all record types except the one we want
+            p.parse(skipType=skip_types)
         return storage.data
 
 class MyMemoryWriter:

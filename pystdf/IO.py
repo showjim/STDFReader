@@ -164,6 +164,14 @@ class Parser(DataSource):
         i = 0
         self.eof = 0
         fields = None
+
+        # Convert skipType to a set for efficient O(1) lookup
+        # Support both single string and iterable of strings
+        if isinstance(skipType, str):
+            skip_types = {skipType} if skipType else set()
+        else:
+            skip_types = set(skipType) if skipType else set()
+
         try:
             while self.eof==0:
                 header = self.readHeader()
@@ -176,7 +184,7 @@ class Parser(DataSource):
                     recType = self.recordMap[(header.typ, header.sub)]
                     recParser = self.recordParsers[(header.typ, header.sub)]
                     # add skipType to bypass parse some certain recType
-                    if recType.name == skipType:
+                    if recType.name in skip_types:
                         self.inp = bakup # restore file position
                         continue
 
