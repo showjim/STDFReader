@@ -20,6 +20,20 @@ from pathlib import Path
 # So sad there is no detaial document about PySTDF, thanks to Thomas's code as sample
 class FileReaders(ABC):
 
+    @staticmethod
+    def _build_skip_list(keep_short_names):
+        """
+        Build a list of record type names to skip during parsing.
+
+        Args:
+            keep_short_names: Set of short record type names to KEEP (e.g., {'Dtr', 'Mir', 'Pir'})
+
+        Returns:
+            List of full record type names to skip (e.g., ['pystdf.V4.Ptr', 'pystdf.V4.Ftr', ...])
+        """
+        return [record.name for record in V4.records
+                if record.name.split('.')[-1] not in keep_short_names]
+
     # This function is to parse STDF into an ATDF like log, abandon this part now
     @staticmethod
     def process_file(filename):
@@ -242,7 +256,15 @@ class FileReaders(ABC):
         # Writing to a text file instead of vomiting it to the console
         stdf_df = My_STDF_V4_2007_1_Profiler(filename)
         p.addSink(stdf_df)
-        p.parse()
+
+        # Build skip list programmatically
+        # My_STDF_V4_2007_1_Profiler only processes: MIR, WIR, BPS, PMR, PSR, STR, PIR, EPS, PRR, VUR
+        # STR is the Scan Test Record we want to extract!
+        keep_records = {'Mir', 'Wir', 'Bps', 'Pmr', 'Psr', 'Str', 'Pir', 'Eps', 'Prr', 'Vur'}
+        skip_types = FileReaders._build_skip_list(keep_records)
+
+        # Skip all unnecessary record types to improve performance
+        p.parse(skipType=skip_types)
 
         endt = time.time()
         print('STDF处理时间：', endt - startt)
@@ -273,32 +295,21 @@ class FileReaders(ABC):
 
     @staticmethod
     def SearchSTDF(fname, rec_name):
-        # Build a list of all STDF record type names that should be skipped
-        # We want to skip everything EXCEPT the target record type
-        all_record_types = [
-            "pystdf.V4.Far", "pystdf.V4.Mir", "pystdf.V4.Mrr", "pystdf.V4.Pcr",
-            "pystdf.V4.Hbr", "pystdf.V4.Sbr", "pystdf.V4.Pmr", "pystdf.V4.Pgr",
-            "pystdf.V4.Plr", "pystdf.V4.Rdr", "pystdf.V4.Sdr", "pystdf.V4.Wir",
-            "pystdf.V4.Wrr", "pystdf.V4.Wcr", "pystdf.V4.Pir", "pystdf.V4.Ptr",
-            "pystdf.V4.Mpr", "pystdf.V4.Ftr", "pystdf.V4.Eps", "pystdf.V4.Atr",
-            "pystdf.V4.Vur", "pystdf.V4.Bps", "pystdf.V4.Psr", "pystdf.V4.Nmr"
-        ]
-
-        # Map rec_name to proper full module path
+        # Map rec_name to short record type name
         rec_name_map = {
-            "DTR": "pystdf.V4.Dtr",
-            "GDR": "pystdf.V4.Gdr",
-            "TSR": "pystdf.V4.Tsr"
+            "DTR": "Dtr",
+            "GDR": "Gdr",
+            "TSR": "Tsr"
         }
 
         target_rec = rec_name_map.get(rec_name.upper())
 
         if not target_rec:
-            # If not in map, assume it's already a full path
+            # If not in map, assume it's already a short name
             target_rec = rec_name
 
-        # Build skip list (all records except target)
-        skip_types = [rt for rt in all_record_types if rt != target_rec]
+        # Build skip list programmatically - skip everything EXCEPT target
+        skip_types = FileReaders._build_skip_list({target_rec})
 
         with open(fname,'rb') as fin:
             p = Parser(inp=fin)
