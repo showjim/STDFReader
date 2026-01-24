@@ -398,6 +398,7 @@ class MyTestResultProfiler:
         self.mpr_first_field = None
 
         self.all_test_result_pd = pd.DataFrame()
+        self.all_test_results_list = []
         self.frame = pd.DataFrame()
 
         self.file = file #io.BytesIO(b'')
@@ -439,6 +440,7 @@ class MyTestResultProfiler:
         self.DIE_ID = []
         self.lastrectype = None
         self.pmr_dict = {}
+        self.all_test_results_list = []
 
         #for MPR
         self.mpr_pin_dict = {}
@@ -740,7 +742,8 @@ class MyTestResultProfiler:
                 tmp_pd = pd.DataFrame.from_dict(self.test_result_dict, orient='index').T
                 # tmp_pd.transpose()
                 # self.all_test_result_pd = self.all_test_result_pd.append(tmp_pd, sort=False, ignore_index=True)
-                self.all_test_result_pd = pd.concat([self.all_test_result_pd, tmp_pd], sort=False, ignore_index=True)
+                # self.all_test_result_pd = pd.concat([self.all_test_result_pd, tmp_pd], sort=False, ignore_index=True)
+                self.all_test_results_list.append(tmp_pd)
         if rectype == V4.sbr:
             sbin_num = fields[V4.sbr.SBIN_NUM]
             sbin_nam = fields[V4.sbr.SBIN_NAM]
@@ -759,6 +762,9 @@ class MyTestResultProfiler:
         print('CSV生成时间：', end_t - start_t)
 
     def generate_data_summary(self):
+        if self.all_test_results_list:
+            self.all_test_result_pd = pd.concat(self.all_test_results_list, sort=False, ignore_index=True)
+
         if not self.all_test_result_pd.empty:
 
             self.frame = self.all_test_result_pd
