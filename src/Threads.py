@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from pypdf import PdfMerger, PdfReader
+from pypdf import PdfWriter, PdfReader # PdfMerger
 from src.Backend import Backend
 from src.FileRead import FileReaders
 
@@ -41,7 +41,7 @@ class PdfWriterThread(QThread):
         startt = time.time()
         self.notify_progress_bar.emit(0)
 
-        pp = PdfMerger() #PdfFileMerger()
+        pp = PdfWriter() #PdfFileMerger()
 
         site_test_data_dic = {}
         if self.group_by_file:

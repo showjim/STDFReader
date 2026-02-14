@@ -47,9 +47,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
-from llm.chat import ChatBot
 
-Version = 'Beta 0.9.0'
+Version = 'Beta 0.9.1'
 
 
 ###################################################
@@ -274,15 +273,6 @@ class Application(QMainWindow):  # QWidget):
         self.convert_SDTFV42007_to_ASCII.setToolTip('Convert STR/PSR to Mentor like ASCII log')
         self.convert_SDTFV42007_to_ASCII.clicked.connect(self.open_parsing_diagnosis_ascii)
 
-        # input text edit for LLM Chat
-        self.llm_prompt_edit = QPlainTextEdit()
-        self.llm_prompt_edit.setPlaceholderText("Input Your Instruction Here To Let AI Coding For You To Analyse Data.") #.setPlainText("Input Your Instruction Here")
-        self.llm_btn = QPushButton(qta.icon('mdi6.brain', color='green', color_active='black'), 'Go~')
-        self.llm_btn.setToolTip('Give order to AI')
-        self.llm_btn.clicked.connect(self.llm_chat)
-        # self.llm_prompt_edit.setMaximumHeight(self.llm_btn.height() * 1)
-        self.llm_prompt_edit.setFixedHeight(50) #.resize(100,100)
-
         # Transpose CSV log
         self.transpose_csv_btn = QPushButton(qta.icon('mdi6.table-column-width', color='green', color_active='black'),
                                           'Convert table rows to columns')
@@ -342,9 +332,6 @@ class Application(QMainWindow):  # QWidget):
 
         self.selected_site_line_edit.setEnabled(False)
 
-        self.llm_prompt_edit.setEnabled(False)
-        self.llm_btn.setEnabled(False)
-
         self.main_window()
 
     # Tab for data analysis
@@ -381,9 +368,7 @@ class Application(QMainWindow):  # QWidget):
     # Tab for tools
     def tab_tools(self):
         layout = QGridLayout()
-        layout.addWidget(self.llm_prompt_edit, 0, 0)
-        layout.addWidget(self.llm_btn, 0, 1)
-        layout.addWidget(self.select_test_for_subcsv_menu, 1, 0)
+        layout.addWidget(self.select_test_for_subcsv_menu, 0, 0)
         layout.addWidget(self.extract_subcsv, 2, 0)
         layout.addWidget(self.transpose_csv_btn, 2, 1)
         self.tools_tab.setLayout(layout)
@@ -813,8 +798,6 @@ class Application(QMainWindow):  # QWidget):
 
             self.select_test_for_subcsv_menu.setEnabled(True)
             self.extract_subcsv.setEnabled(True)
-            self.llm_prompt_edit.setEnabled(True)
-            self.llm_btn.setEnabled(True)
 
         else:
 
@@ -1766,44 +1749,6 @@ class Application(QMainWindow):  # QWidget):
         plt.grid(color='0.9', linestyle='--', linewidth=1)
         plt.tight_layout()
         plt.show()
-
-    def llm_chat(self):
-        matplotlib.use('qt5Agg')
-        # prompt = "Please first find out all the asia countries in column 'country', and then calculate the sum of the gdp."  # north american
-        # prompt = "Please plot the value tendency of column '210 - IDD_Static <> curr' and '222 - IDD1 @ <> curr' and set as Y-axis, take 'PART_ID' as X-axis'"
-        # please plot a histogram of columns showing for their value when 'PART_ID'=1, the columns I need are as below: '535 - VOH_SYNCN <> vout','536 - VOL_SYNCP <> vout','540 - VOH_DTOP <> vout', '541 - VOH_DTO2P <> vout'.
-        # please plot the tendency of column '535 - VOH_SYNCN <> vout' showing for each 'PART_ID' as X-axis
-        # please calculate the mean of column '535 - VOH_SYNCN <> vout', and send the result in a message window
-        # please plot the histogram of column '535 - VOH_SYNCN <> vout', and save as pdf file
-        # 请画出 '535 - VOH_SYNCN <> vout'列的直方图，并指出3 sigma的位置
-        prompt = self.llm_prompt_edit.toPlainText()# .text()
-        # # Sample DataFrame
-        # self.df_csv = pd.DataFrame({
-        #     "country": ["United States", "United Kingdom", "France", "Germany", "Italy", "Spain", "Canada", "Australia", "Japan", "China"],
-        #     "gdp": [19294482071552, 2891615567872, 2411255037952, 3435817336832, 1745433788416, 1181205135360, 1607402389504, 1490967855104, 4380756541440, 14631844184064],
-        #     "happiness_index": [6.94, 7.16, 6.66, 7.07, 6.38, 6.4, 7.23, 7.22, 5.87, 5.12]
-        # })
-        header_list = self.df_csv.columns.tolist()
-        try:
-            chat = ChatBot(self.df_csv)
-            full_instruction = chat.merge_instruction(prompt)
-            err_cnt = 0
-            while err_cnt <= 2:
-                resp = chat.chat(full_instruction)
-                print(resp)
-                print("Execution result:")
-                code = chat.extract_code(resp)
-                try:
-                    # code = "print(1/0)"
-                    chat.run_code(code)
-                    break
-                except Exception as e:
-                    err_cnt += 1
-                    full_instruction = chat.merge_error_instruction(prompt, code, e.__str__())
-        except Exception as e:
-            QMessageBox.information(
-                self, 'Error', e.__str__(),
-                QMessageBox.Ok)
 
     def restore_menu(self):
         self.generate_pdf_button.setEnabled(True)
