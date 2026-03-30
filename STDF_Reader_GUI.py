@@ -47,8 +47,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from src.Backend import Backend
 from src.FileRead import FileReaders
 from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
+from src import analysis as stdf_analysis
 
-Version = 'Beta 0.9.1'
+Version = 'Beta 0.10.0'
 
 
 ###################################################
@@ -643,7 +644,47 @@ class Application(QMainWindow):  # QWidget):
         else:
             self.output_one_file_toggled = False
 
+    def _to_stdf_data(self):
+        """Create a StdfData object from current GUI state for use with analysis module."""
+        data = stdf_analysis.StdfData()
+        data.df_csv = self.df_csv
+        data.test_info_list = self.test_info_list
+        data.list_of_test_numbers = self.list_of_test_numbers
+        data.list_of_test_numbers_string = self.list_of_test_numbers_string
+        data.tnumber_list = self.tnumber_list
+        data.tname_list = self.tname_list
+        data.sdr_parse = self.sdr_parse
+        data.number_of_sites = self.number_of_sites
+        data.file_path = self.file_path
+        return data
+
     def process_csv_file(self):
+        cherry_pick_sites = None
+        if self.cherry_pick_toggled:
+            text = self.selected_site_line_edit.text()
+            if text != "Input selected site list here":
+                site_list = text.replace('-', ' ').replace(';', ' ').replace(',', ' ').split()
+                if len(self.file_paths) != len(site_list):
+                    QMessageBox.information(
+                        self, 'Error', "File count mismatch with input site list!",
+                        QMessageBox.Ok)
+                    return
+                cherry_pick_sites = [int(s) for s in site_list]
+        try:
+            data = stdf_analysis.load_csv_data(self.file_paths, cherry_pick_sites)
+        except ValueError as e:
+            QMessageBox.information(self, 'Warning', str(e), QMessageBox.Ok)
+            return
+        self.df_csv = data.df_csv
+        self.test_info_list = data.test_info_list
+        self.list_of_test_numbers_string = data.list_of_test_numbers_string
+        self.list_of_test_numbers = data.list_of_test_numbers
+        self.tnumber_list = data.tnumber_list
+        self.tname_list = data.tname_list
+        self.sdr_parse = data.sdr_parse
+        self.number_of_sites = data.number_of_sites
+        return
+        # --- Original code below (kept as reference, unreachable) ---
         self.df_csv = pd.DataFrame()
         csv_data = pd.DataFrame()
         self.list_of_test_numbers_string = []
@@ -827,6 +868,18 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText(
             str(analysis_report_name + " is generating..."))
 
+        data = self._to_stdf_data()
+        try:
+            stdf_analysis.generate_analysis_report(
+                data, analysis_report_name, lambda pct: self.progress_bar.setValue(pct))
+            self.status_text.setText(
+                str(analysis_report_name.split('/')[-1] + " written successfully!"))
+        except xlsxwriter.exceptions.FileCreateError:
+            self.status_text.setText(
+                str("Please close " + analysis_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
+        return
+        # --- Original code below (kept as reference, unreachable) ---
         startt = time.time()
         data_summary = self.make_data_summary_report()
         endt = time.time()
@@ -1151,6 +1204,22 @@ class Application(QMainWindow):  # QWidget):
         self.status_text.setText(
             str(correlation_report_name.split('/')[-1] + " is generating..."))
 
+        data = self._to_stdf_data()
+        try:
+            stdf_analysis.generate_correlation_report(
+                data, correlation_report_name, lambda pct: self.progress_bar.setValue(pct))
+            self.status_text.setText(
+                str(correlation_report_name.split('/')[-1] + " written successfully!"))
+        except xlsxwriter.exceptions.FileCreateError:
+            self.status_text.setText(
+                str("Please close " + correlation_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
+        except (IndexError, ValueError):
+            self.status_text.setText(
+                str("Can not find 2 or more set data in csv file, please check your input!"))
+            self.progress_bar.setValue(0)
+        return
+        # --- Original code below (kept as reference, unreachable) ---
         correlation_table, file_list = self.make_correlation_table()
         wafer_map_cmp_list = self.make_wafer_map_cmp()
         meanShiftPivot_df = correlation_table.pivot_table(values='Mean Diff(max - min)', index=correlation_table.index, columns='Site',aggfunc='mean')
@@ -1356,6 +1425,28 @@ class Application(QMainWindow):  # QWidget):
         s2s_correlation_report_name = str(self.file_path + "_s2s_correlation_table" + nowTime + ".xlsx")
         self.status_text.setText(
             str(s2s_correlation_report_name.split('/')[-1] + " is generating..."))
+        self.process_csv_file()
+        data = self._to_stdf_data()
+        try:
+            self.s2s_correlation_report_df = stdf_analysis.generate_s2s_correlation_report(
+                data, s2s_correlation_report_name, lambda pct: self.progress_bar.setValue(pct))
+            if not self.s2s_correlation_report_df.empty:
+                self.status_text.setText(
+                    str(s2s_correlation_report_name.split('/')[-1] + " written successfully!"))
+                self.select_s2s_test_menu.setEnabled(True)
+                self.generate_heatmap_button.setEnabled(True)
+            else:
+                self.status_text.setText('Only 1 Site Data Found in .csv file !!!')
+                self.progress_bar.setValue(0)
+        except ValueError as e:
+            self.status_text.setText(str(e))
+            self.progress_bar.setValue(0)
+        except xlsxwriter.exceptions.FileCreateError:
+            self.status_text.setText(
+                str("Please close " + s2s_correlation_report_name.split('/')[-1]))
+            self.progress_bar.setValue(0)
+        return
+        # --- Original code below (kept as reference, unreachable) ---
         self.s2s_correlation_report_df = self.make_s2s_correlation_table()
         self.progress_bar.setValue(95)
         # In case someone has the file open
@@ -1523,6 +1614,22 @@ class Application(QMainWindow):  # QWidget):
     def make_subcsv_for_chosen_tests(self):
         sub_csv_name = str(self.file_path[:-11] + "_extract_tests.csv")
         self.selected_subcsv_tests = self.select_test_for_subcsv_menu.Selectlist()
+        if len(self.selected_subcsv_tests) >= 1:
+            data = self._to_stdf_data()
+            try:
+                stdf_analysis.extract_sub_csv(data, self.selected_subcsv_tests, sub_csv_name)
+                self.status_text.setText(
+                    str(sub_csv_name.split('/')[-1] + " written successfully!"))
+                self.progress_bar.setValue(100)
+            except PermissionError:
+                self.status_text.setText(
+                    str("Please close " + sub_csv_name.split('/')[-1]))
+                self.progress_bar.setValue(0)
+        else:
+            self.status_text.setText('Please select one or more tests and try again!')
+            self.progress_bar.setValue(0)
+        return
+        # --- Original code below (kept as reference, unreachable) ---
         tmp_df = self.df_csv.iloc[:, :16]
         if len(self.selected_subcsv_tests) >= 1:
             for i in range(len(self.selected_subcsv_tests)):
@@ -1582,9 +1689,7 @@ class Application(QMainWindow):  # QWidget):
         self.transpose_csv_btn.setEnabled(False)
         # self.progress_bar.setMaximum(0)
         if len(filepath) >= 1:
-            a = zip(*csv.reader(open(filepath[0], "rt")))
-            csv.writer(open(filepath[0] + "_transposed.csv", "wt"),
-                       lineterminator="\n").writerows(a)
+            stdf_analysis.transpose_csv(filepath[0])
             self.status_text.setText('Transposing CSV file, done.')
             self.progress_bar.setValue(100)
         else:
