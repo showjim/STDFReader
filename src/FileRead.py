@@ -517,8 +517,9 @@ class MyTestResultProfiler:
             site = str(fields[V4.ptr.SITE_NUM])
             self.pre_inst_name = self.cur_inst_name
             self.cur_inst_name = site + '|' + tname_tnumber
-
-            if (self.cur_inst_name != self.pre_inst_name) and (self.pre_inst_name != "") and not(self.cur_inst_name + "_Appeared" in self.pre_inst_name):
+            # if self.cur_inst_name == '0|20000000|OS_PS AVDD075_PLL <> AVDD075_PLL':
+            #     print('OK')
+            if (self.cur_inst_name != self.pre_inst_name) and not(self.cur_inst_name + "_Appeared" in self.pre_inst_name): # and (self.pre_inst_name != "")
                 # pure_inst_pre = self.pre_inst_name.split("|")[1].split()[0]
                 # pure_inst_cur = self.cur_inst_name.split("|")[1].split()[0]
                 # if pure_inst_pre != pure_inst_cur:
