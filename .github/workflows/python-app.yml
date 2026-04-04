@@ -26,7 +26,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run a multi-line script
+    - name: Test pip install
+      run: |
+        pip install -e .
+        stdf-reader --help
+        python -c "from stdf_reader import __version__; print(__version__)"
+
+    - name: Build executable
       run: |
         # echo Add other actions to build,
         # echo test, and deploy your project.

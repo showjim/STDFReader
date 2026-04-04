@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from pypdf import PdfWriter, PdfReader
 
-from src.Backend import Backend
+from stdf_reader.Backend import Backend
 
 
 class StdfData:

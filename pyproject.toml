@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stdf-reader"
+version = "0.10.0"
+description = "STDF (Standard Test Data Format) file reader, parser, and analysis tool for semiconductor test data"
+readme = "README.md"
+license = "GPL-2.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [
+    { name = "Chao Zhou" },
+]
+keywords = ["stdf", "semiconductor", "test", "data-analysis", "aterp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Manufacturing",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "xlsxwriter>=3.0",
+    "matplotlib>=3.7",
+    "PyPDF>=3.0",
+    "chardet>=5.0",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PyQt5>=5.15",
+    "qtawesome>=1.2",
+]
+dev = [
+    "pyinstaller>=5.0",
+]
+
+[project.scripts]
+stdf-reader = "stdf_reader.cli:main"
+
+[project.gui-scripts]
+stdf-reader-gui = "stdf_reader.gui:main"
+
+[tool.setuptools.packages.find]
+include = ["stdf_reader*", "pystdf*"]
+exclude = ["pystdf.explorer*"]
+
+[tool.setuptools]
+py-modules = []

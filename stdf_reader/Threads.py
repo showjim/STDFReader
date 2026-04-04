@@ -14,8 +14,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from pypdf import PdfWriter, PdfReader # PdfMerger
-from src.Backend import Backend
-from src.FileRead import FileReaders
+from stdf_reader.Backend import Backend
+from stdf_reader.FileRead import FileReaders
 
 
 # Attempt to utilize multithreading so the program doesn't feel like it's crashing every time I do literally anything

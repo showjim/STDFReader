@@ -20,5 +20,7 @@ dist
 llm/__pycache__
 pystdf/__pycache__
 src/__pycache__
+stdf_reader/__pycache__
 .venv
 __pycache__/
+*.egg-info/
