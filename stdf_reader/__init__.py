@@ -1,3 +1,3 @@
 """STDF Reader - Parse and analyze STDF (Standard Test Data Format) files."""
 
-__version__ = "0.10.1"
+__version__ = "0.10.2"
