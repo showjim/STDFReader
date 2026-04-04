@@ -56,4 +56,3 @@ exclude = ["pystdf.explorer*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "stdf_reader.__version__"}
-py-modules = []
