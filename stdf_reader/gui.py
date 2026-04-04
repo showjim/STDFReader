@@ -2044,6 +2044,7 @@ class MyExceptHook(ABC):
 
 # Execute me
 def main():
+    global pathname
     # initialize the log settings
     if getattr(sys, 'frozen', False):
         # For PyInstaller, use _MEIPASS for bundled data files

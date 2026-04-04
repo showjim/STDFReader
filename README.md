@@ -2,6 +2,11 @@
 
 **A Comprehensive STDF/STD File Analysis Solution**
 
+[![PyPI Version](https://img.shields.io/pypi/v/stdf-reader.svg)](https://pypi.org/project/stdf-reader/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/stdf-reader.svg)](https://pypi.org/project/stdf-reader/)
+[![License](https://img.shields.io/pypi/l/stdf-reader.svg)](https://github.com/showjim/STDFReader/blob/master/LICENSE)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/stdf-reader.svg)](https://pypi.org/project/stdf-reader/)
+
 ---
 
 ## Table of Contents
@@ -10,13 +15,16 @@
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [CLI Usage](#cli-usage)
+  - [GUI Usage](#gui-usage)
 - [Screenshots](#screenshots)
+- [License](#license)
 
 ---
 
 ## Overview
 
-The **STDF Reader Tool** is a comprehensive desktop application designed for the AP (Application Engineering) team to process and analyze Teradyne's STDF (Standard Test Data Format) and STD files. This tool provides an intuitive graphical interface for parsing test data, generating statistical reports, and performing advanced data analysis operations.
+The **STDF Reader Tool** is a comprehensive desktop application and command-line toolkit designed for the AP (Application Engineering) team to process and analyze Teradyne's STDF (Standard Test Data Format) and STD files. This tool provides an intuitive graphical interface for parsing test data, generating statistical reports, and performing advanced data analysis operations.
 
 STDF is the industry-standard format for storing test data from semiconductor manufacturing. This tool simplifies the process of extracting valuable insights from test data, enabling engineers to:
 
@@ -25,6 +33,12 @@ STDF is the industry-standard format for storing test data from semiconductor ma
 - Visualize test results through wafer maps and histograms
 - Perform correlation analysis between different test lots
 - Extract specific test results for detailed investigation
+
+### PyPI Package
+
+This project is available on PyPI as [stdf-reader](https://pypi.org/project/stdf-reader/):
+
+> STDF (Standard Test Data Format) file reader, parser, and analysis tool for semiconductor test data.
 
 ---
 
@@ -89,18 +103,30 @@ STDF is the industry-standard format for storing test data from semiconductor ma
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.9 or higher
 - pip package manager
 - Windows, macOS, or Linux operating system
 
-### Step 1: Clone the Repository
+### Option 1: Install from PyPI (Recommended)
 
 ```bash
-git clone https://github.com/your-username/STDFReader.git
+# Basic installation (CLI + analysis tools)
+pip install stdf-reader
+
+# With GUI support
+pip install stdf-reader[gui]
+```
+
+### Option 2: Install from Source
+
+#### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/showjim/STDFReader.git
 cd STDFReader
 ```
 
-### Step 2: Create Virtual Environment (Recommended)
+#### Step 2: Create Virtual Environment (Recommended)
 
 ```bash
 # On Windows
@@ -112,16 +138,10 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 3: Install Dependencies
+#### Step 3: Install Dependencies
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Step 4: Run the Application
-
-```bash
-python STDF_Reader_GUI.py
 ```
 
 ### Building an Executable (Optional)
@@ -138,10 +158,66 @@ The executable will be located in the `dist/` directory.
 
 ## Usage
 
-### Quick Start Guide
+### CLI Usage
+
+After installing via pip, the CLI tool is available as `stdf-reader`:
+
+```bash
+# Show available commands
+stdf-reader --help
+
+# Parse STDF/STD file(s) to CSV
+stdf-reader convert-csv <file_or_directory>
+
+# Parse STDF/STD file to XLSX table
+stdf-reader convert-xlsx <file>
+
+# Generate analysis report (XLSX) from CSV
+stdf-reader report <csv_file>
+
+# Generate PDF charts for selected tests
+stdf-reader pdf <csv_file>
+
+# Generate correlation report
+stdf-reader correlation <csv_file>
+
+# Generate site-to-site correlation report
+stdf-reader s2s <csv_file>
+
+# Extract specific records (DTR, GDR, TSR, GDR_ZIP)
+stdf-reader extract-record <file> --type <record_type>
+
+# Extract sub-CSV for specific tests
+stdf-reader extract-tests <csv_file>
+
+# List all test instances in a CSV file
+stdf-reader list-tests <csv_file>
+
+# Transpose a CSV file (rows <-> columns)
+stdf-reader transpose <csv_file>
+
+# Parse diagnosis log
+stdf-reader convert-diag <file>
+```
+
+### GUI Usage
+
+After installing with GUI support (`pip install stdf-reader[gui]`), launch the GUI:
+
+```bash
+stdf-reader-gui
+```
+
+Or run directly from source:
+
+```bash
+python STDF_Reader_GUI.py
+```
+
+#### Quick Start Guide
 
 1. **Launch the Application**
-   - Run `STDF_Reader_GUI.py` or execute the built binary
+   - Run `stdf-reader-gui` or execute the built binary
    - The main window will open with the "Some Tools" tab active
 
 2. **Load an STDF File**
@@ -160,6 +236,7 @@ The executable will be located in the `dist/` directory.
    - Use "Data Statistics" for comprehensive statistical analysis
    - Access "Wafer Map" for spatial visualization
    - Try "Correlation" to compare two datasets
+
 ---
 
 ## Screenshots
@@ -168,7 +245,7 @@ The executable will be located in the `dist/` directory.
 
 ---
 
-### Special Thanks
+## Special Thanks
 
 - The original PySTDF library for providing robust STDF parsing capabilities
 - The matplotlib and numpy communities for exceptional visualization and numerical computing tools
@@ -176,10 +253,16 @@ The executable will be located in the `dist/` directory.
 
 ---
 
+## License
+
+This project is licensed under the [GNU General Public License v2.0](LICENSE).
+
+---
+
 <div align="center">
 
-**Built with ❤️ for the semiconductor testing community**
+**Built for the semiconductor testing community**
 
-⭐ If you find this tool useful, please consider giving it a star!
+If you find this tool useful, please consider giving it a star!
 
 </div>
