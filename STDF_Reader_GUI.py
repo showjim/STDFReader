@@ -49,7 +49,7 @@ from stdf_reader.FileRead import FileReaders
 from stdf_reader.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
 from stdf_reader import analysis as stdf_analysis
 
-Version = 'Beta 0.10.2'
+from stdf_reader import __version__ as Version
 
 
 ###################################################

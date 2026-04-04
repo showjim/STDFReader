@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stdf-reader"
-version = "0.10.2"
+dynamic = ["version"]
 description = "STDF (Standard Test Data Format) file reader, parser, and analysis tool for semiconductor test data"
 readme = "README.md"
 license = "GPL-2.0-only"
@@ -54,5 +54,6 @@ stdf-reader-gui = "stdf_reader.gui:main"
 include = ["stdf_reader*", "pystdf*"]
 exclude = ["pystdf.explorer*"]
 
-[tool.setuptools]
+[tool.setuptools.dynamic]
+version = {attr = "stdf_reader.__version__"}
 py-modules = []
