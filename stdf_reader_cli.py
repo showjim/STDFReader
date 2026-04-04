@@ -80,7 +80,7 @@ class CliProgressBar:
 
 def cmd_convert_csv(args):
     """Convert STDF file(s) to CSV log."""
-    from src.FileRead import FileReaders
+    from stdf_reader.FileRead import FileReaders
 
     file_paths = args.files
     for fp in file_paths:
@@ -113,7 +113,7 @@ def cmd_convert_csv(args):
 
 def cmd_convert_xlsx(args):
     """Convert STDF file to XLSX table."""
-    from src.FileRead import FileReaders
+    from stdf_reader.FileRead import FileReaders
 
     fp = args.file
     if not os.path.exists(fp):
@@ -128,7 +128,7 @@ def cmd_convert_xlsx(args):
 
 def cmd_convert_diag(args):
     """Convert STDF V4-2007.1 diagnosis to ASCII CSV."""
-    from src.FileRead import FileReaders
+    from stdf_reader.FileRead import FileReaders
 
     fp = args.file
     if not os.path.exists(fp):
@@ -143,7 +143,7 @@ def cmd_convert_diag(args):
 
 def cmd_extract_record(args):
     """Extract a single record type to CSV."""
-    from src.FileRead import FileReaders
+    from stdf_reader.FileRead import FileReaders
 
     fp = args.file
     rec_type = args.type.upper()
@@ -163,7 +163,7 @@ def cmd_extract_record(args):
 
 def cmd_transpose(args):
     """Transpose a CSV file (rows <-> columns)."""
-    from src.analysis import transpose_csv
+    from stdf_reader.analysis import transpose_csv
 
     fp = args.file
     if not os.path.exists(fp):
@@ -182,7 +182,7 @@ def cmd_transpose(args):
 
 def _load_data(args):
     """Helper: load CSV data with common options."""
-    from src.analysis import load_csv_data
+    from stdf_reader.analysis import load_csv_data
 
     file_paths = args.files if hasattr(args, 'files') else [args.file]
     for fp in file_paths:
@@ -203,7 +203,7 @@ def _load_data(args):
 
 def cmd_report(args):
     """Generate analysis report (xlsx) from CSV."""
-    from src.analysis import generate_analysis_report
+    from stdf_reader.analysis import generate_analysis_report
 
     data = _load_data(args)
     progress = CliProgressBar("Generating report")
@@ -213,7 +213,7 @@ def cmd_report(args):
 
 def cmd_correlation(args):
     """Generate correlation report from CSV (needs 2+ STDFs merged)."""
-    from src.analysis import generate_correlation_report
+    from stdf_reader.analysis import generate_correlation_report
 
     data = _load_data(args)
     progress = CliProgressBar("Generating correlation")
@@ -223,7 +223,7 @@ def cmd_correlation(args):
 
 def cmd_s2s(args):
     """Generate site-to-site correlation report."""
-    from src.analysis import generate_s2s_correlation_report
+    from stdf_reader.analysis import generate_s2s_correlation_report
 
     data = _load_data(args)
     progress = CliProgressBar("Generating S2S report")
@@ -233,7 +233,7 @@ def cmd_s2s(args):
 
 def cmd_pdf(args):
     """Generate PDF charts for selected tests."""
-    from src.analysis import generate_pdf_report
+    from stdf_reader.analysis import generate_pdf_report
 
     data = _load_data(args)
 
@@ -265,7 +265,7 @@ def cmd_pdf(args):
 
 def cmd_extract_tests(args):
     """Extract sub-CSV for specific tests."""
-    from src.analysis import extract_sub_csv
+    from stdf_reader.analysis import extract_sub_csv
 
     data = _load_data(args)
 

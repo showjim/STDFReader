@@ -44,10 +44,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # from numba import jit
-from src.Backend import Backend
-from src.FileRead import FileReaders
-from src.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
-from src import analysis as stdf_analysis
+from stdf_reader.Backend import Backend
+from stdf_reader.FileRead import FileReaders
+from stdf_reader.Threads import PdfWriterThread, CsvParseThread, XlsxParseThread, DiagParseThread, SingleRecParseThread
+from stdf_reader import analysis as stdf_analysis
 
 Version = 'Beta 0.10.0'
 
