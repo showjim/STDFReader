@@ -95,15 +95,16 @@ def load_csv_data(file_paths, cherry_pick_sites=None):
     if df_csv.shape[0] > 0:
         # Data cleaning: remove (F) and (A) markers
         df_csv.replace(r'\((F|A)\)', '', regex=True, inplace=True)
-        df_csv.iloc[:, 16:] = df_csv.iloc[:, 16:].astype('float')
+        float_cols = df_csv.columns[16:]
+        df_csv[float_cols] = df_csv[float_cols].astype('float')
         df_csv['X_COORD'] = df_csv['X_COORD'].astype(int)
         df_csv['Y_COORD'] = df_csv['Y_COORD'].astype(int)
         df_csv['SOFT_BIN'] = df_csv['SOFT_BIN'].astype(int)
         df_csv['HARD_BIN'] = df_csv['HARD_BIN'].astype(int)
-        df_csv['LOT_ID'].fillna(value=9999, inplace=True)
-        df_csv['WAFER_ID'].fillna(value=9999, inplace=True)
-        df_csv['PART_ID'].fillna(value=9999, inplace=True)
-        df_csv['BIN_DESC'].fillna(value='NA', inplace=True)
+        df_csv['LOT_ID'] = df_csv['LOT_ID'].fillna(value='9999')
+        df_csv['WAFER_ID'] = df_csv['WAFER_ID'].fillna(value='9999')
+        df_csv['PART_ID'] = df_csv['PART_ID'].fillna(value='9999')
+        df_csv['BIN_DESC'] = df_csv['BIN_DESC'].fillna(value='NA')
 
         # Extract test name and number lists
         data.list_of_test_numbers = [x.split(" - ") for x in data.list_of_test_numbers_string]
@@ -518,7 +519,7 @@ def make_correlation_table(data, progress_cb=None):
     for i in range(len(file_list)):
         correlation_df = pd.concat(
             [correlation_df, table_list[i].Mean.astype('float')], axis=1)
-        parameters = parameters + ['Mean(' + file_list[i] + ')']
+        parameters = parameters + ['Mean(' + str(file_list[i]) + ')']
 
     correlation_df.columns = parameters
     parameters = parameters + [
@@ -574,11 +575,11 @@ def make_wafer_map_cmp(df_csv, progress_cb=None):
             col_names = result_df.columns.values
             axis_dic = {'Axis': [], 'Base Bin Number': [], 'CMP Bin Number': []}
             for i in range(df1_c):
-                result_df.iloc[:, i] = np.where(
-                    base_df.iloc[:, i] == cmp_df.iloc[:, i],
-                    base_df.iloc[:, i],
-                    base_df.iloc[:, i].astype(str) + '-->' + cmp_df.iloc[:, i].astype(str))
-                row_name = row_names[np.where(base_df.iloc[:, i] != cmp_df.iloc[:, i])]
+                col = result_df.columns[i]
+                match_mask = base_df.iloc[:, i] == cmp_df.iloc[:, i]
+                diff_str = base_df.iloc[:, i].astype(str) + '-->' + cmp_df.iloc[:, i].astype(str)
+                result_df[col] = np.where(match_mask, base_df.iloc[:, i], diff_str)
+                row_name = row_names[np.where(~match_mask)]
                 col_name = int(col_names[i])
                 for j in row_name:
                     axis_dic['Axis'].append([col_name, int(j)])
@@ -702,7 +703,7 @@ def make_s2s_correlation_table(data, progress_cb=None):
             tmp = tmp[~tmp.index.duplicated()]
             correlation_df = correlation_df[~correlation_df.index.duplicated()]
             correlation_df = pd.concat([correlation_df, tmp], axis=1)
-            columns = columns + ['Mean(site' + site + ')']
+            columns = columns + ['Mean(site' + str(site) + ')']
 
     mean_delta = correlation_df.iloc[:, 2:].max(axis=1) - correlation_df.iloc[:, 2:].min(axis=1)
     correlation_df = pd.concat([correlation_df, mean_delta], axis=1)

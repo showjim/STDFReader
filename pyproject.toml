@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stdf-reader"
-version = "0.10.0"
+version = "0.10.1"
 description = "STDF (Standard Test Data Format) file reader, parser, and analysis tool for semiconductor test data"
 readme = "README.md"
 license = "GPL-2.0-only"
