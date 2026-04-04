@@ -167,34 +167,36 @@ After installing via pip, the CLI tool is available as `stdf-reader`:
 stdf-reader --help
 
 # Parse STDF/STD file(s) to CSV
-stdf-reader convert-csv <file_or_directory>
+stdf-reader convert-csv <file(s)> [-o output_name]
+# Options: --ignore-tnum, --ignore-chnum, --no-merge
 
 # Parse STDF/STD file to XLSX table
 stdf-reader convert-xlsx <file>
 
 # Generate analysis report (XLSX) from CSV
-stdf-reader report <csv_file>
+stdf-reader report <csv_file(s)> [-o output.xlsx]
 
 # Generate PDF charts for selected tests
-stdf-reader pdf <csv_file>
+stdf-reader pdf <csv_file(s)> [-o output.pdf]
+# Options: --tests "name", --regex "pattern", --all, --no-limits, --group-by-file
 
 # Generate correlation report
-stdf-reader correlation <csv_file>
+stdf-reader correlation <csv_file(s)> [-o output.xlsx]
 
 # Generate site-to-site correlation report
-stdf-reader s2s <csv_file>
+stdf-reader s2s <csv_file(s)> [-o output.xlsx] [--cherry-pick "1,3,5"]
 
 # Extract specific records (DTR, GDR, TSR, GDR_ZIP)
 stdf-reader extract-record <file> --type <record_type>
 
 # Extract sub-CSV for specific tests
-stdf-reader extract-tests <csv_file>
+stdf-reader extract-tests <csv_file(s)> [-o output.csv]
 
 # List all test instances in a CSV file
-stdf-reader list-tests <csv_file>
+stdf-reader list-tests <csv_file(s)> [--filter "pattern"]
 
 # Transpose a CSV file (rows <-> columns)
-stdf-reader transpose <csv_file>
+stdf-reader transpose <csv_file> [-o output.csv]
 
 # Parse diagnosis log
 stdf-reader convert-diag <file>
