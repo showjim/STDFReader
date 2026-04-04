@@ -26,6 +26,8 @@ import time
 import logging
 import re
 
+from stdf_reader import __version__
+
 
 
 # ---------------------------------------------------------------------------
@@ -329,6 +331,9 @@ Examples:
   # List all tests in a CSV
   stdf-reader list-tests data_csv_log.csv
         """)
+
+    parser.add_argument('-v', '-V', '--version', action='version',
+                        version=f'%(prog)s {__version__}')
 
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
