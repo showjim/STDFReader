@@ -6,3 +6,4 @@ qtawesome~=1.2.1
 matplotlib~=3.10.8
 PyPDF~=6.9.2
 chardet~=5.2.0
+pyinstaller
