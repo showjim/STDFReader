@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+requires = ["setuptools>=68.0", "cython>=3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,6 @@ dynamic = ["version"]
 description = "STDF (Standard Test Data Format) file reader, parser, and analysis tool for semiconductor test data"
 readme = "README.md"
 license = "GPL-2.0-only"
-license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [
     { name = "Chao Zhou" },

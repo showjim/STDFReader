@@ -2,18 +2,23 @@
 Benchmark script: Compare pure Python vs Cython-compiled STDF parsing performance.
 
 Usage:
-    python benchmark.py              # Run pure Python baseline
-    python benchmark.py --cython     # Run after Cython compilation
+    python benchmark.py                    # Run benchmark in current mode
+    python benchmark.py --profile          # Also run cProfile on largest file
+    python benchmark.py --cli              # Also measure end-to-end CLI timing
+    python benchmark.py --save results.json  # Save results to JSON for comparison
 """
 
 import os
 import sys
 import time
 import glob
+import json
 import argparse
 import cProfile
 import pstats
 import io as sysio
+import subprocess
+import tempfile
 
 
 def get_stdf_files():
@@ -25,7 +30,6 @@ def get_stdf_files():
     files = []
     for pat in patterns:
         files.extend(glob.glob(pat, recursive=True))
-    # Deduplicate and sort by size
     files = sorted(set(files), key=lambda f: os.path.getsize(f))
     return files
 
@@ -38,7 +42,7 @@ def benchmark_parse_only(filepath):
         """Sink that discards all records - measures pure parsing speed."""
         def __init__(self):
             self.record_count = 0
-        def __call__(self, dataset):
+        def after_send(self, dataSource, data):
             self.record_count += 1
 
     sink = NullSink()
@@ -57,17 +61,30 @@ def benchmark_parse_only(filepath):
 
 def benchmark_to_dataframe(filepath):
     """Benchmark STDF parsing into DataFrame (typical user workflow)."""
-    from pystdf.IO import Parser
     from pystdf.Importer import STDF2DataFrame
 
-    with open(filepath, 'rb') as f:
-        p = Parser(inp=f)
-        sink = STDF2DataFrame()
-        p.addSink(sink)
+    start = time.perf_counter()
+    tables = STDF2DataFrame(filepath)
+    elapsed = time.perf_counter() - start
+
+    total_rows = sum(len(df) for df in tables.values())
+    return elapsed, total_rows
+
+
+def benchmark_cli_convert_csv(filepath):
+    """Benchmark end-to-end `stdf-reader convert-csv` command."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output = os.path.join(tmpdir, "out")
 
         start = time.perf_counter()
-        p.parse()
+        result = subprocess.run(
+            [sys.executable, "-m", "stdf_reader.cli", "convert-csv", filepath, "-o", output],
+            capture_output=True, text=True, timeout=300,
+        )
         elapsed = time.perf_counter() - start
+
+        if result.returncode != 0:
+            raise RuntimeError(f"CLI failed: {result.stderr.strip()}")
 
     return elapsed
 
@@ -77,7 +94,10 @@ def profile_parse(filepath):
     from pystdf.IO import Parser
 
     class NullSink:
-        def __call__(self, dataset): pass
+        def __init__(self):
+            self.record_count = 0
+        def after_send(self, dataSource, data):
+            self.record_count += 1
 
     pr = cProfile.Profile()
     pr.enable()
@@ -89,7 +109,6 @@ def profile_parse(filepath):
 
     pr.disable()
 
-    # Get top 20 functions by cumulative time
     s = sysio.StringIO()
     ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
     ps.print_stats(30)
@@ -118,8 +137,10 @@ def format_speed(size_bytes, elapsed):
 def main():
     parser = argparse.ArgumentParser(description="STDF Reader Performance Benchmark")
     parser.add_argument("--profile", action="store_true", help="Run cProfile on largest file")
+    parser.add_argument("--cli", action="store_true", help="Measure end-to-end CLI convert-csv timing")
     parser.add_argument("--repeat", type=int, default=3, help="Number of repeat runs (default: 3)")
     parser.add_argument("--file", type=str, help="Benchmark a specific file only")
+    parser.add_argument("--save", type=str, metavar="JSON", help="Save results to JSON file for comparison")
     args = parser.parse_args()
 
     # Check if Cython modules are compiled
@@ -152,6 +173,7 @@ def main():
     total_bytes = 0
     total_time = 0
     total_records = 0
+    parse_results = []
 
     for filepath in files:
         best_time = float('inf')
@@ -171,8 +193,18 @@ def main():
 
         fname = os.path.basename(filepath)
         if len(fname) > 48:
-            fname = fname[:45] + "..."
-        print(f"{fname:<50} {format_size(file_size):>10} {records:>10} {best_time:>10.4f} {format_speed(file_size, best_time):>12}")
+            fname_short = fname[:45] + "..."
+        else:
+            fname_short = fname
+        print(f"{fname_short:<50} {format_size(file_size):>10} {records:>10} {best_time:>10.4f} {format_speed(file_size, best_time):>12}")
+
+        parse_results.append({
+            "file": fname,
+            "size_bytes": file_size,
+            "records": records,
+            "time_s": best_time,
+            "speed_mb_s": file_size / best_time / (1024 * 1024),
+        })
 
     print("-" * 92)
     print(f"{'TOTAL':<50} {format_size(total_bytes):>10} {total_records:>10} {total_time:>10.4f} {format_speed(total_bytes, total_time):>12}")
@@ -185,18 +217,40 @@ def main():
     print(f"{'=' * 70}")
 
     df_times = []
+    df_rows = 0
     for run in range(args.repeat):
         try:
-            elapsed = benchmark_to_dataframe(largest_file)
+            elapsed, rows = benchmark_to_dataframe(largest_file)
             df_times.append(elapsed)
-            print(f"  Run {run + 1}: {elapsed:.4f}s")
+            df_rows = rows
+            print(f"  Run {run + 1}: {elapsed:.4f}s  ({rows} rows)")
         except Exception as e:
             print(f"  Run {run + 1}: FAILED - {e}")
 
+    df_result = None
     if df_times:
         best = min(df_times)
         avg = sum(df_times) / len(df_times)
         print(f"  Best: {best:.4f}s  Avg: {avg:.4f}s")
+        df_result = {"best_s": best, "avg_s": avg, "rows": df_rows}
+
+    # --- End-to-end CLI timing ---
+    cli_result = None
+    if args.cli:
+        print(f"\n{'=' * 70}")
+        print(f"End-to-end CLI `convert-csv` Benchmark (largest file)")
+        print(f"File: {os.path.basename(largest_file)}")
+        print(f"{'=' * 70}")
+        for run in range(args.repeat):
+            try:
+                elapsed = benchmark_cli_convert_csv(largest_file)
+                print(f"  Run {run + 1}: {elapsed:.4f}s")
+                if cli_result is None or elapsed < cli_result["best_s"]:
+                    cli_result = {"best_s": elapsed}
+            except Exception as e:
+                print(f"  Run {run + 1}: FAILED - {e}")
+        if cli_result:
+            print(f"  Best: {cli_result['best_s']:.4f}s")
 
     # --- Profile ---
     if args.profile:
@@ -212,6 +266,25 @@ def main():
     print(f"  Total records:    {total_records}")
     print(f"  Throughput:       {format_speed(total_bytes, total_time)}")
     print(f"{'=' * 70}")
+
+    # --- Save results ---
+    if args.save:
+        output = {
+            "mode": mode,
+            "io_module": io_file,
+            "parse_results": parse_results,
+            "total": {
+                "bytes": total_bytes,
+                "records": total_records,
+                "time_s": total_time,
+                "throughput_mb_s": total_bytes / total_time / (1024 * 1024) if total_time > 0 else 0,
+            },
+            "dataframe_conversion": df_result,
+            "cli_convert_csv": cli_result,
+        }
+        with open(args.save, 'w') as f:
+            json.dump(output, f, indent=2)
+        print(f"\nResults saved to {args.save}")
 
 
 if __name__ == "__main__":
