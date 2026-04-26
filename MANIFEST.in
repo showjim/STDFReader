@@ -1,5 +1,6 @@
 include LICENSE
 include README.md
+include setup.py
 recursive-include stdf_reader *.py
-recursive-include pystdf *.py
+recursive-include pystdf *.py *.pyx
 prune pystdf/explorer
