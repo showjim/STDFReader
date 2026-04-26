@@ -64,6 +64,7 @@ def stdfToLogicalType(fmt):
     return logicalTypeMap[fmt]
 
 class RecordHeader:
+  __slots__ = ('len', 'typ', 'sub')
   def __init__(self):
     self.len=0
     self.typ=0

@@ -28,6 +28,19 @@ from pystdf import V4
 
 from pystdf.Pipeline import DataSource
 
+# Pre-compute struct sizes and format strings to avoid repeated calcsize() calls
+_pack_structs = {}  # Cache: (endian, fmt) -> struct.Struct
+_pack_sizes = {fmt: struct.calcsize(fmt) for fmt in 'cBHIQbhiqfd'}  # Pre-computed sizes
+
+def _get_struct(endian, fmt):
+    """Get or create a cached struct.Struct for the given endian+fmt."""
+    key = endian + fmt
+    s = _pack_structs.get(key)
+    if s is None:
+        s = struct.Struct(key)
+        _pack_structs[key] = s
+    return s
+
 def appendFieldParser(fn, action):
     """Append a field parsing function to a record parsing function.
     This is used to build record parsing functions based on the record type specification."""
@@ -41,29 +54,35 @@ def appendFieldParser(fn, action):
 
 class Parser(DataSource):
     def readAndUnpack(self, header, fmt):
-        size = struct.calcsize(fmt)
-        if (size > header.len):
+        s = self._struct_cache.get(fmt)
+        if s is None:
+            s = struct.Struct(self.endian + fmt)
+            self._struct_cache[fmt] = s
+        size = s.size
+        if size > header.len:
             self.inp.read(header.len)
             header.len = 0
             raise EndOfRecordException()
         buf = self.inp.read(size)
-        if len(buf) == 0:
+        if not buf:
             self.eof = 1
             raise EofException()
-        header.len -= len(buf)
-        val,=struct.unpack(self.endian + fmt, buf)
-        if isinstance(val,bytes):
+        header.len -= size
+        val, = s.unpack(buf)
+        if isinstance(val, bytes):
             return val.decode("ascii")
-        else:
-            return val
+        return val
 
     def readAndUnpackDirect(self, fmt):
-        size = struct.calcsize(fmt)
-        buf = self.inp.read(size)
-        if len(buf) == 0:
+        s = self._struct_cache.get(fmt)
+        if s is None:
+            s = struct.Struct(self.endian + fmt)
+            self._struct_cache[fmt] = s
+        buf = self.inp.read(s.size)
+        if not buf:
             self.eof = 1
             raise EofException()
-        val,=struct.unpack(self.endian + fmt, buf)
+        val, = s.unpack(buf)
         return val
 
     def readField(self, header, stdfFmt):
@@ -82,41 +101,67 @@ class Parser(DataSource):
             raise EndOfRecordException()
         if slen == 0:
             return ""
-        buf = self.inp.read(slen);
-        if len(buf) == 0:
+        buf = self.inp.read(slen)
+        if not buf:
             self.eof = 1
             raise EofException()
-        header.len -= len(buf)
-        val,=struct.unpack(str(slen) + "s", buf)
+        header.len -= slen
+        # Directly decode bytes - no need for struct.unpack on raw strings
         try:
-            return val.decode("ascii")
-        except Exception as e:
+            return buf.decode("ascii")
+        except UnicodeDecodeError as e:
             # to process when UnicodeDecodeError
             print(e)
-            result = chardet.detect(val)
+            result = chardet.detect(buf)
             encoding = result['encoding']
             print("The unknow format is: " + encoding)
             try:
-                return val.decode(encoding)
+                return buf.decode(encoding)
             except UnicodeDecodeError:
                 return val.decode("utf-8", errors="replace when UnicodeDecodeError")
 
     def readBn(self, header):
         blen = self.readField(header, "U1")
-        bn = []
-        for i in range(0, blen):
-            bn.append(self.readField(header, "B1"))
-        return bn
+        if blen == 0:
+            return []
+        # Read all bytes at once instead of one-by-one readField calls
+        fmt = str(blen) + 'B'
+        s = self._struct_cache.get(fmt)
+        if s is None:
+            s = struct.Struct(self.endian + fmt)
+            self._struct_cache[fmt] = s
+        if s.size > header.len:
+            self.inp.read(header.len)
+            header.len = 0
+            raise EndOfRecordException()
+        buf = self.inp.read(s.size)
+        if not buf:
+            self.eof = 1
+            raise EofException()
+        header.len -= s.size
+        return list(s.unpack(buf))
 
     def readDn(self, header):
         dbitlen = self.readField(header, "U2")
-        dlen = dbitlen / 8
-        if dbitlen % 8 > 0:
-            dlen+=1
-        dn = []
-        for i in range(0, int(dlen)):
-            dn.append(self.readField(header, "B1"))
-        return dn
+        dlen = (dbitlen + 7) // 8
+        if dlen == 0:
+            return []
+        # Read all bytes at once
+        fmt = str(dlen) + 'B'
+        s = self._struct_cache.get(fmt)
+        if s is None:
+            s = struct.Struct(self.endian + fmt)
+            self._struct_cache[fmt] = s
+        if s.size > header.len:
+            self.inp.read(header.len)
+            header.len = 0
+            raise EndOfRecordException()
+        buf = self.inp.read(s.size)
+        if not buf:
+            self.eof = 1
+            raise EofException()
+        header.len -= s.size
+        return list(s.unpack(buf))
 
     def readVn(self, header):
         vlen = self.readField(header, "U2")
@@ -128,11 +173,36 @@ class Parser(DataSource):
         return vn
 
     def readArray(self, header, indexValue, stdfFmt):
-        if (stdfFmt == 'N1'):
-            self.readArray(header, indexValue/2+indexValue%2, 'U1')
-            return
+        count = int(indexValue)
+        if count == 0:
+            return []
+        if stdfFmt == 'N1':
+            return self.readArray(header, count // 2 + count % 2, 'U1')
+        # For simple numeric types, batch-read the entire array at once
+        if stdfFmt in packFormatMap:
+            fmt_char = packFormatMap[stdfFmt]
+            fmt = str(count) + fmt_char
+            s = self._struct_cache.get(fmt)
+            if s is None:
+                s = struct.Struct(self.endian + fmt)
+                self._struct_cache[fmt] = s
+            if s.size > header.len:
+                self.inp.read(header.len)
+                header.len = 0
+                raise EndOfRecordException()
+            buf = self.inp.read(s.size)
+            if not buf:
+                self.eof = 1
+                raise EofException()
+            header.len -= s.size
+            result = s.unpack(buf)
+            # Decode bytes to strings for char types
+            if fmt_char == 'c':
+                return [v.decode('ascii') for v in result]
+            return list(result)
+        # Fallback for complex types (Cn, Bn, etc.)
         arr = []
-        for i in range(int(indexValue)):
+        for i in range(count):
             arr.append(self.unpackMap[stdfFmt](header, stdfFmt))
         return arr
 
@@ -207,10 +277,18 @@ class Parser(DataSource):
                     if i >= count: break
         except EofException: pass
 
+    def _init_struct_cache(self):
+        """Pre-populate struct cache with common formats after endian is known."""
+        self._struct_cache = {}
+        for fmt in packFormatMap.values():
+            self._struct_cache[fmt] = struct.Struct(self.endian + fmt)
+
     def auto_detect_endian(self):
         if self.inp.tell() == 0:
             self.endian = '@'
+            self._struct_cache = {}  # temp cache for detection
             self.endian = self.__detectEndian()
+            self._init_struct_cache()
 
     def parse(self, count=0, skipType=""):
         self.begin()
@@ -225,7 +303,7 @@ class Parser(DataSource):
 
     def getFieldParser(self, fieldType):
         if (fieldType.startswith("k")):
-            fieldIndex, arrayFmt = re.match('k(\d+)([A-Z][a-z0-9]+)', fieldType).groups()
+            fieldIndex, arrayFmt = re.match(r'k(\d+)([A-Z][a-z0-9]+)', fieldType).groups()
             return lambda self, header, fields: self.readArray(header, fields[int(fieldIndex)], arrayFmt)
         else:
             parseFn = self.unpackMap[fieldType]
@@ -305,7 +383,7 @@ class Parser(DataSource):
 
                     # Check if it's an array field (starts with 'k')
                     if field_type.startswith('k'):
-                        match = re.match('k(\d+)([A-Z][a-z0-9]+)', field_type)
+                        match = re.match(r'k(\d+)([A-Z][a-z0-9]+)', field_type)
                         if match:
                             field_index = int(match.group(1))
                             array_fmt = match.group(2)
@@ -337,6 +415,7 @@ class Parser(DataSource):
         self.inp = inp
         self.reopen_fn = reopen_fn
         self.endian = endian
+        self._struct_cache = {}  # Will be populated after endian detection
 
         self.recordMap = dict(
             [ ( (recType.typ, recType.sub), recType )
