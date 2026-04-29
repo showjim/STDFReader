@@ -25,9 +25,29 @@ import os
 import time
 import logging
 import re
+from importlib.metadata import PackageNotFoundError, version
 
-from stdf_reader import __version__
 
+# Resolve version from installed distribution metadata so CLI still works
+# even when stdf_reader is shadowed as a namespace package.
+def _get_cli_version():
+    try:
+        return version("stdf-reader")
+    except PackageNotFoundError:
+        return "0+unknown"
+
+
+def _get_log_file_path():
+    local_app_data = os.getenv("LOCALAPPDATA")
+    if local_app_data:
+        log_dir = os.path.join(local_app_data, "stdf-reader")
+    else:
+        log_dir = os.path.join(os.path.expanduser("~"), ".stdf-reader")
+    os.makedirs(log_dir, exist_ok=True)
+    return os.path.join(log_dir, "app.log")
+
+
+CLI_VERSION = _get_cli_version()
 
 
 # ---------------------------------------------------------------------------
@@ -333,7 +353,7 @@ Examples:
         """)
 
     parser.add_argument('-v', '-V', '--version', action='version',
-                        version=f'%(prog)s {__version__}')
+                        version=f'%(prog)s {CLI_VERSION}')
 
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
@@ -441,7 +461,7 @@ def main():
 
     # Set up logging
     logging.basicConfig(
-        filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.log'),
+        filename=_get_log_file_path(),
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s')
 

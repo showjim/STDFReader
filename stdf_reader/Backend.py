@@ -106,7 +106,7 @@ class Backend(ABC):
         # Plots the table of results, showing a max of 16 sites at once, plus all the collective data
         table = Backend.table_of_results(test_data, sdr_parse, low_lim, hi_lim, units)
         # cell_text = table.copy()
-        plt.subplot2grid((2, 3), (1, 2))
+        plt.subplot2grid((2, 3), (1, 1), colspan=2)
         cell_text = []
         for row in range(len(table)):
             cell_text.append([table.index[row]] + table.iloc[row].to_list())
@@ -123,7 +123,7 @@ class Backend(ABC):
         plt.grid(color='0.9', linestyle='--', linewidth=1)
 
         # Plots the histogram
-        ax = plt.subplot2grid((2, 3), (1, 0), colspan=2, projection='3d')
+        ax = plt.subplot2grid((2, 3), (1, 0), colspan=1, projection='3d')
         Backend.plot_full_test_hist(test_data, low_lim, hi_lim, fail_limit, ax)
         ax.set_xlabel(units)
         # ax.set_xticklabels(units, rotation=45)
