@@ -645,7 +645,7 @@ class MyTestResultProfiler:
                 tname_pinname = tname + '@' + tmp_pin_list[i]
                 tname_tnumber = str(fields[V4.mpr.TEST_NUM]) + '|' + tname_pinname
                 if not (tname_tnumber in self.tname_tnumber_dict):
-                    self.tname_tnumber_dict[tname_tnumber] = str(self.fields[V4.mpr.TEST_NUM]) + '|' + \
+                    self.tname_tnumber_dict[tname_tnumber] = str(self.mpr_first_field[V4.mpr.TEST_NUM]) + '|' + \
                                                              tname_pinname + '|' + \
                                                              str(self.mpr_first_field[V4.mpr.HI_LIMIT]) + '|' + \
                                                              str(self.mpr_first_field[V4.mpr.LO_LIMIT]) + '|' + \
