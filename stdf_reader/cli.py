@@ -4,7 +4,8 @@
 STDF Reader CLI — Command-line interface for STDF file processing and analysis.
 
 Usage:
-    python stdf_reader_cli.py <command> [options]
+    stdf-reader <command> [options]
+    python -m stdf_reader.cli <command> [options]
 
 Commands:
     convert-csv      Parse STDF file(s) to CSV log
