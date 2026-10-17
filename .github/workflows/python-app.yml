@@ -1,4 +1,5 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# Smoke-tests the package across supported Python versions and builds a
+# standalone Windows executable on release tags.
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Python application
@@ -9,12 +10,51 @@ on:
       - 'V*'
 
 jobs:
-  build:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13", "3.14"]
 
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Smoke test
+      run: |
+        stdf-reader --help
+        python -c "from stdf_reader import __version__; print(__version__)"
+
+    - name: Extract MIR record
+      run: |
+        stdf-reader extract-record sample_stdf/demofile.stdf --type MIR
+        python - <<'PY'
+        import pandas as pd
+        df = pd.read_csv("sample_stdf/demofile.stdf_MIR_Rec.csv")
+        assert df.shape == (1, 38), df.shape
+        assert df.loc[0, "LOT_ID"] == "W118892", df.loc[0, "LOT_ID"]
+        print("MIR OK", df.shape)
+        PY
+
+  build-exe:
+    name: Build Windows executable
+    needs: test
     runs-on: windows-latest # ubuntu-latest
 
     steps:
     - uses: actions/checkout@v5
+
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
@@ -38,7 +78,7 @@ jobs:
         # docker run -v $GITHUB_WORKSPACE:/src cdrx/pyinstaller-windows:latest 'pyinstaller --onefile -w --icon=./img/icon.ico STDF_Reader_GUI.py'
         # sudo zip -r $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.zip $GITHUB_WORKSPACE/dist/STDF_Reader_GUI.exe
         pyinstaller --onefile --icon=./img/icon.ico STDF_Reader_GUI.py
-    
+
     - name: Upload artifact
       uses: actions/upload-artifact@v5
       with:

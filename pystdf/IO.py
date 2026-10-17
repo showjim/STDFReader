@@ -225,7 +225,7 @@ class Parser(DataSource):
 
     def getFieldParser(self, fieldType):
         if (fieldType.startswith("k")):
-            fieldIndex, arrayFmt = re.match('k(\d+)([A-Z][a-z0-9]+)', fieldType).groups()
+            fieldIndex, arrayFmt = re.match(r'k(\d+)([A-Z][a-z0-9]+)', fieldType).groups()
             return lambda self, header, fields: self.readArray(header, fields[int(fieldIndex)], arrayFmt)
         else:
             parseFn = self.unpackMap[fieldType]
@@ -305,7 +305,7 @@ class Parser(DataSource):
 
                     # Check if it's an array field (starts with 'k')
                     if field_type.startswith('k'):
-                        match = re.match('k(\d+)([A-Z][a-z0-9]+)', field_type)
+                        match = re.match(r'k(\d+)([A-Z][a-z0-9]+)', field_type)
                         if match:
                             field_index = int(match.group(1))
                             array_fmt = match.group(2)
