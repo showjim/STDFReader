@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 ###################################################
 # STDF Reader Tool                                #
-# Version: Beta 0.8                               #
 #                                                 #
 # Sep. 18, 2019                                   #
 # A light STDF reader and analysis tool           #

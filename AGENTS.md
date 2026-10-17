@@ -29,8 +29,10 @@ python -m build                    # dist/*.whl + *.tar.gz
 # Standalone Windows executable (uses the legacy root script, not the package)
 pyinstaller --onefile --icon=./img/icon.ico STDF_Reader_GUI.py
 
-# No test suite exists. CI (on tags `V*`) only smoke-tests:
+# No test suite exists. CI (on tags `V*`) smoke-tests on Python 3.11/3.13/3.14:
 pip install -e . && stdf-reader --help
+stdf-reader extract-record sample_stdf/demofile.stdf --type MIR
+# then builds the Windows exe on Python 3.11.
 ```
 
 Sample STDF inputs are in [sample_stdf/](sample_stdf/) (`a595.stdf`, `demofile.stdf`, `lot2.stdf`, `lot3.stdf`). There is no pytest/unittest setup; `test/transpose.py` is a scratch script.
