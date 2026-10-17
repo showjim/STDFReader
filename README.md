@@ -186,7 +186,7 @@ stdf-reader correlation <csv_file(s)> [-o output.xlsx]
 # Generate site-to-site correlation report
 stdf-reader s2s <csv_file(s)> [-o output.xlsx] [--cherry-pick "1,3,5"]
 
-# Extract specific records (DTR, GDR, TSR, GDR_ZIP)
+# Extract any single record type (e.g. MIR, DTR, GDR, TSR, GDR_ZIP)
 stdf-reader extract-record <file> --type <record_type>
 
 # Extract sub-CSV for specific tests

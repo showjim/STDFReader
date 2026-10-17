@@ -11,7 +11,7 @@ Commands:
     convert-csv      Parse STDF file(s) to CSV log
     convert-xlsx     Parse STDF file to XLSX table
     convert-diag     Convert STDF V4-2007.1 diagnosis to ASCII CSV
-    extract-record   Extract a single record type (DTR/GDR/TSR) to CSV
+    extract-record   Extract any single STDF record type (e.g. MIR) to CSV
     report           Generate analysis report (xlsx) from CSV
     correlation      Generate correlation report from CSV (needs 2+ STDFs)
     s2s              Generate site-to-site correlation report
@@ -167,18 +167,33 @@ def cmd_extract_record(args):
     from stdf_reader.FileRead import FileReaders
 
     fp = args.file
-    rec_type = args.type.upper()
     if not os.path.exists(fp):
         print(f"  ✗ Error: File not found: {fp}", file=sys.stderr)
         return 1
 
+    rec_type = args.type.strip().upper()
     extract_zip = rec_type.endswith('_ZIP')
-    if extract_zip:
-        rec_type = rec_type.split('_')[0]
+    base_type = rec_type[:-4] if extract_zip else rec_type
 
-    print(f"  Extracting {rec_type} records from {os.path.basename(fp)}...")
-    FileReaders.rec_to_csv(fp, rec_type, extract_zip)
-    print(f"  ✓ Output: {fp}_{rec_type}_Rec.csv")
+    record_type = FileReaders.resolve_record_type(base_type)
+    if record_type is None:
+        valid = ', '.join(FileReaders.available_record_types())
+        print(f"  ✗ Error: Unknown record type '{args.type}'.", file=sys.stderr)
+        print(f"    Valid types: {valid}", file=sys.stderr)
+        return 1
+    if not record_type.fieldMap:
+        print(f"  ✗ Error: Record type {base_type} has no fields; "
+              f"nothing to export.", file=sys.stderr)
+        return 1
+
+    print(f"  Extracting {base_type} records from {os.path.basename(fp)}...")
+    output = FileReaders.rec_to_csv(fp, base_type, extract_zip)
+    if output is None:
+        print(f"  ✗ Error: No {base_type} records found in "
+              f"{os.path.basename(fp)}", file=sys.stderr)
+        return 1
+
+    print(f"  ✓ Output: {output}")
     return 0
 
 
@@ -383,10 +398,11 @@ Examples:
 
     # --- extract-record ---
     p = subparsers.add_parser('extract-record',
-                              help='Extract a single record type to CSV')
+                              help='Extract any single STDF record type to CSV')
     p.add_argument('file', help='STDF file to parse')
-    p.add_argument('--type', required=True, choices=['DTR', 'GDR', 'TSR', 'GDR_ZIP'],
-                   help='Record type to extract')
+    p.add_argument('--type', required=True, metavar='TYPE',
+                   help='Record type to extract (e.g. MIR, DTR, GDR, TSR). '
+                        'Append _ZIP to extract embedded GDR ZIP data (e.g. GDR_ZIP).')
     p.set_defaults(func=cmd_extract_record)
 
     # --- transpose ---

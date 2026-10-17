@@ -34,6 +34,29 @@ class FileReaders(ABC):
         return [record.name for record in V4.records
                 if record.name.split('.')[-1] not in keep_short_names]
 
+    @staticmethod
+    def resolve_record_type(rec_name):
+        """
+        Resolve an STDF record short name to its pystdf V4 record singleton.
+
+        Accepts 'MIR' / 'Mir' / 'mir' (case-insensitive), or an already
+        resolved record singleton (e.g. V4.mir). Returns None if unknown.
+        """
+        if rec_name in V4.records:  # already a resolved singleton
+            return rec_name
+        if not isinstance(rec_name, str):
+            return None
+        key = rec_name.strip().upper()
+        for record in V4.records:
+            if record.__class__.__name__.upper() == key:
+                return record
+        return None
+
+    @staticmethod
+    def available_record_types():
+        """Sorted upper-case short names of every supported V4 record type."""
+        return sorted(record.__class__.__name__.upper() for record in V4.records)
+
     # This function is to parse STDF into an ATDF like log, abandon this part now
     @staticmethod
     def process_file(filename):
@@ -162,28 +185,46 @@ class FileReaders(ABC):
     # this function to extract only 1 type of record, in case STDF file is too large
     @staticmethod
     def rec_to_csv(filename, RecName:str, extract_zip:bool=False):
+        """Extract one record type from an STDF file to CSV.
+
+        Returns the output path on success, or None when nothing was written.
+        """
+        record_type = FileReaders.resolve_record_type(RecName)
+        if record_type is None:
+            print("Error: unknown STDF record type %r. Valid types: %s"
+                  % (RecName, ", ".join(FileReaders.available_record_types())))
+            return None
+
+        if not record_type.fieldMap:
+            print("Error: record type %s has no fields; nothing to export."
+                  % record_type.__class__.__name__.upper())
+            return None
+
+        RecName = record_type.__class__.__name__.upper()
 
         # Converts the stdf to a dataframe
-        table = FileReaders.STDFRec2DataFrame(filename, RecName)
+        table = FileReaders.STDFRec2DataFrame(filename, record_type)
 
-        # Extract zip file from DTR
+        if table.empty:
+            print("No %s records found in %s; no CSV written."
+                  % (RecName, filename))
+            return None
+
+        # Extract zip files from GDR data
         if extract_zip:
-            FileReaders.extract_zips_binary(table)
+            if "GEN_DATA" in table.columns:
+                FileReaders.extract_zips_binary(table)
+            else:
+                print("Warning: %s records have no GEN_DATA field; "
+                      "skipping ZIP extraction." % RecName)
 
         # The name of the new file, preserving the directory of the previous
         fname = filename + "_" + RecName + "_Rec.csv"
 
         # Make sure the order of columns complies the specs
-        record = [r for r in V4.records if r.__class__.__name__.upper() == RecName]
-        if len(record) == 0:
-            print("Ignore exporting table %s: No such record type exists." % RecName)
-        else:
-            columns = [field[0] for field in record[0].fieldMap]
-            if len(record[0].fieldMap) > 0:
-                # try:
-                table.to_csv(fname, index=False)
-            # except BaseException:
-            #     os.system('pause')
+        columns = [field[0] for field in record_type.fieldMap]
+        table.to_csv(fname, index=False, columns=columns)
+        return fname
 
     @staticmethod
     def extract_zips_binary(df):
@@ -275,8 +316,13 @@ class FileReaders(ABC):
     def STDFRec2DataFrame(fname, RecName:str):
         """ Convert selected STDF record to a DataFrame objects
         """
-        RecName = RecName.upper()
-        data = FileReaders.SearchSTDF(fname, RecName)
+        record_type = FileReaders.resolve_record_type(RecName)
+        if record_type is None:
+            raise ValueError(
+                "Unknown STDF record type %r. Valid types: %s"
+                % (RecName, ", ".join(FileReaders.available_record_types())))
+        RecName = record_type.__class__.__name__.upper()
+        data = FileReaders.SearchSTDF(fname, record_type)
         Rec = {}
         BigTable = pd.DataFrame()
         for datum in data:
@@ -295,48 +341,34 @@ class FileReaders(ABC):
 
     @staticmethod
     def SearchSTDF(fname, rec_name):
-        # Map rec_name to short record type name
-        rec_name_map = {
-            "DTR": "Dtr",
-            "GDR": "Gdr",
-            "TSR": "Tsr"
-        }
-
-        target_rec = rec_name_map.get(rec_name.upper())
-
-        if not target_rec:
-            # If not in map, assume it's already a short name
-            target_rec = rec_name
+        record_type = FileReaders.resolve_record_type(rec_name)
+        if record_type is None:
+            raise ValueError(
+                "Unknown STDF record type %r. Valid types: %s"
+                % (rec_name, ", ".join(FileReaders.available_record_types())))
 
         # Build skip list programmatically - skip everything EXCEPT target
-        skip_types = FileReaders._build_skip_list({target_rec})
+        skip_types = FileReaders._build_skip_list(
+            {record_type.__class__.__name__})
 
-        with open(fname,'rb') as fin:
+        opener = gzip.open if str(fname).lower().endswith(".gz") else open
+        with opener(fname, 'rb') as fin:
             p = Parser(inp=fin)
-            storage = MyMemoryWriter(rec_name)
+            storage = MyMemoryWriter(record_type)
             p.addSink(storage)
             # Skip all record types except the one we want
             p.parse(skipType=skip_types)
         return storage.data
 
 class MyMemoryWriter:
-    def __init__(self, rec_name):
+    def __init__(self, record_type):
+        """record_type must be a resolved pystdf V4 singleton (e.g. V4.mir)."""
         self.data = []
-        self.rec_name = rec_name
-        self.typ = V4.dtr
+        self.typ = record_type
     def after_send(self, dataSource, data):
         rectype, fields = data
-        self.get_typ()
-        # First, get lot/wafer ID etc.
         if rectype == self.typ:
             self.data.append(data)
-    def get_typ(self):
-        if self.rec_name == "DTR":
-            self.typ = V4.dtr
-        elif self.rec_name == "GDR":
-            self.typ = V4.gdr
-        elif self.rec_name == "TSR":
-            self.typ = V4.tsr
 
     def write(self,line):
         pass

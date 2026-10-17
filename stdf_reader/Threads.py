@@ -246,16 +246,19 @@ class SingleRecParseThread(QThread):
     def run(self):
 
         if self.filepath == '':
-
             self.notify_status_text.emit('Please select a file')
-            pass
+            return
 
+        self.isExtract = self.rec_name.endswith("_ZIP")
+        if self.isExtract:
+            self.rec_name = self.rec_name[:-4]
+
+        output = FileReaders.rec_to_csv(self.filepath, self.rec_name, self.isExtract)
+        if output:
+            self.notify_status_text.emit(os.path.basename(output) + " created!")
         else:
-            if "_" in self.rec_name:
-                self.rec_name = self.rec_name.split("_")[0]
-                self.isExtract = True
-            FileReaders.rec_to_csv(self.filepath, self.rec_name, self.isExtract)
-            self.notify_status_text.emit(str(self.filepath.split('/')[-1] + "_" + self.rec_name + "_Rec.csv created!"))
+            self.notify_status_text.emit(
+                "No " + self.rec_name.upper() + " records found; no CSV written.")
 
 
 class DiagParseThread(QThread):

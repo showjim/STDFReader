@@ -15,7 +15,7 @@ Added a complete CLI interface to the STDFReader project, enabling all GUI featu
 | `convert-csv` | STDF → CSV (with progress bar + ETA) |
 | `convert-xlsx` | STDF → XLSX table |
 | `convert-diag` | STDF V4-2007.1 diagnosis → ASCII |
-| `extract-record` | Extract DTR/GDR/TSR records |
+| `extract-record` | Extract any STDF record type (MIR/DTR/GDR/TSR/...) |
 | `transpose` | Transpose CSV rows ↔ columns |
 | `report` | Generate analysis XLSX (stats, bins, wafer map) |
 | `correlation` | Compare 2+ STDF files' means |
@@ -64,6 +64,7 @@ All commands tested against sample files in `sample_stdf/`:
 |---------|-----------|--------|
 | `convert-csv` | `a595.stdf` | ✓ CSV created in 0.5s |
 | `extract-record --type TSR` | `demofile.stdf` | ✓ TSR records extracted |
+| `extract-record --type MIR` | `demofile.stdf` | ✓ 1 MIR record (38 fields) extracted |
 | `convert-csv --no-merge` | `a595.stdf + demofile.stdf` | ✓ Separate CSVs |
 | `list-tests` | `a595.stdf_csv_log.csv` | ✓ 123 tests listed |
 | `report` | `a595.stdf_csv_log.csv` | ✓ XLSX with 4 sheets |
